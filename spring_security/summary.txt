@@ -1,1 +1,307 @@
-spring
+스프링 시큐리티
+
+MySQL db 에 저장한다
+
+
+구현 
+	인증 > 로그인
+	인가 > :  클라이언트의 요청이 특정 Controller 클래스에 도달하기 전, 필터에서 Spring Security가 검증을 하는 과정.  
+		1. 해당 경로의 접근은 누구에게 열려 있는지
+		2. 로그인이 완료된 사용자인지
+		3. 해당되는 role을 가지고 있는지
+
+	회원가입 > db 저장
+
+
+-----------------------------------------------------------------------------------------------------------
+
+와일드 카드 표현 == ** 
+
+
+-----------------------------------------------------------------------------------------------------------
+
+: 일반적인 스프링 부트 프로젝트 흐름
+	▼ 요청
+		▼ 서블릿 컨테이너
+			▼ 필터
+				▼ 스프링부트 컨트롤러
+
+: 스프링 시큐리티 흐름 > spring security config 파일을 등록
+	▼ 요청
+		▼ 서블릿 컨테이너
+			▼필터 ▼spring security config : 자바 config 파일을 등록해두면 특정 필터를 만들어서 그 요청을 가로챈다. 클라이언트의 요청을 목적지로 전달하기 전에 해당 클라이언트가 특정 권한을 가지고 있는지 검증한다(==인가작업). 권한이 없으면 해당 컨트롤러로의 접근을 막고 권한이 있으면 요청 전달해준다
+					▼ 스프링부트 컨트롤러 : 로그인과 같은 작업 진행
+						▼ 세션: 로그인 중인 사용자와 같은 정보 저장
+
+
+-----------------------------------------------------------------------------------------------------------
+
+- 필수 의존성
+    - Spring Web
+    - Lombok
+    - Mustache
+    - Spring Security
+    - Spring Data JPA
+    - MySQL Driver
+
+
+스프링 시큐리티 버전에 따른 릴리즈 목록은 아래의 스프링 부트 공식 리포지토리에서 확인 가능
+	: https://github.com/spring-projects/spring-security/releases
+	: 람다 형식으로"만" 내부 메서드를 구현해야된다
+
+	public class SpringSecurityConfig {
+
+	    @Bean
+  	  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
+    	    	http
+         		.authorizeHttpRequests((auth) -> auth
+           	       .requestMatchers("/login", "/join").permitAll()
+           	       .anyRequest().authenticated()
+     	   );
+
+       	 return http.build();
+   	 	}
+	}
+
+
+-----------------------------------------------------------------------------------------------------------
+
+처음엔 로그인 화면이 자동으로 뜬다
+	: Spring Security를 의존성으로 추가한 상태에서 security config 파일을 설정하지 않은 경우 기본적으로 모든 요청에 대해 로그인 페이지가 뜨게 되어있기 떄문
+	: 로그인 하는 법
+		id : user
+		pw : 로그에 올라오는 pw
+
+
+-----------------------------------------------------------------------------------------------------------
+
+SecurityConfig 클래스 
+	: 인가 설정 하는 클래스
+	: 구현 방법
+		1. config 패키지 생성
+		2. SecurityConfig.java 명으로 클래스 생성
+		3. 해당 클래스명 위에 
+			@Configuration 작성 : Configuration 클래스로 등록
+ 			@EnableWebSecurity 작성 : 스프링 시큐리티의 관리 대상이 됨.
+
+		4. 클래스 내부에 메서드 작성 :  SecurityConfig 클래스 내부에서 빈으로 등록시킨 얘들은 자동으로 필터가 된다.
+
+
+
+         상단에서 정의한 것부터 우선적으로 적용되기 떄문에 순서에 유의한다
+             anyRequest( ) 를 가장 먼저 쓰면 그 밑에 쓴 requestMatchers(.. ) 에 대한 모든 설정은 다 무시된다 
+
+
+        authorizeHttpRequests( 람다식 )  >> 특정 경로로의 요청을 허용하거나 거부함
+         requestMatchers( "경로1" , "경로2" , ... ) >> 특정 경로에 대해 설정할 수 있게 함
+             permitAll() >> 모든 사용자에게 로그인을 하지 않아도 접근할 수 있게 하는 메서드
+             hasRole(String role) >> 특정한 role, 규칙이 있어야 경로에 접근할 수 있게 함
+             hasAnyRole(String role1 , String role2, ... ) >>특정한 role, 규칙 중 하나여야 경로에 접근할 수 있게 함
+             authenticated() >> 로그인만 잘 하면 접근할 수 있게 함
+             denyAll() >> 모든 사용자의 접근을 막음. 로그인을 진행해도 접근하지 못하게 함.
+
+         anyRequest( )  이외의 ( requestMatchers 에 의해 ) 설정되지 않은 모든 경로들
+
+
+
+-----------------------------------------------------------------------------------------------------------
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
+        http.authorizeHttpRequests(
+                (auth) ->auth
+                        .requestMatchers("/","/login").permitAll()
+                        .requestMatchers("/admin").hasRole("ADMIN")requestMatchers("/admin").hasRole("ADMIN")
+                        .requestMatchers("/my/**").hasAnyRole("ADMIN","USER")
+                        .anyRequest().authenticated());
+
+        return http.build();  // 최종적으로 받았던 httpSecurity 를 빌더 타입으로 리턴해준다
+    }
+}
+
+
+
+
+위에서 requestMatchers("/admin").hasRole("ADMIN") 이 설정되었기 떄문에 /admin 으로 접속하려하면 "localhost에 대한 액세스가 거부됨" 이라는 메세지와 함꼐 접근이 거부된다. 
+
+리다이렉팅. 로그인 페이지 작업을 모두 커스텀 해주어야한다.
+
+
+-----------------------------------------------------------------------------------------------------------
+
+커스텀 로그인 
+	: 마찬가지로 SecurityConfig 클래스에서 설정을 진행한다
+	: https://velog.io/@gmtmoney2357/%EC%8A%A4%ED%94%84%EB%A7%81-%EC%8B%9C%ED%81%90%EB%A6%AC%ED%8B%B0-Form-Login-%EC%9D%B8%EC%A6%9D
+
+	.formLogin() : form 로그인 인증 기능이 작동함
+
+       .loginPage( "경ㅀ" ) : 커스텀 로그인 페이지 경로를 설정(등록)한다. 설정을 하면 로그인을 해야하는 상황에서 해당 경로로 리다이렉션 하게 된다.
+
+
+	.loginProcessingUrl("경로") : 로그인데이터의 action 경로를 설정한다. 이 경로로 입력 데이터가 보내진다.
+
+ 	.permitAll(); 인증 없이 접근 가능하게 한다
+
+csrf >> 위변조방지 설정. 동작이 되면 호스트 요청을 보낼 떄 csrf 토큰도 보내주어야 로그인이 진행된다
+	: 스프링 시큐리티엔 자동으로 설정되있다 
+	: 이건 이후 강의에 더 자세히 다루고 지금은 잠시 꺼두자
+
+
+
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
+     
+        http.authorizeHttpRequests(
+                (auth) ->auth
+                        .requestMatchers("/","/login").permitAll()
+                        .requestMatchers("/admin").hasRole("ADMIN")
+                        .requestMatchers("/my/**").hasAnyRole("ADMIN","USER")
+                        .anyRequest().authenticated());
+
+
+  
+
+        http.formLogin((auth)->auth
+                .loginPage("/login")
+                .loginProcessingUrl("/loginProc")
+                .permitAll() ); // 로그인 페이지와 로그인 정보를 전달할 action url은 .permitAll된다. 즉, 인증이 없이 접근이 가능하다. 로그인을 하기 위한 로그인은 필요없다.
+
+        http.csrf(auth->auth.disable());
+        
+        return http.build();     }
+}
+
+
+
+로그인페이지 요청 경로를 "/login" 로 하고 , 입력받은로그인데이터는 "/loginProc" 로 전달하고.  로그인페이지와 로그인 정보가 전달된 페이지에 대한 접근은 모두에게 허용한다.
+
+
+
+-----------------------------------------------------------------------------------------------------------
+
+BCrypt 암호화 메소드
+
+스프링 시큐리티는 암호화를 무조건적으로 진행해야된다.
+	: 스프링 시큐리티는 사용자 인증(로그인)시 아이디와 비밀번호에 검증을 한다. 이때 비밀번호를 단방향 해시 암호화하여 저장되어 있는 비밀번호와 대조한다.
+		: 대조를 할 떄 해시화된걸로 비교하기 때문에 저장 할 떄 해쉬화해서 저장해야된다
+			: 그러니까 회원가입시 비밀번호 항목에 대해서 암호화를 진행해야 한다.
+			: 스프링 시큐리티는 암호화를 위해 BCrypt Password Encoder 라는 암호화 도구. 클래스를 제공하고 권장한다. 따라서 해당 클래스를 return하는 메소드를 만들어 @Bean으로 (회원 가입할 떄, 검증할 때 자동으로 사용하도록) 등록하여 사용하면 된다. 
+
+
+
+암호화의 종류
+	: 양방향
+ 	  	 - 대칭키
+   		 - 비대칭키
+
+	: 단방향 >> 다시 해독이 불가한 암호화
+   		 - 해시
+
+
+
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+
+    @Bean
+    public BCryptPasswordEncoder bCryptPasswordEncoder(){
+        return new BCryptPasswordEncoder(); 
+    }
+
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
+     
+        http.authorizeHttpRequests(
+                (auth) ->auth
+                        .requestMatchers("/","/login").permitAll()
+                        .requestMatchers("/admin").hasRole("ADMIN")
+                        .requestMatchers("/my/**").hasAnyRole("ADMIN","USER")
+                        .anyRequest().authenticated());
+
+
+  
+
+        http.formLogin((auth)->auth
+                .loginPage("/login")
+                .loginProcessingUrl("/loginProc")
+                .permitAll() ); // 로그인 페이지와 로그인 정보를 전달할 action url은 .permitAll된다. 즉, 인증이 없이 접근이 가능하다. 로그인을 하기 위한 로그인은 필요없다.
+
+        http.csrf(auth->auth.disable());
+        
+        return http.build();     }
+}
+
+
+
+
+호출되면 BCryptPasswordEncoder 가 자동으로 생성될 수 있게 하는 메서드를 SecurityConfig에 @Bean 으로 추가해 어떤 곳에서든 다 호출에서 쓸 수 있게 한다.
+
+
+-----------------------------------------------------------------------------------------------------------
+
+build.gradle : 의존성 관리하는 파일
+	: 이전에 잠시 주석 처리 해놨던 jpa 와 mysql 관련된 dependency 주석 해제한다
+
+
+직접 쿼리문 안쓰고 JPA 라는 ORM 을 사용할꺼다
+
+
+스프링 부트와 db (mySql )단일연결하기
+	: application.properties / .yml 을 통해 쉽게 설정 가능하다
+
+
+application.properties 설정하기
+	: MySQL 연결 설정
+	1. spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+		: 의존성추가한드라이버( mysql드라이버 ) 의 주소를넣는다
+	2. spring.datasource.url=jdbc:mysql://아이피:3306/데이터베이스?useSSL=false&useUnicode=true&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
+		: 아이피 >> localhost
+		: 데이터베이스 >> schema . db명
+		: 그 뒤에 자잘하게 붙는 쿼리 스트링은 SSL , timezone, key 같은거 설정
+	3. spring.datasource.username=아이디
+	4. spring.datasource.password=비밀번호
+
+
+	: ddl 관련 설정
+		: ddl 설정을 통해 스프링 부트 프로젝트에 존재하는 Entity를 기반으로 MySQL DB에 테이블 자동 생성이 가능하다.
+		: 필수는 아니다
+
+
+	1. spring.jpa.hibernate.ddl-auto=값
+		할당가능한값
+			none : 아무것도 건들이지 말란 뜻.
+			create : 내 엔티티 기반으로 자동으로 테이블 생성하게 한다. 기존 테이블이 존재한다면 기존 테이블을 delete 하기 떄문에 좀 위험하다.
+			update :내 엔티티 기반으로 자동으로 테이블 생성하게 한다. 기존 테이블이 존재한다면 따로 새로 만들진 않고, 내 엔티티가 추가적으로 가지는 column 이 있다면 해당 테이블에 그 column 들을 추가한다
+			
+
+
+-----------------------------------------------------------------------------------------------------------
+
+회원가입로직
+	: db에 저장된 회원정보를 통해 인증 인가 작업을 진행하기 때문에 본격 실습전 db에 회원 정보를 저장하고 시작한다
+
+	: 전체적으로 MVC 패턴 그낭 알던 대로 짜고, Entity 도 짜는데 id, name , pw 뿐 아니라 "role" 에대한 필드도 따로 만든다.
+
+	: 테이블을 "처음"에 직접 생성 할 필요 없이 아래와 같은 문장을 applicatoin.properties 에 추가하여 자동 생성하게 한다
+	******: 처음에 테이블 쿼리문으로 생성하기 귀찮아서 이러는거지, 다음에도 이 상태로 돌리면 기존 데이터 덮어 쓰게 됨으로 생성 된 후에는 꼭 ddl-auto=none 으로 바꿔서 진행한다.
+		spring.jpa.hibernate.ddl-auto=update혹은create
+		spring.jpa.hibernate.naming.physical-strategy=org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+
+
+
+
+
+
