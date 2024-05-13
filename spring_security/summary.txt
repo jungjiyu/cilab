@@ -15,12 +15,51 @@ MySQL db 에 저장한다
 
 -----------------------------------------------------------------------------------------------------------
 
+
+sql 워크밴치 의 쿼리 작동 안될 떄 : https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=skybrend&logNo=90155188520
+
+
 와일드 카드 표현 == ** 
 
 
 -----------------------------------------------------------------------------------------------------------
 
+스프링시큐리티의전반적과정
+	: https://blog.naver.com/907hz_/223406397370 << 이걸로 나중에 한번 더 정리하기
+	: https://velog.io/@beberiche/Spring-Spring-Security-%EC%A3%BC%EC%9A%94-%EA%B8%B0%EB%8A%A5%EA%B3%BC-%EC%B2%98%EB%A6%AC-%EA%B3%BC%EC%A0%95-%EC%82%B4%ED%8E%B4%EB%B3%B4%EA%B8%B0
 
+
+	정 리 해 라
+
+
+
+Authentication 인증 >> 클라이언트가 자신이 주장하는 사용자와 같은 사용자인지를 확인하는 과정
+ Authentication ( 인증객체 ) >> 사용자의 인증 정보를 저장하는 토큰 개념.
+ 	: 인증시 검증을 위해 전달되어 사용되고,  인증 후 최종인증결과를 담아 SecurityContext 에 저장하여 Authentication authentication = SecurityContexHolder.getContext().getAuthentication() 의 코드로 전역 참조 가능해진다.
+
+	: Authentication은 인터페이스이므로 구현체가 따로 존재. 사용자가 직접 커스텀도 가능 (근데 실습에선 안했다) 
+	: 구조
+		Principal(Object 타입): 사용자 아이디 혹은 User 객체를 저장
+		Credentials: 사용자 비밀번호
+		authorities: 인증된 사용자의 권한 목록
+		details: 인증 부과 정보
+		Authenticated: 인증 여부
+	: https://uchupura.tistory.com/26
+
+
+SecurityContext : Authentication 객체가 저장되는 "보관소"로 필요 시 언제든지 "Authentication 객체"를 꺼내어 쓸 수 있도록 제공되는 클래스
+	: ThreadLocal에 저장되어 아무 곳에서나 참조가 가능하도록 설계함
+	:인증이 완료되면 HttpSession에 저장되어 어플리케이션 전반에 걸쳐 전역적인 참조가 가능하다.
+
+SecurityContextHolder : SecurityContext 가 카드라면 SecurityContextHolder는 카드팩이라고 보면 된다
+
+-----------------------------------------------------------------------------------------------------------
+인증(Authentication)과 인가(Authorization)
+	> Authentication은 말 그대로 사용자가 인증하는 과정
+	> Authorization은 서버가 사용자에 대한 권한을 부여
+
+
+-----------------------------------------------------------------------------------------------------------
 스프링 시큐리티에서는 회원이나 계정에 대해서 User라는 용어를 사용.User라는 단어를 사용할 때는 상당히 주의. (키워드)
 
 
@@ -101,10 +140,13 @@ SecurityConfig 클래스
          상단에서 정의한 것부터 우선적으로 적용되기 떄문에 순서에 유의한다
              anyRequest( ) 를 가장 먼저 쓰면 그 밑에 쓴 requestMatchers(.. ) 에 대한 모든 설정은 다 무시된다 
 
+메서드들 :
+	: 해당 URL 에 접근하기 위해 로그인이 필요한 경우 서브는 로그인 페이지를 리다이렉트 한다.
+		: 리다이렉팅될 로그인 페이지는 직접 설정 가능하고, 맡밑에 적었다 
 
-        authorizeHttpRequests( 람다식 )  >> 특정 경로로의 요청을 허용하거나 거부함
-         requestMatchers( "경로1" , "경로2" , ... ) >> 특정 경로에 대해 설정할 수 있게 함
-             permitAll() >> 모든 사용자에게 로그인을 하지 않아도 접근할 수 있게 하는 메서드
+        authorizeHttpRequests( 람다식 )  >> http 요청에 대한 인가 설정을 가능하게 함
+         requestMatchers( "경로1" , "경로2" , ... ) >> 특정 경로에 대해 인가 설정할 수 있게 함
+             permitAll( ) >> 모든 사용자에게 로그인을 하지 않아도 접근할 수 있게 하는 메서드
              hasRole(String role) >> 특정한 role, 규칙이 있어야 경로에 접근할 수 있게 함
              hasAnyRole(String role1 , String role2, ... ) >>특정한 role, 규칙 중 하나여야 경로에 접근할 수 있게 함
              authenticated() >> 로그인만 잘 하면 접근할 수 있게 함
@@ -114,7 +156,6 @@ SecurityConfig 클래스
 
 
 
------------------------------------------------------------------------------------------------------------
 
 @Configuration
 @EnableWebSecurity
@@ -138,27 +179,77 @@ public class SecurityConfig {
 
 위에서 requestMatchers("/admin").hasRole("ADMIN") 이 설정되었기 떄문에 /admin 으로 접속하려하면 "localhost에 대한 액세스가 거부됨" 이라는 메세지와 함꼐 접근이 거부된다. 
 
-리다이렉팅. 로그인 페이지 작업을 모두 커스텀 해주어야한다.
 
 
 -----------------------------------------------------------------------------------------------------------
 
 커스텀 로그인 
-	: 마찬가지로 SecurityConfig 클래스에서 설정을 진행한다
+	: 마찬가지로 SecurityConfig 클래스에서 설정을 진행한다	
+	: https://stir.tistory.com/266
 	: https://velog.io/@gmtmoney2357/%EC%8A%A4%ED%94%84%EB%A7%81-%EC%8B%9C%ED%81%90%EB%A6%AC%ED%8B%B0-Form-Login-%EC%9D%B8%EC%A6%9D
 
-	.formLogin() : form 로그인 인증 기능이 작동함
+	.formLogin( ) : form 로그인 인증 기능이 작동함
+		: 주의 >> 로그아웃에 대한 설정은 또 별개로 http.logout( ) 으로 해야됨
 
-       .loginPage( "경ㅀ" ) : 커스텀 로그인 페이지 경로를 설정(등록)한다. 설정을 하면 로그인을 해야하는 상황에서 해당 경로로 리다이렉션 하게 된다.
+       .loginPage( "경로" ) : 커스텀 로그인 페이지 경로를 설정(등록)한다. 설정을 하면 로그인을 해야하는 상황에서 해당 경로로 리다이렉션 하게 된다. 즉, 인가되지 않은 사용자에게 보여줄 페이지를 설정합니다.
+		: 설정하지 않을 경우 스프링시큐리티가 기볹적으로 제공하는 템플릿과 연결된다.
 
+	.loginProcessingUrl("경로") : 로그인폼데이터의 action 경로를 설정한다. 이 경로로 입력 데이터가 보내진다.	
+		: 그러니까 로그인폼페이지 만들떄 form 태그의 action 값은 loginProcessingUrl 의 arg 값과 같게 해야된다.
+		: 주의 )  폼데이터처리URL 에 mapping 되는 메서드를 따로 우리가 구현하진 않는다. 해당 요청( 폼데이터 )은 우리가 만든 Spring MVC, 컨트롤러에 전달되지 않습니다. 
+			: 해당경로로 POST 요청이 들어올 경우 스프링이 알아서 로그인 대한 인가 처리를 해준다. 그리고 정보가 맞다면(userDetail 객체의 정보와 폼데이터의 정보가 일치한다면 ) 디폴트로는 사용자가 원래 request 했던 페이지( 그러니까 권한이 없어 리다이렉트 되기 전에 젤 처음에 요청했던 경로 ) 로 이동시켜준다. 만약 로그인 성공/실패시 다른페이지로 이동시키고 싶다면 defaultSuccessUrl("경로") 혹은 failureUrl("경로") 를 사용하면된다.
 
-	.loginProcessingUrl("경로") : 로그인데이터의 action 경로를 설정한다. 이 경로로 입력 데이터가 보내진다.
+		: https://sooyeon-surf.tistory.com/22
+		: https://okimaru.tistory.com/317
 
  	.permitAll(); 인증 없이 접근 가능하게 한다
+	
 
-csrf >> 위변조방지 설정. 동작이 되면 호스트 요청을 보낼 떄 csrf 토큰도 보내주어야 로그인이 진행된다
-	: 스프링 시큐리티엔 자동으로 설정되있다 
-	: 이건 이후 강의에 더 자세히 다루고 지금은 잠시 꺼두자
+
+
+
+
+
+로그인 검증 로직
+	: https://velog.io/@seongwon97/Spring-Security-Form-Login
+	: https://velog.io/@jyyoun1022/SpringSpring-Security%EB%A5%BC-%EC%9D%B4%EC%9A%A9%ED%95%9C-%EB%A1%9C%EA%B7%B8%EC%9D%B8%EC%B2%98%EB%A6%AC-5
+	: https://velog.io/@daryu519/Spring-Security-User-UserDetailsService
+
+
+로그인 검증 절차 : 
+0. 사용자가 서버에 특정URL 을 요청했는데 해당 URL 이 인증이 필요한 URL 임
+1. 서버가 등록된 로그인 페이지( http.formLogin((auth)->auth.loginPage("/특정URL") 로 등록된 URL ) 로 리다이렉팅시킴
+2. 사용자가 해당 폼 페이지에 로그인 정보 입력해서 POST 방식으로 등록된 url (  http.formLogin((auth)->auth.loginPage("/특정URL1").loginProcessingUrl("/특정URL2") 에 등록된 특정URL2 ) 로 정보 넘김 
+3.  스프링 시큐리티가 UserDetailsService를 이용해서 입력된 username 에 대한 UserDetails객체를 생성하여 가져옴
+	: 등록 안되있음 빠꾸
+4. 입력된 password가 UserDetails객체의 password와 일치하면 원하는 자원(URL)에 접근할 수 있는 적절한 권한이 있는지를 확인
+	: password 가 틀리면 빠꾸
+4. 권한 있으면 접근 허용하고, Session과 Token을 생성하고 저장해둔다.
+	: 없으면 빠꾸 (접근 권한이 없습니다.)
+
+
+
+이러한 과정을 거친후 사용자가 원래 접속하려던 URL에 다시 접속하면, 세션에 저장된 인증 토큰이 유지되는 동안에는 해당 사용자를 인증된 사용자라고 판단하여 인증을 유지한다.
+
+
+주의 >> PK 값은 username 이라는 필드로, 패스워드값은 password 라는 필드로 받아야된다
+	: 아님 별도로 usernameParameter( " 이름 " ) 같은거 설정하든가(ex : .usernameParameter("email")로 하면 폼데이터에서 "email"이란 이름을 가진 파라미터를 PK 로 인식 ) 직접 설정할 수도 있다,)
+Spring Security 에서의 username  == 엔티티의 PK 값을 저장하는 필드이다. 
+폼데이터넘길떄 id 를 필드명(파라미터명)으로 하지말고 username 으로 해서 받아야 스프링시큐리티가 잘 인식힌다.
+
+ex )  아래에서 name="id" 가 아닌 name="username" 이다.
+
+<form action="/loginProc" method="post" name="loginForm">
+    <input type="text" name="username" placeholder="아이디"/>  
+    <input type="password" name="password" placeholder="비밀번호"/>
+    <input type="hidden" name="_csrf" value="{{_csrf.token}}"/>
+    <input type="submit" value="로그인"/>
+</form>
+
+
+
+정리잘 한 예시 : https://velog.io/@seowj0710/Spring-Security-Form-Login-%EA%B0%9C%EB%85%90-%EB%B0%8F-%EC%84%A4%EC%A0%95
+
 
 
 
@@ -170,14 +261,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
      
-        http.authorizeHttpRequests(
-                (auth) ->auth
-                        .requestMatchers("/","/login","/join","/joinProc").permitAll()
-                        .requestMatchers("/admin").hasRole("ADMIN")
-                        .requestMatchers("/my/**").hasAnyRole("ADMIN","USER")
-                        .anyRequest().authenticated());
-
-
+...
   
 
         http.formLogin((auth)->auth
@@ -194,6 +278,33 @@ public class SecurityConfig {
 
 로그인페이지 요청 경로를 "/login" 로 하고 , 입력받은로그인데이터는 "/loginProc" 로 전달하고.  로그인페이지와 로그인 정보가 전달된 페이지에 대한 접근은 모두에게 허용한다.
 
+
+
+-----------------------------------------------------------------------------------------------------------
+
+커스텀 로그아웃
+	: https://velog.io/@gmtmoney2357/%EC%8A%A4%ED%94%84%EB%A7%81-%EC%8B%9C%ED%81%90%EB%A6%AC%ED%8B%B0-Logout-%EA%B8%B0%EB%8A%A5
+	: http.formLogin( ) 과 마찬가지로 http.logout() 를 통해 로그아웃 기능을 작동시킬 수 있다
+
+: 커스텀 로그아웃하는 법 >> 로그인 설정했던 것처럼 SpringConfig.java 에 명시한다
+	: 메서드
+		.logout( ) : 로그아웃 기능을 작동시킨다.
+  		.logoutUrl("/특정경로") : "POST방식"으로 해당경로로  요청이 들어오면 로그아웃 처리를 해준다.
+			: 이게 로그인으로 치면 loginProcessingUrl( ) 랑 비슷한 역할이다.
+		.logoutSuccessUrl("/login") : 로그아웃 성공 후 이동할 페이지를 명시한다
+  		.deleteCookies("JSESSIONID", "remember-me") : 로그아웃 후 JSESSIONID쿠키와 remember-me쿠키를 삭제한다
+			: JSESSIONID >> 로그인 토큰
+			: remember-me >> 뭔가 토큰이긴함
+				: JSESSIONID이 만료되거나 쿠키가 없을 지라도 어플리케이션이 사용자를 기억하는 기능이다. 자동 로그인 기능을 떠올리면 쉽다.
+				: 토큰 쿠키를 이용한다. 서버는 이 토큰의 유효성을 검사하고, 검증되면 사용자는 로그인된다.
+				: remember-me 쿠키 사이클
+					로그인(인증) 성공 = remember-me 쿠키 발급
+					로그인(인증) 실패 = remember-me 쿠키가 있다면 무효화. 즉, 로그인이 성공했어도 사용자가 임의로 로그인 페이지로 돌아간 후 인증에 실패하면, 있는 쿠키도 무효화 시킨다.
+					로그아웃 = remember-me 쿠키가 있다면 무효화
+					만료시간 = 지날 겨웅 무효화
+				: https://velog.io/@gmtmoney2357/%EC%8A%A4%ED%94%84%EB%A7%81-%EC%8B%9C%ED%81%90%EB%A6%AC%ED%8B%B0-Remember-Me-%EA%B8%B0%EB%8A%A5
+    		.addLogoutHandler( ...생략... ) : 로그아웃 핸들러
+    		.logoutSuccessHandler( ...생략... ) : 로그아웃 성공 후 핸들러
 
 
 -----------------------------------------------------------------------------------------------------------
@@ -495,18 +606,9 @@ public class JoinService {
 -----------------------------------------------------------------------------------------------------------
 
 
-로그인 검증 로직
-	: https://velog.io/@jyyoun1022/SpringSpring-Security%EB%A5%BC-%EC%9D%B4%EC%9A%A9%ED%95%9C-%EB%A1%9C%EA%B7%B8%EC%9D%B8%EC%B2%98%EB%A6%AC-5
-	: https://velog.io/@daryu519/Spring-Security-User-UserDetailsService
+-----------------------------------------------------------------------------------------------------------
 
-username과 password를 "동시"에 사용하지 "않는다". 
-스프링 시큐리티는 
-1. UserDetailsService를 이용해서 회원의 존재( UserDetails ) 만을 우선적으로 가져옴
-2. 이후에 password가 틀리면 'Bad Cridential'이라는 결과를 만들어 냄
-3. (password가 맞아서) 사용자의 username과 password로 인증 과정이 끝나면 원하는 자원(URL)에 접근할 수 있는 적절한 권한이 있는지를 확인
-4. 권한 있으면 접근 허용
-
-
+스프링 시큐리티가 두루두루 쓰는 UserDetails 구현하기
 
 
 	: 왜 DTO 를 이미 만들었는데도 UserDetails (와 이를 반환하는 UserDetailsService )가 필요한 것일 까 >> "DTO 정보 + 인증 관련 정보"를 포함하고 있는 인증 관련 정보를 담은 객체를 만들기 위해 UserDetails가 필요하고, UserDetails를 반환 받기 위해 UserDetailsService가 필요한 것.
@@ -514,6 +616,7 @@ username과 password를 "동시"에 사용하지 "않는다".
 
 	: CustomerUserDetailsService 
 		: 스프링이 제공하는 UserDetailsService 를 impelements해서 만든 서비스 단이다
+			: UserDetailsService는 인터페이스로 데이터베이스에서 사용자의 정보를 가져오는 역할을 담당
 			: 유저의 인증에 필요한 사용자 정보들(username, password, authorities)를 제공한다.
 			:: interface  UserDetailsService  > Spring Security에서 유저의 정보를 가져오는 인터페이스
 				: UserDetails loadUserByUsername(String username ) > 유저의 정보를 불러와서 UserDetails로 리턴해준다
@@ -544,18 +647,36 @@ CustomUserDetails 는 아래에서 따로 """dto 패키지"""에 만든다.
 
 
 	: CustomUserDetails
-		: 스프링이 제공하는 UserDetails 를 implements 한 클래스
+		: 스프링이 제공하는 UserDetails 를 implements 한 클래스. 스프링 시큐리티가 이 객체를 기반으로 여러 작업들(다중로그인 인식 등)을 하게 된다
 			: userDetails >> Spring Security에서 사용자의 정보를 담는 인터페이스로,  사용자의 정보를 불러오기 위해서 구현해야 된다.
 			: 가장 중요한 메서드는 
 
 	*******: "dto" 패키지에 만든다 !!!
 			: 사용자의 정보를 담는. 제공하는 역할을 하니까.
 
-		: CustomUserDetailsService 가 
+		: 스프링 시큐리티가 다중 로그인을 인식, 처리하는 원리 >> userDetail 구현 객체가 같은지를 체크 해서 같은 유저가 존재 할경우 중복로그인 처리를 진행하도록 되어 있다. 그러니까 userDetail 의 hashCode( )  와 equals( ) 를 사용해서 같은 객체 인지 인식한다는 말이다. 
+			: 따라서 userDetails 를 custom 하게 구현했다면 반드시 userDetails의 equals, hash 등의 메소드 또한 반드시 직접 구현해야 동반되어야 같은 유저임을 확인할 수 있다.
+				: https://powernote.tistory.com/59
+
 
 
 
 public class CustomUserDetails implements UserDetails {
+
+// *** 제발 까먹지 말고 hashCode, equals 구현해라. 안그러면 같은 정보를 담은 UserDetails 객체 간의 구분이 안된다. 그러니까 다중로그인 인식이 안된단 말이다.
+
+    @Override
+    public int hashCode() {
+        return this.getUsername().hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return this.getUsername().equals( ((CustomUserDetails)obj).getUsername() );
+    }
+
+
+
 
     private UserEntity userEntity;
 
@@ -566,6 +687,8 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() { // 사용자의 권한 정보를 제공
+
+
         //GrantedAuthority 라는 인터페이스를 요소로 하는 컬랙션 객체 생성
         Collection<GrantedAuthority> collection = new ArrayList<>();
 
@@ -665,14 +788,315 @@ public class MainController {
 
 
 로그인 정보
-	: 사용자가 로그인을 진행한 뒤 사용자 정보는 SecurityContextHolder 라는 내부 세션에 저장된다. 세션에 대한 세션 id 는 사용자에게 cookie 로 반환된다.
+	: 로그인이 되면 해당 사용자 정보는 SecurityContextHolder 라는 내부 세션에 저장된다. 세션에 대한 세션 id 는 사용자에게 cookie 로 반환된다.
 
 세션 타임아웃 설정>> 세션의 소멸시간 설정.
 	: 로그인 한 후에 자동으로 로그아웃 시켜서 언제 다시 로그인하게 할 건지
 	: 로그인 진행 한 후 특정 요청 처리 후 count down 이 시작
 		: 기본은 1800 초. (30 분)
 	: 시간 너무 빡빡하게 주면 글쓰기 하는 중에 타임 아웃 됬다고 로그아웃 시켜서 글 쓴거 날라가는 불참사가 일어날 수 있음
+	: timeout 설정 방법
+		: application,properties 에 "server.servlet.session.timeout=시간" 작성
+			: 이떄 단위를 명시하지 않을 경우 기본 s 단위이고 m 명시시 분 단위가 됨
 
+
+다중(중복) 로그인 설정 >> 동일한 아이디로 다중로그인 할 경우 그것에 대해 통제 할건지 안할건지 . 최대 몇개까지 허용할 건지 등등에 대한 설정	
+	: 다중 로그인 >> 하나의 아이디 대해 여러 브라우저에서 로그인 진행할 수 있는 것
+		: 여러 브라우저라 함은 하나의 창에서 각각의 탭을 말하는게 아니라, 완전다른(?) 창(== 다른 구글계정 창)들을 말하는거다.
+	: 스프링 시큐리티가 다중 로그인을 인식, 처리하는 원리 >> userDetail 구현 객체가 같은지를 체크 해서 같은 유저가 존재 할경우 중복로그인 처리를 진행하도록 되어 있다. 그러니까 userDetail 의 hashCode( )  와 equals( ) 를 사용해서 같은 객체 인지 인식한다는 말이다. 	
+
+	: 다중 로그인 인식이 안될 떄 체크해봐야할 것 >> UserDetails 구현 클래스에서 hashCode 와 equals 를 오버라이딩하는걸 잊어먹은건 아닌지.
+		: https://powernote.tistory.com/59
+
+
+
+	: 다중로그인 설정 방법
+		: SecurityConfig.class 에서 설정
+
+
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+    
+  	... 
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
+		
+		. . . 
+
+	// 다중 로그인 설정
+        http.sessionManagement((auth) -> auth
+                .maximumSessions(1)
+                .maxSessionsPreventsLogin(true));
+
+        
+        return http.build();  
+    }
+}
+
+
+
+
+sessionManagement( ) 메소드를 통한 다중 로그인 설정을 진행한다. 
+maximumSession( n ) : n개의 아이디에 대한 다중 로그인 허용 개수
+maxSessionPreventsLogin(불린) : 다중 로그인 개수를 초과하였을 경우 처리 방법
+- true : 초과시 "새로운" 로그인 차단
+- false : 초과시 기존 세션 "하나" 삭제. 우리가 통상적으로 마주하는 설정. << 디폴트값.
+
+
+
+-----------------------------------------------------------------------------------------------------------
+
+세션 고정 보호
+	: 헤커가 admin 계정 등의 세션 아이디를 탈취해서 admin 계정을 대행해서 서버에 특정 작업하는걸 방지하기 위함
+	: 헤커의 탈취 과정
+		1. 헤커가 서버에 접속
+		2. 세션쿠키 (아이디) 획득
+		3. 앞서 획득한 세션 아이디를 우리한테 심음
+		4. 우리가 로그인 하면 해당 쿠키로 해커가 우리가 가진 권한을 사용할 수 있게 됨
+
+	: 세션 고정 보호 하는 방법
+		
+		:  sessionManagement() 메소드의 sessionFixation() 메소드로 로그인 성공시 세션 설정하여 방지 가능
+		: SecurityConfig 클래스에서 작성.
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+    
+   ...
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
+
+              ...
+
+        //세션 고정 보호
+        http.sessionManagement(auth->auth
+                .sessionFixation().changeSessionId());
+
+	. . .
+        
+        return http.build();  
+    }
+}
+
+
+sessionManagement() > 세션에 대한 설정
+sessionFixation( ) >> 세션 고정에 대한 설정
+.none() : 로그인 시 세션 정보 변경 안함 >> 세션 고정 보호가 안됨
+.newSession() : 로그인 시 세션자체를 새로 생성
+.changeSessionId() : 로그인 시 동일한 세션에 대한 id 변경 >> 세션을 유지하지만, 로그인 시 사용자에게 세션 id 를 새로 발급해준다. 가장 많이 씀
+
+
+
+-----------------------------------------------------------------------------------------------------------
+
+csrf 설정
+	
+CSRF Cross-Site Request Forgery
+	: 요청을 위조하여 사용자가 원하지 않아도 서버측으로 특정 요청을 강제로 보내는 해킹 방식.
+	: 게시글 같은 데다가 이상한 http 주소를 심어서 내가 하지도 않았는데 나의 회원 정보를 바꾸거나 뭐 그러게 하는 것.
+
+
+csrf 설정>> 위변조방지 설정
+	: 스프링 시큐리티엔 기본 enable 으로 설정되있다 
+	: enable >> csrf 방어를 한다. 필터인 CsrfFilter를 통해 POST, PUT, DELETE 요청(== GET 요청이 아닌 요청 )에 대해서 ( 우리서버측에서보낸 ) csrf 토큰과 함께 요청된건지 검증을 진행. 
+		: 그러니까 사용자가 csrf 켜둔 상태에서 사용자 POST, PUT, DELETE  요청( 로그인 뿐 아니라 get 이 아닌 모든 요청)을 가능하게 하기 위해서는 요청을 보낼 떄 csrf 토큰도 보내주어야 해당 요청을 컨트롤러가 전달받을 수 있다
+
+		: 그리고 enable 상태에선 로그아웃 진행시 무조건 post 방식으로 요청을 해야만 반영이 된다.
+			: get 요청으로 로그아웃을 할 수 있게 하기 위해 security config에서 logout 주소를 설정한후, 컨트롤러에서 해당 주소를 getMapping 하는 방식으로 로그아웃을 진행시킬 수 있다.
+
+@Bean
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
+
+	. . . 
+
+    http
+            .logout((auth) -> auth.logoutUrl("/logout")
+                    .logoutSuccessUrl("/"));
+	. . . 
+
+    return http.build();
+}
+
+
+위와 같이 로그아웃경로를 따로 정해준다
+
+@Controller
+public class logoutController {
+
+    @GetMapping("/logout")
+    public String logout(HttpServletRequest request, HttpServletResponse response) throws Exception {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if(authentication != null) {
+            new SecurityContextLogoutHandler().logout(request, response, authentication);
+        }
+
+        return "redirect:/";
+    }
+}
+
+		: csrf 가 disable 이 아닐 시 csrf 대한 설정을 별도로 해줘야한다
+			: enable 인데 아무런 설정 안하면 , csrf 토큰을 클라이언트에게 주지 않은 것이라 아무리 클라이언트가 알맞은 로그인 정보를 입력해도 로그인 자체가 안된다.
+		: get 방식 요청의 경우 토큰 검증을 직접적으로 진행하진 않는다.
+	: disable 하고 싶음 disable( ) 로 할 수도 있는데 이건 개발할떄만 하고 , 배포할 떈 ㅈ되고 싶으면 해라
+
+
+
+application.properties 에 추가 설정하여 mustache 파일의 오류를 잡아준다 ( 지혼자 에러냄 )
+spring.mustache.servlet.expose-request-attributes=true
+
+
+1. POST 요청에서 csrf 토큰도 같이 보내게 하는 방법 : hidden 으로 {{_csrf.token}}를 같이 보낸다
+
+<form action="/loginReceiver" method="post" name="loginForm">
+    <input type="text" name="username" placeholder="아이디"/>
+    <input type="password" name="password" placeholder="비밀번호"/>
+    <input type="hidden" name="_csrf" value="{{ _csrf.token }}"/>
+    <input type="submit" value="로그인"/>
+</form>
+
+security config 클래스에서 설정을 진행한다.
+
+
+
+API 서버의 경우 걍 csrf.disable( ) >> 앱에서 사용하는 API 서버의 경우 JWT를 발급해 보통 세션을 STATELESS로 관리하기 때문에(세션이 없기 떄문에) 스프링 시큐리티 csrf enable 설정을 진행하지 않아도 된다.
+
+
+
+-----------------------------------------------------------------------------------------------------------
+
+ InMemory 유저 정보 저장
+
+
+InMemory db : 디스크가 아닌 메모리에 데이터를 저장하는 데이터베이스
+	:  메모리에 바로 데이터를 저장하기 때문에 디스크에 저장했을 떄보다 더 빠르게 정보 저장 가능
+	: RAM에 데이터를 저장하기 때문에, 전원이 꺼지면 || 서버 재부팅되면 모든 데이터는 소멸
+		: 스키마는 유지됨.
+	: 테스트DB를 위해 사용
+
+InMemory 저장방식
+	종류1. db를 inmemory 로 활용 (db 에 유저 정보 저장)
+	종류2. db 없이 유저를 코드. 서버에 그냥(?) 저장함. 
+		: 굳이 이렇게 할 필욘 없음. db 있음 db 써라
+		: InMemoryUserDetailsManager 를 활용
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+
+		@Bean
+    public UserDetailsService userDetailsService() {
+
+	. . . 
+
+        UserDetails user1 = User.builder()
+                .username("user1")
+                .password(bCryptPasswordEncoder().encode("1234"))
+                .roles("ADMIN")
+                .build();
+
+        UserDetails user2 = User.builder()
+                .username("user2")
+                .password(bCryptPasswordEncoder().encode("1234"))
+                .roles("USER")
+                .build();
+	
+	. . .
+
+        return new InMemoryUserDetailsManager(user1, user2);
+    }
+}
+
+
+-----------------------------------------------------------------------------------------------------------
+
+로그인 방식
+	1. 폼로그인 방식 >> html 같은걸로 폼태그 써서 보내는 것. 특정한 페이지가 필요.
+        http.formLogin((auth)->auth 
+                .loginPage("/login")
+                .loginProcessingUrl("/loginProc")
+                .permitAll()); 
+
+	을 SpringConfig 에 명시하면 formlogin 방식을 채택하여 로그인 하는 것이다. 
+
+	2. HttpBasic 방식 >>아이디와 비밀번호를 별다른 페이지 없이 브라우져에서 바로 헤더에다 아이디와 비밀번호 넣어서 인증하는 방식. alert 랑 비슷하게 생긴 창 뜨고 인증하게 한다
+		: 물론 "/login" 이란 url 이 로그인 페이지를 반환하게 했었더라면 그 경로로 접속했을 떈 로그인 페이지가 반환된다 ."/admin" 같은 본래 로그인페이지 요청목적은 아니지만 로그인이 필요한 경우 로그인 페이지로 넘어가는게 아니라 브라우져에서 바로 아이디, 비번 입력받는 그런 창이 뜬다는 소리다.
+
+		http.httpBasic(Customizer.withDefaults()); 
+
+	를 SpringConfig 에 명시하면HttpBasic방식을 채택하여 로그인 하는 것이다.  (쓸려면 formLogin 대한 설정부분은 주석처리하고 해야된다. 동시에 쓰면x)
+
+-----------------------------------------------------------------------------------------------------------
+
+Role Hierarchy 계층 권한
+	: 더 높은 계층의 경우 더 낮은 계층에 별 인증 없이 들어갈 수 있다
+	: 권한 A, 권한 B, 권한 C가 존재하고 권한의 계층은 “A < B < C”라고 설정을 진행하고 싶은 경우 RoleHierarchy 설정을 진행할 수 있다.
+
+
+아래처럼 계층별로 ( "A", "B" , "C" ) , ("B", "C") 처럼 URL 마다 접근 가능한 계층을 일일이 명시하는건 비추. 일일이 명시하기도 어렵고 계산하는데 머리 뽀개지고 나중에 수정하기도 어렵다. 
+
+@Bean
+public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
+
+
+    http.authorizeHttpRequests((auth) -> auth
+                    .requestMatchers("/login").permitAll()
+                    .requestMatchers("/").hasAnyRole("A", "B", "C") // 비추
+                    .requestMatchers("/manager").hasAnyRole("B", "C")
+                    .requestMatchers("/admin").hasAnyRole("C")
+                    .anyRequest().authenticated()
+            );
+
+    . . .
+
+    return http.build();
+
+}
+
+
+개추 : 계층권한 메서드를  (SecurityConfig 클래스에 빈으로) 등록한 후에 해당 계층의 대표 role 하나만 등록
+
+@Bean
+public RoleHierarchy roleHierarchy() {
+
+    RoleHierarchyImpl hierarchy = new RoleHierarchyImpl();
+
+    hierarchy.setHierarchy("ROLE_C > ROLE_B\n" +
+            "ROLE_B > ROLE_A");
+
+    return hierarchy;
+}
+
+
+을 선언하고 
+
+
+@Bean
+public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
+
+
+    http.authorizeHttpRequests((auth) -> auth
+                    .requestMatchers("/login").permitAll()
+                    .requestMatchers("/").hasAnyRole("A") 
+                    .requestMatchers("/manager").hasAnyRole("B")
+                    .requestMatchers("/admin").hasAnyRole("C")
+                    .anyRequest().authenticated()
+            );
+
+    . . .
+
+    return http.build();
+
+}
+
+
+와 같이 각 계층의 대표 role 만 남기고 나머진 생략한다.
 
 
 
