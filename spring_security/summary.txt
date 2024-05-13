@@ -20,6 +20,15 @@ MySQL db 에 저장한다
 
 -----------------------------------------------------------------------------------------------------------
 
+
+스프링 시큐리티에서는 회원이나 계정에 대해서 User라는 용어를 사용.User라는 단어를 사용할 때는 상당히 주의. (키워드)
+
+
+
+Spring Security 에서 계속 username username 거리는데, username  ==  (실제로 사용자의 성함을 의미하는게 아니라 ) 계정의 고유한 값, 그러니까 id 역할을 한다고 봄 된다.
+	: email 같은 값도 username 이 될 수 있겠지만, 걍 PK 값을 username 으로 해라.
+
+-----------------------------------------------------------------------------------------------------------
 : 일반적인 스프링 부트 프로젝트 흐름
 	▼ 요청
 		▼ 서블릿 컨테이너
@@ -163,7 +172,7 @@ public class SecurityConfig {
      
         http.authorizeHttpRequests(
                 (auth) ->auth
-                        .requestMatchers("/","/login").permitAll()
+                        .requestMatchers("/","/login","/join","/joinProc").permitAll()
                         .requestMatchers("/admin").hasRole("ADMIN")
                         .requestMatchers("/my/**").hasAnyRole("ADMIN","USER")
                         .anyRequest().authenticated());
@@ -226,7 +235,7 @@ public class SecurityConfig {
      
         http.authorizeHttpRequests(
                 (auth) ->auth
-                        .requestMatchers("/","/login").permitAll()
+                        .requestMatchers("/","/login","/join","/joinProc").permitAll()
                         .requestMatchers("/admin").hasRole("ADMIN")
                         .requestMatchers("/my/**").hasAnyRole("ADMIN","USER")
                         .anyRequest().authenticated());
@@ -248,6 +257,42 @@ public class SecurityConfig {
 
 
 호출되면 BCryptPasswordEncoder 가 자동으로 생성될 수 있게 하는 메서드를 SecurityConfig에 @Bean 으로 추가해 어떤 곳에서든 다 호출에서 쓸 수 있게 한다.
+
+
+
+
+
+
+@Service
+public class JoinService {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private BCryptPasswordEncoder bCryptPasswordEncoder; // 암호화(해시화)를 해서 데이터를 저장해야됨
+
+
+
+
+
+    public void joinProccess(JoinDTO dto){ //joinController 단에서 받은 데이터를 db에 저장한다
+
+
+        UserEntity data = new UserEntity();
+
+        data.setUsername(dto.getUsername());
+        data.setPassword(bCryptPasswordEncoder.encode(dto.getPassword())); // encode( ) 로 암호화 진행
+        data.setRole("ROLE_USER"); 
+        userRepository.save(data);
+
+    }
+}
+
+
+
+앞서 등록한 BCryptPasswordEncoder 를 서비스 단에서 DI 받아서, 비밀번호를 저장하기 전에 encode( )메서드를 통해 암호화하고 저장한다.
+
 
 
 -----------------------------------------------------------------------------------------------------------
@@ -300,6 +345,333 @@ application.properties 설정하기
 		spring.jpa.hibernate.ddl-auto=update혹은create
 		spring.jpa.hibernate.naming.physical-strategy=org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
 
+
+
+
+-----------------------------------------------------------------------------------------------------------
+
+role. 권한
+	: https://cordcat.tistory.com/97
+
+	:  사용자의 권한 설정
+		: roles(String role1, role2, ..  ) 메서드를 이용하여 사용자에게 권한을 부여할 수 있다.
+		: 권한은 여러개 부여할 수 있고,  "ROLE_XXXX"  과 같이 ROLE_접두사로 시작한다
+			: XXXX 에는 role 의 이름을 넣음 되는데 작명은 맘대로 해둠 되는 것 같다
+
+@Setter
+@Getter
+@Entity
+public class UserEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+
+    @Column(unique = true)
+    private String username;
+    private String password;
+
+    private String role; // ****권한을 저장한다
+    
+    
+
+
+}
+
+
+
+일단 권한을 부여하면 저장할 수 있게 엔티티의 필드를 생성한다
+
+@Service
+public class JoinService {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
+
+    public void joinProccess(JoinDTO dto){ 
+
+
+        UserEntity data = new UserEntity();
+
+        data.setUsername(dto.getUsername());
+        data.setPassword(bCryptPasswordEncoder.encode(dto.getPassword())); 
+        data.setRole("ROLE_USER"); // 권한 부여
+        userRepository.save(data);
+
+    }
+}
+
+
+
+서비스 단에서 저장하기 전에 권한을 부여하고 저장한다
+
+
+
+	:: 자원에 대한 권한 설정
+		: HttpSecurity'객체를 대상으로 
+			http. authorizeHttpRequests( auth -> auth.
+			.antMatchers("/admin/**").hasRole("ADMIN")
+   			 .antMatchers("/user/**").hasRole("USER")
+			)
+			
+			와 같이 특정권한을 가진 사용자만 접근을 허용하면 그게 자원에 대한 권한 설정인거다.
+
+
+		: hasRole 을 통하여 권한 검사할 때는 권한을 부여할 떄와는 다르게 "XXXX" 그 자체로 쓴다.
+
+
+
+-----------------------------------------------------------------------------------------------------------
+
+username 값이 중복되지 않도록 해줘야된다
+
+step 1. 일단 entity 단에서 애초에 중복이 안되게 방지한다
+
+특정column 값 중복 금지 > 해당 엔티티의 필드 위에 @Column( unique = true ) 를 해준다
+
+@Setter
+@Getter
+@Entity
+public class UserEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(unique = true)
+    private String username; // 중복 금지
+
+    private String password;
+
+    private String role; 
+
+
+}
+
+
+step 2. entity 생성하기 전에 해당 username 이 존재하는지 확인하는 메서드 만든다 > repository 에 existByUsername( ) 커스텀 선언한다.
+
+
+public interface UserRepository extends JpaRepository<UserEntity, Long> {
+
+    public abstract  boolean existsByUserName(String userName);
+}
+
+
+
+step 3. 위에서 선언한 메서드를 서비스 단에서 활용한다
+
+
+@Service
+public class JoinService {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private BCryptPasswordEncoder bCryptPasswordEncoder; 
+
+
+    public void joinProccess(JoinDTO dto){ 
+
+        //db 에 이미 해당 username 을 가진 회원이 존재하면 걍 엔티티 자첼 안만듬
+        boolean isUser = userRepository.existsByUserName(dto.getUsername());
+        if(isUser) return;
+        
+        UserEntity data = new UserEntity();
+        data.setUsername(dto.getUsername());
+        data.setPassword(bCryptPasswordEncoder.encode(dto.getPassword()));
+        data.setRole("ROLE_USER"); 
+        userRepository.save(data);
+
+    }
+}
+
+
+-----------------------------------------------------------------------------------------------------------
+
+
+로그인 검증 로직
+	: https://velog.io/@jyyoun1022/SpringSpring-Security%EB%A5%BC-%EC%9D%B4%EC%9A%A9%ED%95%9C-%EB%A1%9C%EA%B7%B8%EC%9D%B8%EC%B2%98%EB%A6%AC-5
+	: https://velog.io/@daryu519/Spring-Security-User-UserDetailsService
+
+username과 password를 "동시"에 사용하지 "않는다". 
+스프링 시큐리티는 
+1. UserDetailsService를 이용해서 회원의 존재( UserDetails ) 만을 우선적으로 가져옴
+2. 이후에 password가 틀리면 'Bad Cridential'이라는 결과를 만들어 냄
+3. (password가 맞아서) 사용자의 username과 password로 인증 과정이 끝나면 원하는 자원(URL)에 접근할 수 있는 적절한 권한이 있는지를 확인
+4. 권한 있으면 접근 허용
+
+
+
+
+	: 왜 DTO 를 이미 만들었는데도 UserDetails (와 이를 반환하는 UserDetailsService )가 필요한 것일 까 >> "DTO 정보 + 인증 관련 정보"를 포함하고 있는 인증 관련 정보를 담은 객체를 만들기 위해 UserDetails가 필요하고, UserDetails를 반환 받기 위해 UserDetailsService가 필요한 것.
+
+
+	: CustomerUserDetailsService 
+		: 스프링이 제공하는 UserDetailsService 를 impelements해서 만든 서비스 단이다
+			: 유저의 인증에 필요한 사용자 정보들(username, password, authorities)를 제공한다.
+			:: interface  UserDetailsService  > Spring Security에서 유저의 정보를 가져오는 인터페이스
+				: UserDetails loadUserByUsername(String username ) > 유저의 정보를 불러와서 UserDetails로 리턴해준다
+
+@Service
+public class CustomUserDetailsService implements UserDetailsService {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        UserEntity userData = userRepository.findByUserName(username); // repository 의 메서드를 활용해 db 상에 해당 username 을 가진 사용자가 등록되있나 검사
+        
+        if(userData !=null) return new CustomUserDetails(userData); //  등록되어있으면 로그인 허용
+        return null;  // 아니면 허용 안함
+    }
+}
+
+
+사용자가 "로그인"을 하면 SpringSecurityConfig 에서 검증을 위해 username 을 자동으로
+UserDetailsService을 구현한  CustomUserDetailsService 에게 넘겨주고 이에 대해 
+loadUserByUsername 이 해당 username 을 가진 사용자가 db 에 등록되어있는지 검증하게 되고 이를 수행하는 코드를 작성한다.
+
+CustomUserDetails 는 아래에서 따로 """dto 패키지"""에 만든다.
+
+
+
+
+	: CustomUserDetails
+		: 스프링이 제공하는 UserDetails 를 implements 한 클래스
+			: userDetails >> Spring Security에서 사용자의 정보를 담는 인터페이스로,  사용자의 정보를 불러오기 위해서 구현해야 된다.
+			: 가장 중요한 메서드는 
+
+	*******: "dto" 패키지에 만든다 !!!
+			: 사용자의 정보를 담는. 제공하는 역할을 하니까.
+
+		: CustomUserDetailsService 가 
+
+
+
+public class CustomUserDetails implements UserDetails {
+
+    private UserEntity userEntity;
+
+    public CustomUserDetails(UserEntity userData) {
+        this.userEntity = userData;
+    }
+
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() { // 사용자의 권한 정보를 제공
+        //GrantedAuthority 라는 인터페이스를 요소로 하는 컬랙션 객체 생성
+        Collection<GrantedAuthority> collection = new ArrayList<>();
+
+        // role 을 넣어줌
+        // 익명 구현 객체 생성 >> getAuthority( ) 가 엔티티의 role 필드를 반환하게 함.
+        collection.add( new GrantedAuthority(){
+            @Override
+            public String getAuthority() {
+                return userEntity.getRole();
+            }
+        });
+
+        return collection;
+    }
+
+    @Override
+    public String getUsername() { //인증에 필요한 아이디 같은 정보
+        return userEntity.getUsername();
+    }
+
+    @Override
+    public String getPassword() { // 인증을 마무리하기 위한 패스워드 정보 제공
+        return userEntity.getPassword();
+    }
+
+
+    // 체크하는 메서드
+        // 원래 db에 이러한 정보 다 있었어야됬는데 현재 저장한게 없으므로 일단 다 true 처리
+
+    @Override
+    public boolean isAccountNonExpired() { // 만료되었는지
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() { // 계정이 잠기지 않았는지
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
+}
+
+
+-----------------------------------------------------------------------------------------------------------
+
+ 세션 정보 활용
+	: 로그인인 된 상태에서 로그인 되었음을 표시같은 걸 표시 가능
+
+@Controller
+public class MainController {
+
+    @GetMapping("/") 
+    public String mainP(Model model){
+
+//코드 복붙. 이건 원래 서비스 단에서 해야되는 거긴함.
+        
+        // id 를 얻어온다
+        String id = SecurityContextHolder.getContext().getAuthentication().getName();
+
+
+        // 권한을 얻어온다
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+        Iterator<? extends GrantedAuthority> iter = authorities.iterator();
+        GrantedAuthority auth = iter.next();
+        String role = auth.getAuthority();
+
+        model.addAttribute("id",id);
+        model.addAttribute("role",role);
+        return "main";
+    }
+}
+
+   
+사실 이건 서비스 단에서 처리해야됨
+	: id 를 얻어오는 법 >>     String id = SecurityContextHolder.getContext().getAuthentication().getName();
+
+	: 권한을 얻어오는 법 >> 
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+        Iterator<? extends GrantedAuthority> iter = authorities.iterator();
+        GrantedAuthority auth = iter.next();
+        String role = auth.getAuthority();
+
+
+-----------------------------------------------------------------------------------------------------------
+
+세션 설정
+
+
+로그인 정보
+	: 사용자가 로그인을 진행한 뒤 사용자 정보는 SecurityContextHolder 라는 내부 세션에 저장된다. 세션에 대한 세션 id 는 사용자에게 cookie 로 반환된다.
+
+세션 타임아웃 설정>> 세션의 소멸시간 설정.
+	: 로그인 한 후에 자동으로 로그아웃 시켜서 언제 다시 로그인하게 할 건지
+	: 로그인 진행 한 후 특정 요청 처리 후 count down 이 시작
+		: 기본은 1800 초. (30 분)
+	: 시간 너무 빡빡하게 주면 글쓰기 하는 중에 타임 아웃 됬다고 로그아웃 시켜서 글 쓴거 날라가는 불참사가 일어날 수 있음
 
 
 
