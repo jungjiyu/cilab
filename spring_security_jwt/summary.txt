@@ -3,6 +3,16 @@
 https://inpa.tistory.com/entry/WEB-%F0%9F%93%9A-JWTjson-web-token-%EB%9E%80-%F0%9F%92%AF-%EC%A0%95%EB%A6%AC
 
 
+--------------------------------------------------------------------------------------------------------------
+
+@Bean 에 파라미터가 있을 경우 자동으로 DI 된다. @Bean  에 @Autowired 있다고 보면 된다.
+
+https://kimcoder.tistory.com/459
+
+https://www.logicbig.com/tutorials/spring-framework/spring-core/javaconfig-methods-inter-dependency.html
+
+
+https://www.inflearn.com/questions/796060/bean-%ED%8C%8C%EB%9D%BC%EB%AF%B8%ED%84%B0-%EC%9E%88%EC%9D%84-%EA%B2%BD%EC%9A%B0-%EB%B9%88-%EC%83%9D%EC%84%B1-%EB%93%B1%EB%A1%9D-%EC%88%9C%EC%84%9C
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -237,7 +247,9 @@ public class UserEntity {
 
 public interface UserRepository extends JpaRepository<UserEntity, Integer> {
 
-    Boolean existsByUsername(String username);
+    public abstract   Boolean existsByUsername(String username);
+    public abstract UserEntity findByUsername(String username);
+
 
 }
 
@@ -301,7 +313,7 @@ public class JoinService {
 
 UsernamePasswordAutneticationFIlter >> 사용자로부터 입력받은 데이터에서 username 과 password 정보를 꺼내서(걸러서) AthenthicationManager에게 넘겨줌
 
-AthenthicationManager >> UsernamePasswordAutneticationFIlter 에게 받은 username 과 password 정보로 db에서 UserDetails 꺼내서 검증을 진행
+AthenthicationManager >> UsernamePasswordAutneticationFIlter 에게 받은 username 과 password 정보로 UserDetailsService 가 UserDetails를 사용해서 검증을 진행 및 결과 반환 
 
 SuccessfulAthentication >>AthenthicationManager 에서 검증이 성공되면 실행된다. JWT 를 생성해서 사용자에게 응답해준다.
 
@@ -312,7 +324,7 @@ UnSuccessfulAthentication >> AthenthicationManager 에서 검증이 실패하면
 
 
 
-### 스프링 시큐리티 동작 원리
+스프링 시큐리티 동작 원리
 	: 기본적인 스프링 부트의 동작 원리>> Servlet Container 에는 여러개의 필터가 있는데 사용자로부터 request 가 들어오면 ServletContainer 내부의 여러 필터를 거쳐서 SpringBoot , 즉 컨트롤러에 전달된다.
 	
 	: 스프링 시큐리티 동작원리 >> 사용자로부터 request 가 왔을 떄 스프링시큐리티는 Servlet Container 내부의 필터부애 도착한 request 를 가로채서 검증(인증/인가) 하고, 그  결과에 따라 컨트롤러에 전달해주고 안해준다.
@@ -340,26 +352,28 @@ UnSuccessfulAthentication >> AthenthicationManager 에서 검증이 실패하면
 
 
 
-커스텀 UsernamePasswordAuthentication 필터 구현
-	: jwt 라는 패키지르ㄹ 별도로 만들고 거기에 저장
+커스텀 UsernamePasswordAuthenticationFilter 구현
+	: jwt 라는 패키지를 별도로 만들고 거기에 저장
+	: 다 만들면 SecurityConfig.java 에 필터로 등록
+
 
 
 public class LoginFilter extends UsernamePasswordAuthenticationFilter {
+    //  attemptAuthentication 에서 authenticationManager 에게 토큰 전달위해 DI
     @Autowired
     private AuthenticationManager authenticationManager;
 
-    // attemptAuthentication 필수로 오버라이드 필요
-        // attemptAuthentication 은 UsernamePasswordAuthenticationFilter 의 메서드
-        //Authentication >> 인증하는 인터페이스
+
+    //  필수로 오버라이드 필요
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
-        // 요청을 가로채서 username 과 password 추출
+
+	// 추출
         String username = obtainUsername(request);
         String password = obtainPassword(request);
 
-        //AthenthicationManager 에게 해당 정보를 DTO역할을 하는UsernamePasswordAuthenticationToken이라는 바구니에 담아서 전달해줘야됨
-
-        //UsernamePasswordAuthenticationToken(username값,password값,role값);
+        // DTO역할을 하는UsernamePasswordAuthenticationToken이라는 바구니에 넣음
+       	 //UsernamePasswordAuthenticationToken(username값,password값,role값);
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(username,password,null); // 일단 당장은 role 이 없으니 null 값넣었다
 
         // 생성한 토큰을 AthenthicationManager 에게 넘겨줌 --> authenticationManager 가 알아서 검증해줌
@@ -367,19 +381,22 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     }
 
 
-// successfulAuthentication , unsuccessfulAuthentication 는 UsernamePasswordAuthenticationFilter가 구현하는 인터페이스인 AbstractAuthenticationProcessingFilter 의 추상메서드
 
-    // successfulAuthentication >> authenticationManager 가 성공적으로 검증을 마쳤을 때 실행되는 메서드 . 여기서 JWT 를 발급한다!!!
+    // authenticationManager 가 성공적으로 검증을 마쳤을 때 실행되는 메서드 . 여기서 JWT 를 발급한다!!!
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
-        super.successfulAuthentication(request, response, chain, authResult);
+
+       구 현
+
     }
 
 
-    // unsuccessfulAuthentication >> authenticationManager 가 검증을 실패했을때 실행되는 메서드
+    //  authenticationManager 가 검증을 실패했을때 실행되는 메서드
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException, ServletException {
-        super.unsuccessfulAuthentication(request, response, failed);
+       
+		구 현
+
     }
 
 
@@ -389,36 +406,18 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
 
 
-만든 필터 등록
-
-@EnableWebSecurity
-@Configuration
-public class SecurityConfig {
-
-
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http)throws Exception {
-
-	. . .
-        
-        // 직접 구현한 필터를 등록
-            //addFilterAt() >> 딱 그자리에 필터를 등록. 즉, 특정원본필터를 대체
-            //addFilterBefore( ) >> 특정필터 앞에 해당 필터 추가 
-            //addFilterAfter( ) >> 특정필터 뒤에 해당 필터 추가
-        http.addFilterAt(new LoginFilter(), UsernamePasswordAuthenticationFilter.class);
-
-
-	. . . 
-
-        return http.build(); // 빌더 타입으로 리턴
-    }
-}
 
 
 
+attemptAuthentication 는 필수로 오버라이딩한다. 이 메서드가 요청을 가로채서 username 과 password 추출하고, 이를 기반으로 토큰을 만들고, AthenthicationManager에게 해당 토큰을 전달하게 된다.
+
+obtainUsername , obtainPassword 메서드를 통해 request 객체에서 각각 username 과 password 를 추출한다. 
+
+AthenthicationManager에게 그냥 띡 username 과 password 를 전달해주면 안되고,  해당 정보를 DTO역할을 하는UsernamePasswordAuthenticationToken이라는 바구니에 담아서 전달해줘야 하기 떄문ㅇㅔ UsernamePasswordAuthenticationToken 객체 그러니까 토큰을 생성한다. 생성자의 arg 로는 username값, password값, role값이 들어간다.
 
 
-구현한 LoginFIlter 에 @Autowired 될 수 있도록 SecurityConfig 에 AuthenticationManager 의 @Bean 을 등록
+AthenthicationManager에게 생성한 토큰을 전달해주기 위해서 AthenthicationManager 의 authenticate 메서드가 필요함으로 AuthenticationManager 를 @Autowired 받게 하고 그 객체를 대상으로 authenticate 메서드를 사용하며 앞서 생성한 토큰을 arg 로 한다
+	: AthenthicationManager 은 별도로 @Bean 등록이 되지 않은 상태이므로 잊지말고 SpringConfig 에서 @Bean 등록해준다.
 
 @EnableWebSecurity
 @Configuration
@@ -438,10 +437,134 @@ public class SecurityConfig {
 
 
 
+AthenthicationManager가 인증을 성공적으로 마쳤을 경우 수행될 successfulAuthentication 와 unsuccessfulAuthentication 또한 오버라이드한다
+	: 참고로 이 둘은 UsernamePasswordAuthenticationFilter의 직속 메서드는 아니고 그의 인터페이스인 AbstractAuthenticationProcessingFilter의 추상 메서드이다.
+
+	: successfulAuthentication 에서 jwt 를 발급하게 된다.
+
+
+
+
+만든 필터 등록 >> SecurityConfig 에서 addFilterXX ( 내가만든필터객체 , 기존필터명.class )  를 활용한다.
+            addFilterAt(  내가만든필터객체 , 기존필터명.class) >> 딱 그자리에 필터를 등록. 즉, 특정원본필터를 대체
+		: 그러니까 부모를 자식으로 대체하려면 이걸활용해야된다.
+
+            addFilterBefore( 내가만든필터객체 , 기존필터명.class ) >> 특정필터 앞에 해당 필터 추가 
+            addFilterAfter(  내가만든필터객체 , 기존필터명.class) >> 특정필터 뒤에 해당 필터 추가
+
+
+@EnableWebSecurity
+@Configuration
+public class SecurityConfig {
+
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http)throws Exception {
+
+	. . .
+        
+      
+        http.addFilterAt(new LoginFilter(), UsernamePasswordAuthenticationFilter.class);
+
+
+	. . . 
+
+        return http.build(); // 빌더 타입으로 리턴
+    }
+}
+
+
+
+
+
+
+
+
 --------------------------------------------------------------------------------------------------------------
 
+AuthenticationManager 이후 부분( userdetails 	~  db ) 은  세션 방식과 동일
+
+CustomUserDetailsService 는 인증하는 부분이지, 새 user 를 등록하는 부분이 아니다.
+	: 
+	: 새 user 를 등록하는건 별도로 JoinController 같은거 만들어서 한다.
+
+
+
+@EqualsAndHashCode
+@ToString
+@AllArgsConstructor
+@NoArgsConstructor
+public class CustomUserDetails implements UserDetails {
+
+    private UserEntity userEntity;
+
+
+    // roll 값들을 반환한다.
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+
+        Collection<GrantedAuthority> collections = new ArrayList<>();
+
+        // 해당 entity 의 roll 값을 뽑아서 collection 에 add 한다
+        collections.add(new GrantedAuthority() {
+            @Override
+            public String getAuthority() {
+                return userEntity.getRole();
+            }
+        });
+
+        return List.of();
+    }
+
+    @Override
+    public String getPassword() {
+        return userEntity.getPassword();
+    }
+
+    @Override
+    public String getUsername() {
+        return userEntity.getUsername();
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+}
+
+
+
+
+@Service
+public class CustomUserDetailsService implements UserDetailsService {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    // 로그인 검증 용 . db의 정보와 일치하는가
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        UserEntity entity = userRepository.findByUsername(username);
+
+        if(entity!=null)return new CustomUserDetails(entity);
+
+        return null;
+    }
+}
 
 	
-
-
-
