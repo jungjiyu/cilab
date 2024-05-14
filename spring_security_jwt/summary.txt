@@ -233,13 +233,215 @@ public class UserEntity {
 }
 
 
-### 회원 테이블 Repository 작성 : UserRepository > 
+회원 테이블 Repository 작성 : UserRepository > 논리적pk 존재여부 확인 위해 별도의 메서드 선언
+
 public interface UserRepository extends JpaRepository<UserEntity, Integer> {
+
+    Boolean existsByUsername(String username);
 
 }
 
 
 
 --------------------------------------------------------------------------------------------------------------
+
+회원가입 로직 >>
+
+RestController 와 Service 단 선언
+
+
+@RestController
+public class JoinController {
+    
+
+    @Autowired
+    private JoinService joinService;
+
+    @PostMapping("/join")
+    public ResponseEntity<JoinDTO> joinP(JoinDTO dto){
+        JoinDTO saved = joinService.JoinP(dto);
+        return ResponseEntity.status(HttpStatus.OK).body(saved);
+    }
+}
+
+
+
+서비스 단에서 password 암호화 한 후에 저장해야함 까먹지 x.
+
+@Service
+public class JoinService {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
+
+    public JoinDTO JoinP(JoinDTO dto){
+        boolean exist = userRepository.existsByUsername(dto.getUsername());
+
+        if(exist) return null;
+
+        UserEntity entity = new UserEntity();
+        entity.setPassword(bCryptPasswordEncoder.encode(dto.getPassword())); // 암호화를 한 후 넣어야됨
+        entity.setUsername(dto.getUsername());
+        entity.setRole("ROLE_ADMIN");
+        userRepository.save(entity);
+        return JoinDTO.toDTO(entity);
+
+    }
+}
+
+
+--------------------------------------------------------------------------------------------------------------
+
+로그인 필터 구현
+	
+세션 방식으로 Spring Security 를 구현 할 떄는 UsernamePasswordAutneticationFIlter 와 AthenthicationManager 를 별도로 구현하지 않아도 됬음. 근데 JWT 방식으로 할 떈 "formLogin 방식을 disable 시켰기 떄문에" 반드시 직접 구현 해줘야됨
+
+UsernamePasswordAutneticationFIlter >> 사용자로부터 입력받은 데이터에서 username 과 password 정보를 꺼내서(걸러서) AthenthicationManager에게 넘겨줌
+
+AthenthicationManager >> UsernamePasswordAutneticationFIlter 에게 받은 username 과 password 정보로 db에서 UserDetails 꺼내서 검증을 진행
+
+SuccessfulAthentication >>AthenthicationManager 에서 검증이 성공되면 실행된다. JWT 를 생성해서 사용자에게 응답해준다.
+
+
+UnSuccessfulAthentication >> AthenthicationManager 에서 검증이 실패하면 실행된다.  JWT 를 따로 생성하진 않고 에러 코드만 보낸다.
+
+
+
+
+
+### 스프링 시큐리티 동작 원리
+	: 기본적인 스프링 부트의 동작 원리>> Servlet Container 에는 여러개의 필터가 있는데 사용자로부터 request 가 들어오면 ServletContainer 내부의 여러 필터를 거쳐서 SpringBoot , 즉 컨트롤러에 전달된다.
+	
+	: 스프링 시큐리티 동작원리 >> 사용자로부터 request 가 왔을 떄 스프링시큐리티는 Servlet Container 내부의 필터부애 도착한 request 를 가로채서 검증(인증/인가) 하고, 그  결과에 따라 컨트롤러에 전달해주고 안해준다.
+
+		1. 스프링 시큐리티를 의존성으로 추가하면,  서블릿 필터 체인(Servlet Container 에 존재하는 필터 체인) 중간에 DelegatingFilter가 등록된다.
+			: 이떄 DelegatingFilter 는 서블릿 필터 체인에 속한 필터인 것이다.
+			: Delegate : 대표자. 위임자. >> 그러니까 DelegatingFilter는 역할을 ( 시큐리티 필터로 ) 위임하는 필터란 뜻
+
+		2. DelegatingFilter 가 자신이 받은 요청을 시큐리티 필터 체인( Spring Security 가 관리하는 별도의 필터)의 필터에 전달한다.
+
+		3. 시큐리티 필터체인 이 검증 결과에 따라 리다이렉션 거부 등의 동작을 수행한다
+
+
+핵심 시큐리티 필터
+	: UsernamePasswordAuthenticationFilter
+		: request 로 보내진 username과 password로 회원 검증을 진행을 시행하는 부분,
+		: formLogin 방식을 사용할 떄 해당 필터는 기본적으로 활성화되어 별다른 구현이 필요 없지만, formLogin 방식을 해제한 경우 직접 . 필수적으로 . 구현해야된다. 
+			: https://docs.spring.io/spring-security/reference/servlet/architecture.html 에서 확인 가능( formLogin 방식 쓸 떄 UsernamePasswordAuthenticationFilter 가 add 되는 것.)
+
+
+
+******커스텀 필터 : 직접 내용을 구현한 필터는 SecurityConfig에 등록해야 사용 가능하다
+
+
+
+
+
+커스텀 UsernamePasswordAuthentication 필터 구현
+	: jwt 라는 패키지르ㄹ 별도로 만들고 거기에 저장
+
+
+public class LoginFilter extends UsernamePasswordAuthenticationFilter {
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    // attemptAuthentication 필수로 오버라이드 필요
+        // attemptAuthentication 은 UsernamePasswordAuthenticationFilter 의 메서드
+        //Authentication >> 인증하는 인터페이스
+    @Override
+    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
+        // 요청을 가로채서 username 과 password 추출
+        String username = obtainUsername(request);
+        String password = obtainPassword(request);
+
+        //AthenthicationManager 에게 해당 정보를 DTO역할을 하는UsernamePasswordAuthenticationToken이라는 바구니에 담아서 전달해줘야됨
+
+        //UsernamePasswordAuthenticationToken(username값,password값,role값);
+        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(username,password,null); // 일단 당장은 role 이 없으니 null 값넣었다
+
+        // 생성한 토큰을 AthenthicationManager 에게 넘겨줌 --> authenticationManager 가 알아서 검증해줌
+        return authenticationManager.authenticate(authToken);
+    }
+
+
+// successfulAuthentication , unsuccessfulAuthentication 는 UsernamePasswordAuthenticationFilter가 구현하는 인터페이스인 AbstractAuthenticationProcessingFilter 의 추상메서드
+
+    // successfulAuthentication >> authenticationManager 가 성공적으로 검증을 마쳤을 때 실행되는 메서드 . 여기서 JWT 를 발급한다!!!
+    @Override
+    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
+        super.successfulAuthentication(request, response, chain, authResult);
+    }
+
+
+    // unsuccessfulAuthentication >> authenticationManager 가 검증을 실패했을때 실행되는 메서드
+    @Override
+    protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException, ServletException {
+        super.unsuccessfulAuthentication(request, response, failed);
+    }
+
+
+
+}
+
+
+
+
+만든 필터 등록
+
+@EnableWebSecurity
+@Configuration
+public class SecurityConfig {
+
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http)throws Exception {
+
+	. . .
+        
+        // 직접 구현한 필터를 등록
+            //addFilterAt() >> 딱 그자리에 필터를 등록. 즉, 특정원본필터를 대체
+            //addFilterBefore( ) >> 특정필터 앞에 해당 필터 추가 
+            //addFilterAfter( ) >> 특정필터 뒤에 해당 필터 추가
+        http.addFilterAt(new LoginFilter(), UsernamePasswordAuthenticationFilter.class);
+
+
+	. . . 
+
+        return http.build(); // 빌더 타입으로 리턴
+    }
+}
+
+
+
+
+
+구현한 LoginFIlter 에 @Autowired 될 수 있도록 SecurityConfig 에 AuthenticationManager 의 @Bean 을 등록
+
+@EnableWebSecurity
+@Configuration
+public class SecurityConfig {
+
+	. . .
+
+    //AuthenticationManager Bean 등록
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+
+        return configuration.getAuthenticationManager();
+    }
+. .. 
+
+}
+
+
+
+--------------------------------------------------------------------------------------------------------------
+
+
+	
+
 
 
