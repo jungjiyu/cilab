@@ -32,7 +32,7 @@ sql 워크밴치 의 쿼리 작동 안될 떄 : https://m.blog.naver.com/PostVie
 	정 리 해 라
 
 
-
+principal 접근주체 >> 보호된 대상에 접근하는 클라이언트
 Authentication 인증 >> 클라이언트가 자신이 주장하는 사용자와 같은 사용자인지를 확인하는 과정
  Authentication ( 인증객체 ) >> 사용자의 인증 정보를 저장하는 토큰 개념.
  	: 인증시 검증을 위해 전달되어 사용되고,  인증 후 최종인증결과를 담아 SecurityContext 에 저장하여 Authentication authentication = SecurityContexHolder.getContext().getAuthentication() 의 코드로 전역 참조 가능해진다.
@@ -46,17 +46,16 @@ Authentication 인증 >> 클라이언트가 자신이 주장하는 사용자와 
 		Authenticated: 인증 여부
 	: https://uchupura.tistory.com/26
 
+Authorize 인가: 사용자가 인증하는 과정
+Authorization 권한 : 서버가 사용자에 대한 권한을 부여하는 과정
+
+
 
 SecurityContext : Authentication 객체가 저장되는 "보관소"로 필요 시 언제든지 "Authentication 객체"를 꺼내어 쓸 수 있도록 제공되는 클래스
 	: ThreadLocal에 저장되어 아무 곳에서나 참조가 가능하도록 설계함
 	:인증이 완료되면 HttpSession에 저장되어 어플리케이션 전반에 걸쳐 전역적인 참조가 가능하다.
 
 SecurityContextHolder : SecurityContext 가 카드라면 SecurityContextHolder는 카드팩이라고 보면 된다
-
------------------------------------------------------------------------------------------------------------
-인증(Authentication)과 인가(Authorization)
-	> Authentication은 말 그대로 사용자가 인증하는 과정
-	> Authorization은 서버가 사용자에 대한 권한을 부여
 
 
 -----------------------------------------------------------------------------------------------------------
@@ -150,7 +149,10 @@ SecurityConfig 클래스
              hasRole(String role) >> 특정한 role, 규칙이 있어야 경로에 접근할 수 있게 함
              hasAnyRole(String role1 , String role2, ... ) >>특정한 role, 규칙 중 하나여야 경로에 접근할 수 있게 함
              authenticated() >> 로그인만 잘 하면 접근할 수 있게 함
+	     anonymous() >> 인증(로그인)되지 않은 사용자도 접근할 수 있다.
              denyAll() >> 모든 사용자의 접근을 막음. 로그인을 진행해도 접근하지 못하게 함.
+	     rememberMe() : 로그인한 사용자만 접근할 수 있다. 리멤버기능 
+		: 권장되지 않음. 단순히 아이디나 토큰을 기억해놓는 것이 아니라 로그인 정보를 유지하는 것? 방법 을 말한다.
 
          anyRequest( )  이외의 ( requestMatchers 에 의해 ) 설정되지 않은 모든 경로들
 
@@ -294,7 +296,7 @@ public class SecurityConfig {
 		.logoutSuccessUrl("/login") : 로그아웃 성공 후 이동할 페이지를 명시한다
   		.deleteCookies("JSESSIONID", "remember-me") : 로그아웃 후 JSESSIONID쿠키와 remember-me쿠키를 삭제한다
 			: JSESSIONID >> 로그인 토큰
-			: remember-me >> 뭔가 토큰이긴함
+			: remember-me >> 뭔가 토큰이긴함. 권장되지 않음
 				: JSESSIONID이 만료되거나 쿠키가 없을 지라도 어플리케이션이 사용자를 기억하는 기능이다. 자동 로그인 기능을 떠올리면 쉽다.
 				: 토큰 쿠키를 이용한다. 서버는 이 토큰의 유효성을 검사하고, 검증되면 사용자는 로그인된다.
 				: remember-me 쿠키 사이클
