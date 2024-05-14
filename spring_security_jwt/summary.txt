@@ -3,6 +3,156 @@
 https://inpa.tistory.com/entry/WEB-%F0%9F%93%9A-JWTjson-web-token-%EB%9E%80-%F0%9F%92%AF-%EC%A0%95%EB%A6%AC
 
 
+
+Cookie / Session / Token 인증 방식 
+	: 
+
+
+HTTP 프로토콜 >>  Connectionless , Stateless 하기 떄문에 로그인 후 다시 웹페이지에 접근하면 로그인상태가 유지되지 않는다. 이러한 HTTP 프로토콜의 인증 문제( 새 요청마다 기존 연결 끊김 )를 해결하기 위해 세션과 쿠키를 사용한다.
+	: Connectionless >> request 이후 response 받으면 연결이 끊어진다
+	: Stateless >> 통신이 종료되면(connection 끊어지면) 어떠한 상태도 남지 않는다
+
+
+
+
+Cookie 인증
+	: 쿠키의 형태 >> Key-Value 형식의 문자열 덩어리
+	: 단순히 클라이언트의 정보를 클라이언트 쪽에 "쿠키" 라는  작은 기록 정보 파일로 클라이언트에 심어 두는 것.
+	: 절차
+		1. 클라이언트가 서버에 최초 접속 요청(쿠키 없이 요청)
+		2. 서버가 쿠키를 response header 에 담아서 repsonse
+		3. 클라이언트는 request 보낼 떄 마다 해당 cookie 를 requset header 에 담아서 request 함
+		4. 서버는 함꼐온 큐키를 통해 해당 클라이언트를 식별함. 
+
+
+	: 단점
+	******1. 보안에 취약. 쿠키의 값을 그대로 보내기 때문에 유출 및 조작의 위험이 존재
+		2. 용량 제한
+		3. 브라우저간 공유 불가능
+		4 .쿠키 사이즈 커질 수록 네트워크 부하
+
+
+
+
+
+세션인증방식 >> session Id 를 클라이언트 쪽에 쿠키로 심어두고, 클라이언트 정보는 서버쪽에 저장하는 방식
+	Session Id : 세션 식별정보
+		: Session Cookie 에 저장되어 있는 값으로, Session 의 id 값을 말한다.
+		: 이 값으로 서버에서 로그인 된 사용자의 세션을 식별가능해진다.
+		: 사용자가 동일해도 여러개의 세션을 가질 수 있다
+
+
+	Session Cookie : 클라이언트의 쿠키로 저장된 세션 데이터 전체(JSESSIONID, PHPSESSIONID 등)를 의미
+		: 브라우저가 종료되면 자동으로 삭제되는 휘발성 쿠키
+		: 서버가 클라이언트에 세션ID를 클라이언트에게 부여하는 방법 중 하나로, 세션 식별정보를 쿠키에 담아 저장하는 것.
+		: ( JSESSIONID 등의 이름의) 쿠키로 세션ID를 클라이언트에 저장해놓으면 클라이언트는 앞으로 모든 요청 헤더에 이 쿠키값을 포함시켜 보내고, 서버가 이를 식별할 수 있고, 이 값을 통해 세션을 유지할 수 있도록 한다(==JSESSIONID값을 기준으로 서버에서는 세션 메모리 영역에 상태를 유지할 값들을 저장할 수 있게 된다. (HttpSession 등) ).
+	
+		: 쿠키의 만료시간이 되면 클라이언트 측 쿠키는 소멸되기 때문에( 더이상 해당 세션ID를 가지지 않아서) 동일한 클라이언트가 보낸 요청이라고 해도 서버는 새로운 클라이언트로 인식하게 된다. 하지만 이전에 서버측에 생성된 세션 정보는 유지될 수 있고, 아직 "Invalidate"가 되지 않는다.
+			: 세션 타임아웃
+				; HTTP는 connectionless하고 stateless이기 때문에 클라이언트측의 세션 쿠키 소멸을 서버가 직접적으로 알 수 없다. 그렇기 때문에  클라이언트측의 세션 쿠키가 소멸되었다고해서 서버 내의 세션의 삭제도 즉시 이루어지는게 아니라 일정 시간 동안 유지된다.. 서버는 일정 시간이 지나면서 세션 데이터를 만료시키고 삭제하게 되어있는데, 이 시간을 '세션 타임아웃'이라고 부름.  
+				: 세션 타임아웃이 되면 서버는 해당 세션 데이터를 삭제하고, 인지할 수 없는 세션 Id 를 포함하는 요청에 대해서는 새로운 세션을 생성함. 
+		 :https://www.inflearn.com/questions/853519/%EC%84%B8%EC%85%98-%EC%82%AD%EC%A0%9C-%EA%B4%80%EB%A0%A8-%EC%A7%88%EB%AC%B8
+
+
+
+	: 동작 방식
+		1. 유효한 JsessionId없이 reqeust 할 시(브라우저에 최초 접근 시) 톰캣은 session ID값 발급하고이를 Response 헤더에  포함하여 response
+		2. 이후 해당  session ID값을 헤더에 포함해 reqeust 할 시(브라우저 재요청시) 서버는 새로운  session ID값을 발급하진 않고 , 클라이언트로부터 전달받은  session ID값을 기준으로 서버의 세션 메모리 영역에 상태를 유지할 값들을 저장/접근하여 사용한다.
+ 
+
+	세션 단점
+		1. 세션 쿠키 자체에는 세션 id 값만 있지, 유의미한 정보를 가지지 않기 떄문에 Http 요청 중 노출되어도 큰 문제는 없으나, 그 쿠키 자체를 훔쳐 ( 세션 하이재킹 ) 서버에 해당 쿠키로 접근하면 중요한 정보를 뺴낼 수 있다는 문제점이 있다.
+
+		2. 서버에 세션을 저장하기 떄문에 사용자수가 많아지면 서버의 부담이 커진다.
+
+
+
+	세션 유효 범위
+		 : https://dololak.tistory.com/543
+		: 쿠키는 기본적으론 쿠키가 생성된 서버로만 전송됨. 그러니까 google 에서 생성된 쿠키는 naver 로 request 할 떄 전송되지 않음. 
+		: 대규모 웹 서비스는 하나의 웹서버가 아닌 여러 웹서버가 하나의 시스템을 이루면서 운영되는 경우가 있는데 다른 서버에도 해당 쿠키가 전송되게 하려면 다른 방법이 필요 << 추후 기술
+		: 동일한 Full 도메인 ( 서브도메인이 다를 경우 쿠키가 유지되지 않기 때문)
+  
+
+ 
+
+ 
+
+세션과 토큰 인증 방식 Stateless, stateful
+	: Stateful >>  세션 기반 인증 방식. 서버에서 클라이언트의 이전 상태를 기록.
+	: Stateless >> 서버에서 Http와 같은 cilent 의 이전 상태를 기록하지 않는 접속
+		: caching, load balancing, scale out 등의 장점이 있지만 매 요청마다 클라이언트의 상태정보를 전달받아야되기 떄문에 네트워크 자원을 소모하며, 서버는 정보 처리를 위한 작업이 필요
+		: REST api 에서 각각의 요청은 독립적인 stateless 방식
+
+	: https://inpa.tistory.com/entry/WEB-%F0%9F%93%9A-JWTjson-web-token-%EB%9E%80-%F0%9F%92%AF-%EC%A0%95%EB%A6%AC
+	: https://russwest.tistory.com/40\
+
+
+토큰 인증 방식
+	: 서버의 토큰을 이용하여 인증을 수행하는 방법
+	: 세션 기반 인증방식인 stateful 과는 다르게 서버에 클라이언트의 상태 정보를 저장하지 않아서 서버의 부담을 줄일 수 있다
+	1. 사용자가 토큰없이(최초로그인) request 
+	2. 서버가 사용자 검증 통해 유효성 확인 후 통과하면 토큰을 response 와 함꼐 반환
+	3. 클라이언트는 토큰을 저장하고, 서버 요청 시  request 할 떄마다 토큰을 request header 에 담아서 보냄
+	4. 서버는 토큰 검증 후 요청에 respnose.
+
+토큰 방식 장점
+	1. 서버 부담 감소 : 일일이 사용자의 정보를 저장할 필요 없음
+	2. csrf 방지 : 
+
+
+
+Session 인증
+
+	: 세션 객체의 형태 >> key 에 해당하는 sessionID 와 이에 대응하는 Value 로 구성되어있다,
+		: value >> creationTIme ( 세션 생성 시간 ), lastAccessedTime , ... 등이 map 형태로 저장된다
+
+
+	: 절차
+		1. 유저가 웹사이트에서 로그인하면 세션이 서버 상에 저장된다. 이때, 세션을 식별하기 위한 Session Id를 기준으로 정보를 저장한다.
+		2. 서버에서 브라우저에 쿠키에 Session Id를 저장한다.
+쿠키에 정보가 담겨있기 때문에 브라우저는 해당 사이트에 대한 모든 Request에 Session Id를 쿠키에 담아 전송한다.
+서버는 클라이언트가 보낸 Session Id 와 서버 메모리로 관리하고 있는 Session Id를 비교하여 인증을 수행한다.
+
+
+	: 단점
+		1. 요청이 외부에 노출되더라도 세션 ID 자체는 유의미한 개인정보를 담고 있지 않는다.그러나 해커가 세션 ID 자체를 탈취하여 클라이언트인척 위장할 수 있다는 한계가 존재한다. (이는 서버에서 IP특정을 통해 해결 할 수 있긴 하다)
+		2. 서버에서 세션 저장소를 사용하므로 요청이 많아지면 서버에 부하가 심해진다.
+
+
+
+Token 인증
+	: 클라이언트가 서버에 접속을 하면 서버에서 해당 클라이언트에게 인증되었다는 의미로 '토큰'을 부여한다. 이 토큰은 유일하며 토큰을 발급받은 클라이언트는 또 다시 서버에 요청을 보낼 때 요청 헤더에 토큰을 심어서 보낸다. 그러면 서버에서는 클라이언트로부터 받은 토큰을 서버에서 제공한 토큰과의 일치 여부를 체크하여 인증 과정을 처리하게 된다.
+	: 세션방식과 다르게 토큰은 클라이언트에 저장되기 떄문에 서버의 부담을 덜 수 있따. 
+	: 웹에는 쿠키와 세션이 있지만 앱에서는 없기 때문에 모두 가능한 토큰을 가장 많이 사용한다
+	: 상태를 유지하지 않으므로 Stateless 한 특징을 가지고 있다.
+	: 방식
+		1. 클라이언트가 로그인 성공
+		2. 서버측에서 유일한 토큰 발급하여 response
+		3. 클라이언트는 받은 토큰을 쿠키나 스토리지에 저장해두고 서버에 요청을 할 떄마다 해당 토큰을 Http request header 에 포함하여 전달
+		4. 서버는 전달받은 토큰을 검증하고 response. 
+			: db 를 조회하지 않고도 누가 요청했는지 알 수 있다.
+
+	: 단점 
+		1. 토큰 자체의 데이터가 커서 네트워크 부하가 심해질 수 있다.
+		2.내부 정보를 단순 BASE64 방식으로 인코딩하기 때문에 외부에서 쉽게 디코딩 할 수 있어서 유저의 중요한 정보는 담을 수 없다.
+		3. 토큰을 탈취당하면 대처하기 어렵다. (따라서 사용 기간 제한을 설정하는 식으로 극복한다)
+
+
+
+서버(세션) 기반 인증 시스템 >> stateful
+토큰 기반 인증 시스템 >> stateless
+
+
+JWT (JSON Web Token) : 인증에 필요한 정보들을 암호화시킨 JSON 토큰
+	:: JSON 데이터를 Base64 URL-safe Encode 를 통해 인코딩하여 직렬화한 것
+	: 내부에는 위변조방지를 위한 개인키를 통한 전자서명도 있다.
+
+	: 구조 >> . 을 구분자로 나눠지는 3가지 문자열의 조합
+
+
+
+
 --------------------------------------------------------------------------------------------------------------
 
 @Bean 에 파라미터가 있을 경우 자동으로 DI 된다. @Bean  에 @Autowired 있다고 보면 된다.
@@ -13,6 +163,64 @@ https://www.logicbig.com/tutorials/spring-framework/spring-core/javaconfig-metho
 
 
 https://www.inflearn.com/questions/796060/bean-%ED%8C%8C%EB%9D%BC%EB%AF%B8%ED%84%B0-%EC%9E%88%EC%9D%84-%EA%B2%BD%EC%9A%B0-%EB%B9%88-%EC%83%9D%EC%84%B1-%EB%93%B1%EB%A1%9D-%EC%88%9C%EC%84%9C
+
+
+
+
+--------------------------------------------------------------------------------------------------------------
+
+@Value >> application.yml , application.properties 내의 값을 클래스의 원하는 위치에 DI 시키는데 사용한다.	
+	: @Autowired 랑 비슷한 개념. ( 다만 빈을 주입하는게 아니라 application.yml , application.properties내의 값을 주입하는 것)
+
+	: @Value("${ 값가져오고싶은변수}" ) 의 꼴을 아래의 위치에 명시
+		case 1. 필드 위에
+		case 2. 파라미터 앞에
+
+	: 주의 >>  static 필드에는 주입이 되지 않는다.
+
+	: ex ) application.yml 에
+		my:
+  			name: duck
+  			age: 23
+		이런식으로 있다면
+
+	어쩌구.java 에서 
+	@Value("${my.name}") String name 과 같이 하면 name 에 duck 이 들어간다.
+	초기값 설정 시 유용하게 쓸 수 있는데, 되도록이면 필드 주입 말고 생성자 주입을 하라는 것 같다.
+	ex ) 
+@Service
+public class Service {
+
+	@Value("${value.test}")
+	private String test;
+   }
+
+보다는 
+
+@Service
+public class Service {
+	private String test;
+	public Service(@Value("${value.test}") String test) { 
+		this.test = test;
+		  }
+}
+
+처럼 해라
+		
+	: https://velog.io/@jduckling_1024/Value%EB%A1%9C-application.yml%EC%9D%98-%EA%B0%92-%EA%B0%80%EC%A0%B8%EC%98%A4%EA%B8%B0
+
+--------------------------------------------------------------------------------------------------------------
+
+
+이거 왜 꼭 우리가 arg 로 넣어줘야되는지 모르겠는데 나중에 함 보기
+
+@Bean
+public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
+    }
+
+https://velog.io/@waveofmymind/blog-%EB%A1%9C%EA%B7%B8%EC%9D%B8-%EC%B2%98%EB%A6%AC-Spring-Security
+
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -79,77 +287,6 @@ dependencies {
 
 
 --------------------------------------------------------------------------------------------------------------
-
-HTTP 프로토콜 >>  Connectionless , Stateless 하기 떄문에 로그인 후 다시 웹페이지에 접근하면 로그인상태가 유지되지 않는다. 이러한 HTTP 프로토콜의 인증 문제( 새 요청마다 기존 연결 끊김 )를 해결하기 위해 세션과 쿠키를 사용한다.
-	: Connectionless >> request 이후 response 받으면 연결이 끊어진다
-	: Stateless >> 통신이 종료되면(connection 끊어지면) 어떠한 상태도 남지 않는다
-
-
-
-
-Session Id : 세션 식별정보
-	: Session Cookie 에 저장되어 있는 값으로, Session 의 id 값을 말한다.
-	: 이 값으로 서버에서 로그인 된 사용자의 세션을 식별가능해진다.
-	: 사용자가 동일해도 여러개의 세션을 가질 수 있다
-
-
-Session Cookie : 클라이언트의 쿠키로 저장된 세션 데이터 전체(JSESSIONID, PHPSESSIONID 등)를 의미
-	: 브라우저가 종료되면 자동으로 삭제되는 휘발성 쿠키
-	: 서버가 클라이언트에 세션ID를 클라이언트에게 부여하는 방법 중 하나로, 세션 식별정보를 쿠키에 담아 저장하는 것.
-	: ( JSESSIONID 등의 이름의) 쿠키로 세션ID를 클라이언트에 저장해놓으면 클라이언트는 앞으로 모든 요청 헤더에 이 쿠키값을 포함시켜 보내고, 서버가 이를 식별할 수 있고, 이 값을 통해 세션을 유지할 수 있도록 한다(==JSESSIONID값을 기준으로 서버에서는 세션 메모리 영역에 상태를 유지할 값들을 저장할 수 있게 된다. (HttpSession 등) ).
-
-	: 쿠키의 만료시간이 되면 클라이언트 측 쿠키는 소멸되기 때문에( 더이상 해당 세션ID를 가지지 않아서) 동일한 클라이언트가 보낸 요청이라고 해도 서버는 새로운 클라이언트로 인식하게 된다. 하지만 이전에 서버측에 생성된 세션 정보는 유지될 수 있고, 아직 "Invalidate"가 되지 않는다.
-		: 세션 타임아웃
-			; HTTP는 connectionless하고 stateless이기 때문에 클라이언트측의 세션 쿠키 소멸을 서버가 직접적으로 알 수 없다. 그렇기 때문에  클라이언트측의 세션 쿠키가 소멸되었다고해서 서버 내의 세션의 삭제도 즉시 이루어지는게 아니라 일정 시간 동안 유지된다.. 서버는 일정 시간이 지나면서 세션 데이터를 만료시키고 삭제하게 되어있는데, 이 시간을 '세션 타임아웃'이라고 부름.  
-			: 세션 타임아웃이 되면 서버는 해당 세션 데이터를 삭제하고, 인지할 수 없는 세션 Id 를 포함하는 요청에 대해서는 새로운 세션을 생성함. 
-		 :https://www.inflearn.com/questions/853519/%EC%84%B8%EC%85%98-%EC%82%AD%EC%A0%9C-%EA%B4%80%EB%A0%A8-%EC%A7%88%EB%AC%B8
-
-
-
-동작 방식
-	1. 유효한 JsessionId없이 reqeust 할 시(브라우저에 최초 접근 시) 톰캣은 session ID값 발급하고이를 Response 헤더에  포함하여 response
-	2. 이후 해당  session ID값을 헤더에 포함해 reqeust 할 시(브라우저 재요청시) 서버는 새로운  session ID값을 발급하진 않고 , 클라이언트로부터 전달받은  session ID값을 기준으로 서버의 세션 메모리 영역에 상태를 유지할 값들을 저장/접근하여 사용한다.
- 
-
-세션 단점
-	1. 세션 쿠키 자체에는 세션 id 값만 있지, 유의미한 정보를 가지지 않기 떄문에 Http 요청 중 노출되어도 큰 문제는 없으나, 그 쿠키 자체를 훔쳐 ( 세션 하이재킹 ) 서버에 해당 쿠키로 접근하면 중요한 정보를 뺴낼 수 있다는 문제점이 있다.
-
-	2. 서버에 세션을 저장하기 떄문에 사용자수가 많아지면 서버의 부담이 커진다.
-
-
-
-세션 유효 범위
-	 : https://dololak.tistory.com/543
-	: 쿠키는 기본적으론 쿠키가 생성된 서버로만 전송됨. 그러니까 google 에서 생성된 쿠키는 naver 로 request 할 떄 전송되지 않음. 
-	: 대규모 웹 서비스는 하나의 웹서버가 아닌 여러 웹서버가 하나의 시스템을 이루면서 운영되는 경우가 있는데 다른 서버에도 해당 쿠키가 전송되게 하려면 다른 방법이 필요 << 추후 기술
-	: 동일한 Full 도메인 ( 서브도메인이 다를 경우 쿠키가 유지되지 않기 때문)
-  
-
- 
-
- 
-
-세션과 토큰 인증 방식 Stateless, stateful
-	: Stateless >> 서버에서 Http와 같은 cilent 의 이전 상태를 기록하지 않는 접속
-		: caching, load balancing, scale out 등의 장점이 있지만 매 요청마다 클라이언트의 상태정보를 전달받아야되기 떄문에 네트워크 자원을 소모하며, 서버는 정보 처리를 위한 작업이 필요
-		: REST api 에서 각각의 요청은 독립적인 stateless 방식
-
-	: Stateful >>  세션 기반 인증 방식. 서버에서 클라이언트의 이전 상태를 기록.
-	: https://inpa.tistory.com/entry/WEB-%F0%9F%93%9A-JWTjson-web-token-%EB%9E%80-%F0%9F%92%AF-%EC%A0%95%EB%A6%AC
-	: https://russwest.tistory.com/40\
-
-
-토큰 인증 방식
-	: 서버의 토큰을 이용하여 인증을 수행하는 방법
-	: 세션 기반 인증방식인 stateful 과는 다르게 서버에 클라이언트의 상태 정보를 저장하지 않아서 서버의 부담을 줄일 수 있다
-	1. 사용자가 토큰없이(최초로그인) request 
-	2. 서버가 사용자 검증 통해 유효성 확인 후 통과하면 토큰을 response 와 함꼐 반환
-	3. 클라이언트는 토큰을 저장하고, 서버 요청 시  request 할 떄마다 토큰을 request header 에 담아서 보냄
-	4. 서버는 토큰 검증 후 요청에 respnose.
-
-토큰 방식 장점
-	1. 서버 부담 감소 : 일일이 사용자의 정보를 저장할 필요 없음
-	2. csrf 방지 : 
 
 --------------------------------------------------------------------------------------------------------------
 SecurityConfig 클래스  >> 스프링 시큐리티의 인가 및 설정을 담당하는 클래스
@@ -567,4 +704,190 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 }
 
-	
+--------------------------------------------------------------------------------------------------------------
+
+JWT 발급 및 검증 
+- 로그인시 → 성공 → JWT 발급
+- 접근시 → JWT 검증
+	: 우리 서버에서 생성된건지. 유효기간 지났는지. .. 등 검증
+
+
+JWT >> JSON 타입의 웹토큰으로 문자열 형태를 띠고 있다. 점을 통해서 해더/페이로드/시그니쳐 부분으로 구분하여 내부의 데이터를 전달한다.
+- Header
+    - JWT임을 명시
+    - 사용된 암호화 알고리즘
+
+- Payload : body 라고도 부르는 듯
+    - 정보 : 
+-	: 대표적인 저장될 정보
+   	   - username
+ 	   - role
+  	  - 생성일
+  	  - 만료일
+
+- Signature
+    - 암호화알고리즘((BASE64(Header))+(BASE64(Payload)) + 암호화키)
+	: 발행한 서버 혹은 시크릿 키를 가진 서버끼리만 검증을 진행할 수 있도록 BASE64 방식으로 인코딩해서 암호화 한다.
+	: 만약에 payload 부분을 해킹해서 변경했다하면( ex : user 권한을 admin 권한으로 변경) signature 부분과 달라지기 떄문에 해당 토큰은 반려되게 된다
+ 
+JWT 특징 : header 와 payload 는 간단ㅎl base64 방식으로 인코딩만해두기 때문에 외부에서 언제든지 내부 데이터를 디코딩하여 확인 가능하다. 따라서 외부에서 열람해도 되는 정보만 담아야된다. (username 과 role 값 정도는 담아도 되지만 password 그런 것 까지 담으면 ㅈ된다)
+	: 비밀번호 같은 것도 담지 못하는데 왜쓰냐 ? ? >> 토큰 자체의 발급처를 확인하기 위해 사용
+		 : 토큰 안에 담긴 내용을 해석하는건 쉽지만 원본을 위조하기는엄청힘들다
+
+
+ JWT 암호화 방식
+
+- 암호화 종류
+    - 양방향 : 다시 복호화 가능한 암호화
+        - 대칭키 : 동일한 키로 암호화와 복호화 진행
+		:  이 프로젝트는 양방향 대칭키 방식 사용 : HS256
+
+        - 비대칭키 : 각각 다른키로 암호화와 복호화 진행 ( public key 와 secrete key )
+
+    - 단방향 : 다시 복호화 불가한 암호화
+
+--------------------------------------------------------------------------------------------------------------
+JWT 를 암호화할 키를 만들기
+	: application.properties 에 선언
+		: 클래스 내부에도 만들 수 있지만 외부에도 노출될 수 있고, 여러개의 서버를 띠울때 암호를 수정하기가 어려워지기 떄문 
+		: spring.jwt.secret =vmfhaltmskdlstkfkdgodyroqkfwkdbalroqkfwkdbalaaaaaaaaaaaaaaaabbbbb
+			: spring.jwt.secret  으로 꼭 이름을 설정하지 않아도 된다. 이름은 자윤데, 이미 존재하는 키워드랑 겹치면 안된다.
+			: 키 값은 vmfhaltmskdlstkfkdgodyroqkfwkdbalroqkfwkdbalaaaaaaaaaaaaaaaabbbbb 아니라 딴 것도 가능하고 , 최대한 길게 설정한다.  (: HS256 > 256 자 up 굿. )
+
+
+
+--------------------------------------------------------------------------------------------------------------
+
+발급과 검증을 담당할 클래스( JWTUtil 클래스. 이름은 자유 .) 직접 구현하기
+해당 클래스을 @Component 로 등록해서 여러군데서 사용한다
+
+JWTUtil
+	: 이름은 상관없다
+	: jwt 패키지에 구현
+	: @Component 로 spring 에 의해 관리되게 함
+
+
+ 0.12.3 구현 실습
+
+application.properties 에 선언한 시크릿키값을 JWTUtil 의 생성자 부분에서 @Value("${시크릿키명}")을 이용해 주입 시킨다.
+	: @Value 는 lombok 불러오는게 아니라 org.springframework.beans.factory.annotation.Value 임을 주의
+
+주입받은 문자열 타입의 키값을 기반으로 객체타입의 키, 그러니까 시그니쳐키를 생성한다.
+	: new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm());
+
+검증 메서드를 구현한다
+    : 토큰을 전달 받아 내부의 Jwts 의 parser 를 이용해 분석한다
+	: //JWT 토큰은 . 구분자를 사용하는 문자열이므로 문자열 타입으로 토큰받는 파라미터 선언
+    : verifyWith( 저장하고있는객체키 ) >> 토큰이 우리 서버에서 생성되었는지 검사 (우리키와 일치하는 키값을 가지는지.)
+    : parseSignedClaims( 클라이언트가준토큰 ) >> 클레임확인
+    : getPayload().get("키명", 키의값타입.class)  >> 페이로드에서 특정데이터가져옴
+    : getExpiration().before(new Date() ) >> 오늘을 기준으로 만료되었는지 확인한다.
+        :  new Date( ) == 현재시간값
+
+토큰생성 메서드를 구현한다
+    : 로그인이 성공했을 떄 successfulHandelr 에 의해 실행된다
+    : Jwts.builder() >> 토큰생성한다
+    : claim( "키명", 값 ) 을 사용하여 토큰에 값을 저장 가능
+    : .issuedAt(new Date(System.currentTimeMillis())) : 토큰의 발행시간을 현재로 저장
+    :.expiration(new Date(System.currentTimeMillis() + ms단위의커스텀시간 )) : 토큰의 소멸시간을 저장
+    : .signWith(secretKey) : 시그니쳐키를 이용하여 암호화진행
+    :.compact(); : 컴팩트 시킴
+
+
+@Component
+public class JWTUtil {
+   // 객체키를 저장
+    private SecretKey secretKey;
+
+   
+    public JWTUtil(@Value("${spring.jwt.secret}")String secret) {   // 시크릿 키 불러오기
+        // application.prperties 의 시크릿키값을 기반으로 객체타입의 키 생성
+        this.secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm());
+    }
+
+
+
+    //username 뽑아냄 . 검증.
+    public String getUsername(String token){ 
+        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("username",String.class);
+
+    }
+
+
+// role 뽑아냄. 검증
+    public String getRole(String token){
+        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("role",String.class);
+    }
+
+    // 토큰완료여부확인. 소멸되면 true 아니면 false
+    public boolean isExpired(String token){
+        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().getExpiration().before(new Date());    }
+
+    //토큰생성 
+    public String createJwt(String username , String role, Long expiredMs){
+        return Jwts.builder()
+                .claim("username", username)
+                .claim("role", role)
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + expiredMs))
+                .signWith(secretKey)
+                .compact();    }
+
+
+}
+
+
+
+
+ 참고 > 0.11.5 구현
+
+@Component
+public class JWTUtil {
+
+    private Key key;
+
+    public JWTUtil(@Value("${spring.jwt.secret}")String secret) {
+
+
+				byte[] byteSecretKey = Decoders.BASE64.decode(secret);
+        key = Keys.hmacShaKeyFor(byteSecretKey);
+    }
+
+    public String getUsername(String token) {
+
+        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().get("username", String.class);
+    }
+
+    public String getRole(String token) {
+
+        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().get("role", String.class);
+    }
+
+    public Boolean isExpired(String token) {
+
+        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().getExpiration().before(new Date());
+    }
+
+    public String createJwt(String username, String role, Long expiredMs) {
+
+				Claims claims = Jwts.claims();
+        claims.put("username", username);
+        claims.put("role", role);
+
+        return Jwts.builder()
+                .setClaims(claims)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + expiredMs))
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+} 
+
+
+--------------------------------------------------------------------------------------------------------------
+
+ 로그인이 성공 했을 경우 JWT를 발급하기 위한 구현
+
+구현한 JWTUtil 을 loginfilter.java 에 @Autowired 되게 해서 loginfilter.java 의 successfulAuthentication 메소드 에서 사용할 수 있ㄱ ㅔ 한다.
+
+로그인 했을 떄 받아온 토큰 값을 복붙해서 이후에 같이 request 해야돈다.
