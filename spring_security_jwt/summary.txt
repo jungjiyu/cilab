@@ -212,6 +212,36 @@ public class Service {
 --------------------------------------------------------------------------------------------------------------
 
 
+: principal >> 유저. 사용자를 통칭하는 말.
+	: https://devidea.tistory.com/16
+	
+
+principal 인터페이스
+	: https://codevang.tistory.com/273
+	: 컨트롤러의 메소드에서 Model 과 같이 파라미터로 별도의 빈 등록 없이 DI 받을 수 있는 타입 중 하나
+	: 구현체의 최상위 인터페이스이기 때문에 이 타입으로 받으면 사용할만한 메소드가 getName() 정도밖에 없다
+
+	▼ Athentication 인터페이스
+		: UsernamePasswordAuthenticationToken 구현체 및 세션 정보를 보관하는 객체에서 필요한 정보를 뽑아내는 메소드를 보유. 
+			Object getPrincipal() : 구현 객체 생성 당시 할당한 principal 객체 반환
+				: 반환형이 objec t 이기 떄문에 UserDetails user = (UserDetails) authentication.getPrincipal(); 과 같이 사용 가능 
+			Object getCredentials() : 구현 객체 생성 당시 힐당한 credentials 객체 반환 
+			Collection<? extends GrantedAuthority> getAuthorities() :  구현 객체 생성 당시 힐당한 권한 리스트 객체 반환 
+			Object getDetails() : 세션정보를 가진 WebAuthenticationDetails 객체 반환
+		:  실제로 인증 정보를 사용하기 위해 사용되는 타입
+
+		▶ UsernamePasswordAuthenticationToken  구현 클래스 
+			: 인증이 완료된 후 최종적으로 스프링 Security에게 전달해주는 구현체
+			: 생성자 >> public UsernamePasswordAuthenticationToken (Object principal, Object credentials,  Collection<? extends GrantedAuthority> authorities)
+				: principal 자리에 userdetails 객체를 넣어주는게 좋다
+				: 딱히 필요 없는 건 null 값 넣어주면 된다
+		▶ AbstractAtuthenticationToken 추상클래스 
+		▶ RememberMeAuthenticationToken  구현클래스
+
+
+
+--------------------------------------------------------------------------------------------------------------
+
 이거 왜 꼭 우리가 arg 로 넣어줘야되는지 모르겠는데 나중에 함 보기
 
 @Bean
@@ -286,7 +316,7 @@ dependencies {
 
 
 
---------------------------------------------------------------------------------------------------------------
+
 
 --------------------------------------------------------------------------------------------------------------
 SecurityConfig 클래스  >> 스프링 시큐리티의 인가 및 설정을 담당하는 클래스
@@ -553,6 +583,12 @@ obtainUsername , obtainPassword 메서드를 통해 request 객체에서 각각 
 AthenthicationManager에게 그냥 띡 username 과 password 를 전달해주면 안되고,  해당 정보를 DTO역할을 하는UsernamePasswordAuthenticationToken이라는 바구니에 담아서 전달해줘야 하기 떄문ㅇㅔ UsernamePasswordAuthenticationToken 객체 그러니까 토큰을 생성한다. 생성자의 arg 로는 username값, password값, role값이 들어간다.
 
 
+ return authenticationManager.authenticate(authToken) 
+	:  Authentication authenticate(Authentication authentication)  메서드>> 토큰의 유효성 검사하는 메서드
+		: authenticationManager 의 메서드로 , arg로 들어온 토큰을 기반으로 userDetailsService 를 통해 userDetails 객체를 얻고, 이를 필드로 가지는 Authentication 객체를 반환하고, SecurityContextHolder 에 저장되기 때문에 꺼내쓸 수 있다.
+
+		: 유효성 검증에 성공하면 인증 성공 이벤트가 발생하고, 이벤트 처리 핸들러인 AuthenticationSuccessHandler 에 의 해 successfulAuthentication 이 호출된다.
+	
 AthenthicationManager에게 생성한 토큰을 전달해주기 위해서 AthenthicationManager 의 authenticate 메서드가 필요함으로 AuthenticationManager 를 @Autowired 받게 하고 그 객체를 대상으로 authenticate 메서드를 사용하며 앞서 생성한 토큰을 arg 로 한다
 	: AthenthicationManager 은 별도로 @Bean 등록이 되지 않은 상태이므로 잊지말고 SpringConfig 에서 @Bean 등록해준다.
 
@@ -712,42 +748,92 @@ JWT 발급 및 검증
 	: 우리 서버에서 생성된건지. 유효기간 지났는지. .. 등 검증
 
 
-JWT >> JSON 타입의 웹토큰으로 문자열 형태를 띠고 있다. 점을 통해서 해더/페이로드/시그니쳐 부분으로 구분하여 내부의 데이터를 전달한다.
-- Header
-    - JWT임을 명시
-    - 사용된 암호화 알고리즘
 
-- Payload : body 라고도 부르는 듯
-    - 정보 : 
--	: 대표적인 저장될 정보
-   	   - username
- 	   - role
-  	  - 생성일
-  	  - 만료일
-
-- Signature
-    - 암호화알고리즘((BASE64(Header))+(BASE64(Payload)) + 암호화키)
-	: 발행한 서버 혹은 시크릿 키를 가진 서버끼리만 검증을 진행할 수 있도록 BASE64 방식으로 인코딩해서 암호화 한다.
-	: 만약에 payload 부분을 해킹해서 변경했다하면( ex : user 권한을 admin 권한으로 변경) signature 부분과 달라지기 떄문에 해당 토큰은 반려되게 된다
- 
-JWT 특징 : header 와 payload 는 간단ㅎl base64 방식으로 인코딩만해두기 때문에 외부에서 언제든지 내부 데이터를 디코딩하여 확인 가능하다. 따라서 외부에서 열람해도 되는 정보만 담아야된다. (username 과 role 값 정도는 담아도 되지만 password 그런 것 까지 담으면 ㅈ된다)
-	: 비밀번호 같은 것도 담지 못하는데 왜쓰냐 ? ? >> 토큰 자체의 발급처를 확인하기 위해 사용
-		 : 토큰 안에 담긴 내용을 해석하는건 쉽지만 원본을 위조하기는엄청힘들다
 
 
  JWT 암호화 방식
-
 - 암호화 종류
     - 양방향 : 다시 복호화 가능한 암호화
-        - 대칭키 : 동일한 키로 암호화와 복호화 진행
-		:  이 프로젝트는 양방향 대칭키 방식 사용 : HS256
+        - 대칭키 : 동일한 키로 암호화와 복호화 진행 << 이 프로젝트에서 구현
+		: 해당 키는 절대 외부에 노출되면 안된다.
+		: 키의 길이에 따라 암호화의 종류가 다르다 >>128bit , 192bit, 256bit (HS256)
 
         - 비대칭키 : 각각 다른키로 암호화와 복호화 진행 ( public key 와 secrete key )
 
     - 단방향 : 다시 복호화 불가한 암호화
 
+
+JWT 특징 : header 와 payload 는 간단ㅎl base64 방식으로 인코딩만해두기 때문에 외부에서 언제든지 내부 데이터를 디코딩하여 확인 가능하다. 따라서 외부에서 열람해도 되는 정보만 담아야된다. (username 과 role 값 정도는 담아도 되지만 password 그런 것 까지 담으면 ㅈ된다)
+	: 비밀번호 같은 것도 담지 못하는데 왜쓰냐 ? ? >> 토큰 자체의 발급처를 확인하기 위해 사용
+		 : 토큰 안에 담긴 내용을 해석하는건 쉽지만 원본을 위조하기는엄청힘들다. ( 화폐가 얼만지는 눈으로 얼마든지 확인할 수 있지만 지폐는 위조하기 힘든 그런st)
+
+
+
+
+JWT >> JSON 타입의 웹토큰으로 문자열 형태를 띠고 있다. 2개의 . 을 구분자로하여 해더/페이로드/시그니쳐 부분으로 구분하여 내부의 데이터를 전달한다.
+	: https://velog.io/@jungmin_/%ED%86%A0%ED%81%B0%EA%B8%B0%EB%B0%98-%EC%82%AC%EC%9A%A9%EC%9E%90-%EC%9D%B8%EC%A6%9D-JWT
+
+	: ex) header , payload , signature 를 조합> ewogICJhbGciOiAiSFMyNTYiLAogICJ0eXAiOiAiSldUIgp9.ewogICJpc3MiOiAic2VydmVyIgogICJhdWQiOiAidXNlcjEiCiAgInN1YiI6ICJzdWJqZWN0IgogICJpYXQiOiAxNzAxMDA4MTQxIAogICJleHAiOiAxNzAxMDA4NDQxCiAgInVzZXJJZCI6IDEKICAiZW1haWwiOiAidXNlcjFAZXhhbXBsZS5jb20iCn0._YIWNJdMwXo1GwUuQ-k3i9f_gdHnPkr2CVQ2EW9qyO4
+
+1. Header >> 서명에 사용된 알고리즘 정보와 토큰의 종류를 명시. base64 인코딩 된다.
+	ex)  
+	원본 > HMAC-SHA256 암호화 알고리즘을 사용한 JWT토큰이라는 정보를 담고 있다.
+	{
+  	"alg": "HS256",
+  	"typ": "JWT"
+	}
+
+	헤더를 base64 인코딩 > ewogICJhbGciOiAiSFMyNTYiLAogICJ0eXAiOiAiSldUIgp9
+
+
+2. Payload >> 주요 정보를 담고있는 부분. base64 인코딩된다.
+	 : body 랑 비슷		
+	: 주의 >  토큰을 가진다면 누구나 정보를 확인 할 수 있으므로 민감한 정보는 절대 포함시키면 안된다.
+	: 페이로드는 하나의 json 에 모두 작성된다.
+	: 클레임 >페이로드 부분의 key 와  value 의 쌍. 3가지의 클레임으로 구성될 수 있으며 클레임들은 필수적으로 사용하지 않아도 된다.
+		ex ) 
+		원본 페이로드 >
+		{
+ 		 "iss": "server"
+  		"aud": "user1"
+  		"sub": "subject"
+ 		 "iat": 1701008141 
+  		"exp": 1701008441
+  		"userId": 1
+ 		 "email": "user1@example.com"
+		}
+
+		페이로드를 base64 로 인코딩 > ewogICJpc3MiOiAic2VydmVyIgogICJhdWQiOiAidXNlcjEiCiAgInN1YiI6ICJzdWJqZWN0IgogICJpYXQiOiAxNzAxMDA4MTQxIAogICJleHAiOiAxNzAxMDA4NDQxCiAgInVzZXJJZCI6IDEKICAiZW1haWwiOiAidXNlcjFAZXhhbXBsZS5jb20iCn0
+
+		(1) 등록된 클레인 registered claim : JSON Web Token Claims라는 레지스트리에 등록된 클레임
+			iss(Issuer) Claim : 토큰을 발급한 대상을 말한다.
+			sub(Subject) Claim : 토큰의 제목을 말한다.
+			aud(Audience) Claim : 토큰을 받는 대상자를 말한다.
+			exp(Expiration Time) Claim : 토큰의 유효기간을 말한다.
+			nbf(Not Before) Claim : 토큰이 활성화되는 시간을 말한다.
+			iat(Issued At) Claim : 토큰이 발급된 시간을 말한다.
+			jti(JWT ID) Claim : 토큰의 ID를 말한다.
+
+		(2) 공개 클레임 Public Claim : 토큰을 사용하는 사람들이 정의하는 클레임으로, 충돌 방지를 위해서 다른 이름과 중복되지 않는 이름으로 지어야됨.
+
+		(3) ㅂ;공개 클레임 private claim : 토큰 공급자와 토큰 사용자 간에 협의된 클레임으로 다른 클레임과 충돌되지 않게 사용하면 된다.
+
+
+
+3. Signature : 암호화알고리즘을 사용하여 헤더와 페이로드를 각각 base64 방식으로 인코딩한 값을 또 시크릿키로 암호화 한다( (BASE64(Header))+(BASE64(Payload)) + 암호화키 ). 이 암호화된 값을 통해 이 토큰의 무결성을 검증할 수 있다.
+    - 암호화알고리즘
+	: 발행한 서버 혹은 시크릿 키를 가진 서버끼리만 검증을 진행할 수 있도록 BASE64 방식으로 인코딩해서 암호화 한다.
+	: 만약에 payload 부분을 해킹해서 변경했다하면( ex : user 권한을 admin 권한으로 변경), 변경한내용을 base64 적용하고 시크릿키 적용했을 때 기존 signature 부분과 달라지기 떄문에 해당 토큰은 반려되게 된다
+
+	ex)  
+	헤더와 페이로드를 마침표로 구분한 ewogICJhbGciOiAiSFMyNTYiLAogICJ0eXAiOiAiSldUIgp9.ewogICJpc3MiOiAic2VydmVyIgogICJhdWQiOiAidXNlcjEiCiAgInN1YiI6ICJzdWJqZWN0IgogICJpYXQiOiAxNzAxMDA4MTQxIAogICJleHAiOiAxNzAxMDA4NDQxCiAgInVzZXJJZCI6IDEKICAiZW1haWwiOiAidXNlcjFAZXhhbXBsZS5jb20iCn0
+	를 이용하여 암호화 결과 > _YIWNJdMwXo1GwUuQ-k3i9f_gdHnPkr2CVQ2EW9qyO4
+
+ 
+
 --------------------------------------------------------------------------------------------------------------
-JWT 를 암호화할 키를 만들기
+
+JWT 를 암호화, 복호화할 키를 만들기
 	: application.properties 에 선언
 		: 클래스 내부에도 만들 수 있지만 외부에도 노출될 수 있고, 여러개의 서버를 띠울때 암호를 수정하기가 어려워지기 떄문 
 		: spring.jwt.secret =vmfhaltmskdlstkfkdgodyroqkfwkdbalroqkfwkdbalaaaaaaaaaaaaaaaabbbbb
@@ -755,13 +841,16 @@ JWT 를 암호화할 키를 만들기
 			: 키 값은 vmfhaltmskdlstkfkdgodyroqkfwkdbalroqkfwkdbalaaaaaaaaaaaaaaaabbbbb 아니라 딴 것도 가능하고 , 최대한 길게 설정한다.  (: HS256 > 256 자 up 굿. )
 
 
-
 --------------------------------------------------------------------------------------------------------------
 
 발급과 검증을 담당할 클래스( JWTUtil 클래스. 이름은 자유 .) 직접 구현하기
 해당 클래스을 @Component 로 등록해서 여러군데서 사용한다
 
-JWTUtil
+Util 클래스 > 특정 파라미터에 대한 작업을 수행하는 메서드들을 가지는 클래스
+	
+
+
+JWTUtil >>  토큰 생성, 검증, 정의를 하는 클래스
 	: 이름은 상관없다
 	: jwt 패키지에 구현
 	: @Component 로 spring 에 의해 관리되게 함
@@ -769,29 +858,58 @@ JWTUtil
 
  0.12.3 구현 실습
 
+
+https://green-bin.tistory.com/50
+Java - AES-128 양방향 암호화
+
 application.properties 에 선언한 시크릿키값을 JWTUtil 의 생성자 부분에서 @Value("${시크릿키명}")을 이용해 주입 시킨다.
 	: @Value 는 lombok 불러오는게 아니라 org.springframework.beans.factory.annotation.Value 임을 주의
 
-주입받은 문자열 타입의 키값을 기반으로 객체타입의 키, 그러니까 시그니쳐키를 생성한다.
+주입받은 문자열 타입의 키값을 기반으로 암호화된 객체타입의 키를 생성한다.
 	: new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm());
 
+		: SecretKeySpec( 바이트배열타입의키 , 문자열타입의알고리즘 )  > secrete key 를 만드는데 사용되는 라이브러리
+			: secret.getBytes(StandardCharsets.UTF_8) >>  secret 은 내부적으로 내가 secretkey 값을 담아둔 문자열필드. 이를 UTF_8인코딩 방식의 getBytes( ) 를 이용해 바이트타입배열로 변환
+			:  Jwts.SIG.HS256.key().build().getAlgorithm() >>  HMAC-SHA256 방식 알고리즘을 문자열화
+
+
+
+
 검증 메서드를 구현한다
-    : 토큰을 전달 받아 내부의 Jwts 의 parser 를 이용해 분석한다
-	: //JWT 토큰은 . 구분자를 사용하는 문자열이므로 문자열 타입으로 토큰받는 파라미터 선언
-    : verifyWith( 저장하고있는객체키 ) >> 토큰이 우리 서버에서 생성되었는지 검사 (우리키와 일치하는 키값을 가지는지.)
-    : parseSignedClaims( 클라이언트가준토큰 ) >> 클레임확인
-    : getPayload().get("키명", 키의값타입.class)  >> 페이로드에서 특정데이터가져옴
-    : getExpiration().before(new Date() ) >> 오늘을 기준으로 만료되었는지 확인한다.
+	        return Jwts.parser().verifyWith( secretKey ).build().parseSignedClaims( token ).getPayload().get("username",String.class);
+
+  	: 토큰을 전달 받아 내부의 Jwts 의 parser 를 이용해 분석한다
+	: JWT 토큰은 문자열타입 이므로 문자열 타입으로 토큰받는 파라미터 선언
+  	 : verifyWith( 객체키 ) >> 특정객체 키를 이용하여 parse 를 (디코딩) 하게 설정한다
+		: 그러니까 토큰 생성 부분에서 .signWith(객체키) 했었던  arg 로 들어간 객체와 같은 객체를 arg 로 하면 된다.
+    	: parseSignedClaims( 클라이언트가준토큰 ) >> 앞서 설정한 기준으로 클라이언트가 준 토큰을 parse 진행한다.
+    	: getPayload( ).get("키명", 키의값타입.class)  >> custom claim 을 가져온다.
+     	: getExpiration().before(new Date() ) >>  Standard Claim 중 하나인 Expiration 클레임을 가져오고 오늘을 기준으로 만료되었는지 확인한다. 이외의 Standard Claim  은 이처럼 getter 계열 메서드를 활용해 간푠히 가져올 수 있다.
         :  new Date( ) == 현재시간값
 
 토큰생성 메서드를 구현한다
-    : 로그인이 성공했을 떄 successfulHandelr 에 의해 실행된다
-    : Jwts.builder() >> 토큰생성한다
-    : claim( "키명", 값 ) 을 사용하여 토큰에 값을 저장 가능
-    : .issuedAt(new Date(System.currentTimeMillis())) : 토큰의 발행시간을 현재로 저장
-    :.expiration(new Date(System.currentTimeMillis() + ms단위의커스텀시간 )) : 토큰의 소멸시간을 저장
-    : .signWith(secretKey) : 시그니쳐키를 이용하여 암호화진행
-    :.compact(); : 컴팩트 시킴
+	: https://samtao.tistory.com/65
+	: https://escapefromcoding.tistory.com/255
+   	 : 로그인이 성공했을 떄 successfulHandelr 에 의해 실행된다
+	: 토큰의 타입은 String 이기 떄문에 이 메서드의 반홚형은 String
+    	: 토큰객체생성 >> Jwts.builder() 
+	: claim 저장 >>
+		: claim >> 토큰 payload 들어갈 key-value 쌍
+		1. custom claim .사용자지정클레임 :  claim( "키명", 값 ) ;
+		2. Standard Claims . 기본적으로 등록되있는 클레임. :  Jwt 가 제공하는 setter 메서드 활용
+			setIssuer("값")
+			setSubject("값") 
+			setAudience("값")
+			setExpiration("값") >> 주로 .expiration(new Date(System.currentTimeMillis() + ms단위의커스텀시간 )) 
+		    	:토큰의 소멸시간을 저장
+
+			setNotBefore("값")
+			setIssuedAt("값") >> 주로  .setIssuedAt(new Date()) 
+			setId("값")
+ 
+    	: 어떤 키로 암호화 할 지 정해준다. 그러니까 어떤 시크릿키를 사용하여 header 와 payload 를 base64 로 인코딩한 것을 또 암호화하여 시그니쳐 부분 문자열을 생성할 건지 지정한다.>> .signWith( 시크릿키객체 ) :
+ 
+   	: 토큰설정이 끝나면 하는 마지막 과정으로, 토큰을 압축한다. >> .compact(); : 
 
 
 @Component
@@ -890,4 +1008,217 @@ public class JWTUtil {
 
 구현한 JWTUtil 을 loginfilter.java 에 @Autowired 되게 해서 loginfilter.java 의 successfulAuthentication 메소드 에서 사용할 수 있ㄱ ㅔ 한다.
 
-로그인 했을 떄 받아온 토큰 값을 복붙해서 이후에 같이 request 해야돈다.
+
+UsernamePasswordAuthenticationFilter 의 successfulAuthentication 는 authenticationManager 의 antuenticate( ) 과정이 성공적으로 끝나면 이벤트 헨들러에 의해 자동 호출된다. 그리고 authenticate 하는 과정에서 Userdetails 겍체와 role 값 등을 담고 있는 authentication 객체를 context 에 저장해놨으므로 successfulAuthentication 에서 arg 로 authentication 객체를 받아 userDetails 등의 정보를 빼내 쓸 수 있따.
+
+
+
+CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal( );
+	: authentication의 principal 필드는 userDetails 객체를 담고 있고 , Object 타입이기 때문에 강제형변환 시켜준다.
+
+
+
+String username = customUserDetails.getUsername();
+	: username 을 얻는다
+
+
+ Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+Iterator<? extends GrantedAuthority> iterator = authorities.iterator();
+GrantedAuthority auth = iterator.next(); >>
+	: role 을 얻는다. 이렇게 코드가 복잡한건 successfulAuthentication 에서 복잡한 작업을 해서 그런게 아니라 role 들의 값을 담는 authorities 가 collection 타입이기 때무에 그런거다. 
+	: 만약에 role 이 하나가 아니었다면 List<GrantedAuthority> 이런 식으로 받아야됬겠지.
+
+String role = auth.getAuthority() >>
+	: 앞서 구한 GrantedAuthority 에서 role 명을 뽑아낸다
+
+String token = jwtUtil.createJwt(username, role, 60*60*10L) >>
+	: 앞서 구현한 jwtUtil 의 메서드를 활용하여 현재 메서드에서 뽑은 정보를 기반으로 token 을 생성한다
+     
+
+
+response.addHeader("Authorization", "Bearer " + token) >>
+response header 에 토큰을 추가한다.
+HTTP 인증 방식은 RFC 7235 정의에 따라 아래와 같은 형식으로 response header 에  토큰을 추가해야된다 
+	:    response.addHeader("Authorization", "Bearer " + token);
+
+	: 형식 >>Authorization: 타입 인증토큰
+		: 그러니까 key 값은 "Authorization" , value값은 "타입명" + 문자열토큰값.	
+		: ex )  Authorization: Bearer 인증토큰명 >> response.addHeader("Authorization","Bearer " + 인증토큰명); 
+
+	: 인증토큰 type 의 종류
+		Baic : 사용자 아이디와 암호를 Base64로 인코딩한 값을 토큰으로 사용
+		Bearer : JWT 혹은 Oauth에 대한 토큰을 사용
+		Mutual : 암호를 이용한 클라이언트 - 서버 상호 인증
+		AWS4-HMAC-SHA256 : AWS 전저 서명 기반 인증
+		. . .
+
+
+
+public class LoginFilter extends UsernamePasswordAuthenticationFilter {
+
+    private final AuthenticationManager authenticationManager;
+		
+	private final JWTUtil jwtUtil; //JWTUtil 객체 저장할 필드
+
+// 직접 주입 >> SpringConfig 부분에서 주입된다
+    public LoginFilter(AuthenticationManager authenticationManager, JWTUtil jwtUtil) {
+        this.authenticationManager = authenticationManager;
+	this.jwtUtil = jwtUtil;
+    }
+
+
+	. . .
+
+
+	//로그인 성공시 실행하는 메소드 (여기서 JWT를 발급하면 됨)
+    @Override
+    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authentication) {
+
+        CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal( );
+
+        String username = customUserDetails.getUsername();
+
+        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+        Iterator<? extends GrantedAuthority> iterator = authorities.iterator();
+        GrantedAuthority auth = iterator.next();
+
+        String role = auth.getAuthority();
+
+        String token = jwtUtil.createJwt(username, role, 60*60*10L);
+
+        response.addHeader("Authorization", "Bearer " + token);
+    }
+    }
+
+
+//로그인 실패시 실행하는 메소드
+    @Override
+    protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) {
+	// 일단 간단히 response 부분에 상태코드만 찍어서 보내줌
+	response.setStatus(401);
+
+
+    }
+}
+
+
+
+
+
+토큰을 받았으면 이후 requet 할 때 header 에 토큰키명("authorization")을  reqesut header 에 넣어 request 해야 해당 권한을 누릴 쑤 있다
+
+--------------------------------------------------------------------------------------------------------------
+
+jwt 검증 필터 . 토큰 검증 필터.
+ : stateless 지만 한번의 request 대해 일시적으로 session 을 만드는 방식의 필터.
+	: 세션을 이용하지만 stateless 로 관리되어 한번의 request 만 기억해서, 다시 동일한 요청을 보내면 또 토큰 검증을 진행하여 또 다른 세션을 생성한다.
+
+
+우리가 만든 필터는 역시나 SecurityConfg 에 등록해줘야 효력이 발생한다.
+
+jwtFilter 구현 후 등록.
+	:: jwt 패키지 내에 생성
+
+@Slf4j
+// OncePerRequestFilter >> 요청에 대해서 한번만 동작하는 필터
+public class JwtFilter extends OncePerRequestFilter {
+
+
+    private final JWTUtil jwtUtil;
+
+
+    public JwtFilter( JWTUtil jwtUtil){
+        this.jwtUtil = jwtUtil;
+    }
+
+    // 필터 내부 작업에 대한 구현
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+
+        // ( "Bearer" 가 접두사로 붙은) authorization 값을 request 에서 뽑아내서 검증 진행
+        String authorization= request.getHeader("Authorization");
+
+        //Authorization 헤더 검증
+        if (authorization == null || !authorization.startsWith("Bearer ")) { // 토큰이 아예 없거나 jwt 타입의 토큰이 아니면
+            log.info("JwtFilter: token null");
+            filterChain.doFilter(request, response); // 현재 필터에서 받은 request 와 response 를 다음 필터에게 넘겨주며 현재 필터는 종료함
+            return; // 메서드 종료
+        }
+
+        log.info("JwtFilter : token get");
+        // 순수 토큰 획득
+            //  authorization.split(" ") >> 띄어쓰기 단위로 요소로 포함하는 String 타입 배열 반환
+            // authorization.split(" ") [1] >> 생성된 문자열 배열에서 1 번째 객체 반환. 즉, bearer 접두사 다음 찐 토큰 부분
+        String token = authorization.split( " ")[1];
+
+        // 토큰 소멸 시간 검증
+        if (jwtUtil.isExpired(token)) {
+            log.info("JwtFilter :token expired");
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // 토큰이 유효한게 검증되면 해당 토큰을 기반으로 일시적인 세션을 하나 만들고, security context holder 라는 세션에다가 우리의 user를 일시적으로 저장시켜주면 다른 클래스에서 해당 정보를 뽑아서 권한을 확인 할 수 있게 된다
+
+        //토큰에서 username과 role 획득
+        String username = jwtUtil.getUsername(token);
+        String role = jwtUtil.getRole(token);
+
+        //userEntity를 생성하여 값 set
+            // 굳이 dto 가 아니라 userEntity 로 만드는건 앞서 CustomUserDetails 에서 entity 를 기반으로 CustomUserDetails 객체를 생성하게 했었기 때문. 쩄뜬 CustomUserDetails 객체를 만들기 위한 과정
+            // 주의 >> 비밀번호 값은 토큰에 담기지 않았었음. 그렇다고 여기서 비밀번호를 db에서 조회 매번 요청이 올때 마다 db 조회하는 꼴이 되버리기 떄문에, 여기선 찐 pw 값을 넣는다기 보다는 일시적인 password 값을 임의로 설정해서 넣어준다. 이미 인증이 되었는데 contex t hodler 에 정확한 비밀번호 입력할 필요가 굳이 없기 떄문ㄴ.
+        UserEntity userEntity = new UserEntity();
+        userEntity.setUsername(username);
+        userEntity.setPassword("temppassword"); // 임시적인 비밀번호로 초기화
+        userEntity.setRole(role);
+
+        //UserDetails에 회원 정보 객체 담기
+        CustomUserDetails customUserDetails = new CustomUserDetails(userEntity);
+
+        // UserDetails 객체를 기반으로 UsernamePasswordAuthenticationToken 토큰 생성
+        Authentication authToken = new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
+
+        //세션(SecurityContextHolder)에 사용자 등록 . 해당 user 에 대한 세션 생성
+        SecurityContextHolder.getContext().setAuthentication(authToken);
+
+        filterChain.doFilter(request, response); // 다음 필터에 reqeust , response 넘겨주면서 현재 필터를 종료함
+
+    }
+
+
+
+
+}
+
+
+
+필터 등록
+
+@EnableWebSecurity
+@Configuration
+public class SecurityConfig {
+
+
+    private final JWTUtil jwtUtil;
+
+   . ..
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http)throws Exception {
+
+	 ..  . 
+
+        //JWTFilter 등록 >> LoginFilter 앞에다가 
+        http.addFilterBefore(new JwtFilter(jwtUtil), LoginFilter.class);
+
+	. . .
+        return http.build(); // 빌더 타입으로 리턴
+    }
+}
+
+
+
+
+
+
+
