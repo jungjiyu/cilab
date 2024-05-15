@@ -242,6 +242,80 @@ principal 인터페이스
 
 --------------------------------------------------------------------------------------------------------------
 
+
+CustomUserDetails 객체의 경우 
+
+@AllArgsConstructor
+public class CustomUserDetails implements UserDetails {
+	private UserEntity userEntity;
+
+@Override
+public Collection<? extends GrantedAuthority> getAuthorities() {
+
+    Collection<GrantedAuthority> collectors = new ArrayList<>();
+    collectors.add( new GrantedAuthority() {
+        @Override
+        public String getAuthority() {
+            return "ROLE_"+userEntity.getRole();   // ROLE_USER
+        }
+    });
+
+    return collectors;
+}
+}
+
+. . .
+
+}
+
+와 같이 엔티티를 기반으로 생성된다( @AllArgsConstructor )
+그리고 내부 오버라이딩한 getAuthorities는 Collection<? extends GrantedAuthority>  타입의 값을 반환하게 되어있다.
+getAuthorities의 collectors.add 의 내부에서는 내부적으로 getAuthoritey( ) 를 오버라이드 한  인터페이스 인 GrantedAuthority의 익명객체를 arg 로 함으로써 role 하나 뽑아낼 수 있는 GrantedAuthority의 익명객체를 요소로하는 컬렉션 객체가 반환이 된다,
+
+
+실습에선 
+
+Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+Iterator<? extends GrantedAuthority> iter = authorities.iterator();
+GrantedAuthority auth = iter.next();
+String role = auth.getAuthority();
+
+이렇게 해놨는데
+
+암튼 내가 봤을떈 아래처럼 하는게 더 좋다 .
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        List<GrantedAuthority> list =( List<GrantedAuthority> )authentication.getAuthorities();
+        String auth = list.getFirst().getAuthority(); //     여러개는 List<String> roles = collection.stream().map(auth->auth.getAuthority()).collect(Collectors.toList());
+
+        
+        
+        return ResponseEntity.status(HttpStatus.OK).body("username:"+username+", role:"+auth);    
+
+     
+
+
+
+--------------------------------------------------------------------------------------------------------------
+
+SecurityContextHolder
+	: https://ohtaeg.tistory.com/8
+	: 인증된 사용자 정보인 principal 객체를  Authentication에서 관리하고 , 이 Authentication 은 securityContext 가 관리하고, Sec
+	: Authentication 객체는 AuthenticationManager 에 의해 생성되는데,  생성될때 인증된 사용자 정보인 userdetails 객체를   principal 필드에 저장하고, 생성된 Authentication 객체는 securityContext 에 저장된다. 그리고 securityContext 는 SecurityContextHolder에 의해 관리되므로 생성된 Authentication 객체는 SecurityContextHolder를 통해 접근 가능하다
+		:  SecurityContextHolder.getContext().getAuthentication() 해서 Authentication객체 받을 수 있따.
+
+
+
+username 가져오는 법
+String username = SecurityContextHolder.getContext().getAuthentication().getName();
+
+role 가져오는 법
+Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+ List<GrantedAuthority> list =( List<GrantedAuthority> )authentication.getAuthorities();
+ String auth = list.getFirst().getAuthority();
+
+--------------------------------------------------------------------------------------------------------------
 이거 왜 꼭 우리가 arg 로 넣어줘야되는지 모르겠는데 나중에 함 보기
 
 @Bean
@@ -1219,6 +1293,25 @@ public class SecurityConfig {
 
 
 
+--------------------------------------------------------------------------------------------------------------
+
+세션 정보 확인 . 특정 role 값 , id 값 같은거 뽑아내는.
+
+jwt 가 세션을 stateless 하게 관리하긴 함. 근데 jwt filter 를 통과한 순간 일시적을 ㅗ필터를 만들기 떄문에 세션에 대한 사용자 이름을 확인 가능
 
 
+SecurityContextHolder.getContext().getAuthentication().getName();
+
+
+
+Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+Iterator<? extends GrantedAuthority> iter = authorities.iterator();
+GrantedAuthority auth = iter.next();
+String role = auth.getAuthority();
+
+
+--------------------------------------------------------------------------------------------------------------
+ CORS 설정 >> 나중에.
 
