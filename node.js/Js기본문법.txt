@@ -21,6 +21,106 @@ String 문자열 타입 >
 Variable 변수 > let 혹은 constant 로 선언후 사용
 
 
+-----------------------------------------------------------------------------------------------------
+객체와 딕셔너리 (?)
+	: https://velog.io/@surim014/%EC%9B%B9%EC%9D%84-%EC%9B%80%EC%A7%81%EC%9D%B4%EB%8A%94-%EA%B7%BC%EC%9C%A1-JavaScript%EB%9E%80-%EB%AC%B4%EC%97%87%EC%9D%B8%EA%B0%80-part-7-Object-35k01xmdfp
+
+
+함수와 메서드
+	: js 에서도 객체 개념이 있기 떄문에 한 객체에 속한 function 은 메서드라 부르고 , 그 외의 function 은 함수라고 부른다.
+
+
+객체 object : 
+	: js 는 거의 모든 것이 객체
+		: 원시 타입
+			1. String
+			2. number
+			3. boolean
+			4. null
+			5. undefined
+
+		: 객체인 타입 >> 원시 타입을 제외한 모든 타입
+			: 예외적으로 boolean, number, string 원시타입의 경우 new 키워드로 정의시 객체가 된다.
+			1. 배열
+			2. 함수
+			3. 객체
+			4. 날짜
+			5. 정규표현식
+			.
+			.
+			.
+
+	: 객체의 종류
+		1. JavaScript 내장객체 Built-in Object
+			: JS 엔진이 구동되는 시점에 바로 제공되는 객체들. JS 코드 내 어디서든 사용 가능하다
+			: Global, Object, Number, Date 등등이 built-in object 인거다
+
+		2. 브라우저 내장 객체 Native Object  
+			: JavaScript 엔진을 구동하는 주체 즉 브라우저에서 빌드되는 객체들이다. 자바스크립트 자체의 내장 객체가 구성된 "후"에 브라우저 내장 객체가 구성된다 
+			(1) BOM Browser Object Model 
+			(2) DOM Document Object Model
+
+		3. 사용자 정의 객체 Host Object
+			: 사용자가 직접 정의한 개체
+			: 브라우저 내장 객체도 다 구성된 후에 구성되어진다
+
+	: 여러 속성을 하나의 변수가 저장할 수 있게 해주는 데이터 타입
+	: key(property) 와 value 의 쌍으로 이루어짐
+		: key >> propertey 라고 부른다.
+			: 문자열 타입으로 표기
+				: ' ' 없이 쓰면 자동으로 문자열로 형변환된다.
+			: property 의 나열 순서는 보장되지 않는다
+			: 중복 선언하면 나중에 선언한 프로퍼티가 먼저 선언한 프로퍼티를 덮어쓴다
+			: 프로퍼티에 값을 할당하지 않고 선언하면 자동적으로 undefined 로 초기화시킨다.
+			: 프로퍼티에 undifined 나 null 을 할당한다고해서 해당 프로퍼티가 삭제되는게 아니다. 실제로 해당 프로퍼티 자체의 삭제를 원하면 delete 키워드를 사용하여 삭제한다
+				ex ) 
+					var foo= new Object();
+					foo.name=undefined;
+					console.log(foo.name); // undefined . 이건 걍 값이 undefined 인거임
+
+					delete foo.name; // 실제로 삭제
+					console.log(foo.name); // undefined . 실제로 삭제된거임
+		: value >> 모든 타입
+
+	: 메서드 method >> 객체 내에서 정의된 function
+
+	: 생성 방법 >> 이렇게 생성하나 저렇게 생성하나 똑같은 객체 생성됨
+		1. 중괄호 표기
+			(1) 별다른 property 없이 생성 >> let 객체명 = { };
+			(2) property 와 함꼐 생성 >> let 객체명 = { "프로퍼티명1":프로퍼티값1 , "프로퍼티명2":프로퍼티값2 , ...  } ;  
+				ex ) 
+				let person = {
+					"firstName":"John",
+					"lastName":"Doe",
+					"age":50,
+					"eyeColor":"blue"
+				};
+
+ 		2. new 연산자
+			(1) 내장 객체인 Object 객체 사용하여 생성 >> let 객체명 = new Object();
+				: 이 경우 객체를 먼저 생성한 후 property 정의가 가능하다
+				ex ) 
+					let person = new Object();
+					person.firstName = "John";
+					person.lastName = "Doe";
+					person.age = 50;
+					person.eyeColor = "blue";				
+
+				
+
+	: 객체의 프로퍼티 접근 방법 >>
+		1. 대괄호 표현 사용해 접근 >> 객체명['프로퍼티명']
+			: 객체명[프로퍼티명] 하면 안되는거 주의.
+		2. 도트 연산자 사용해 접근 >> 객체명.프로퍼티명
+
+	: 객체의 프로퍼티 추가 방법 >> 그냥 새로운 프로퍼티에 대한 접근을 하고 값을 대입.
+		1. 대괄호 표현 사용해 접근 >> 객체명['새프로퍼티명'] = 값
+		2. 도트 연산자 사용해 접근 >> 객체명.새프로퍼티명 = 값
+
+	: 객체의 프로퍼티값 수정 방법 >> 접근하고 값 새로 할당
+	: 객체의 프로퍼티값 삭제 방법 >> delete 객체명.프로퍼티
+
+	: 객체 변수를 복사하면 '참조'가 복사되는거지, 객체가 복사되는게 아니다!!
 
  
 
