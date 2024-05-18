@@ -54,7 +54,7 @@ main.js 코드 분석
 	: __dirname >>  해당 js 파일이 컴퓨터에 저장되있는 경로. 
 		ex ) C:\Cilab\myGitRepo\node_js_practice 폴더에 있는 main.js 를 실행시켰을 경우 __dirname 은 "C:\Cilab\myGitRepo\node_js_practice"
 
-	: url >> 클라이언트로부터 request 들어온 경로
+	:  request.url >> 클라이언트로부터 request 들어온 경로
 		: 앞에 '/' 붙는거다!
 		ex ) http://localhost:3000/index.html 로 요청 들어왔으면 " /index.html " .
 
@@ -81,5 +81,143 @@ app.listen(3000);
 
 
 ------------------------------------------------------------------------------------------------------------
+<URL>
+
+하나의 html 파일로 사용자에 따라 다른 페이지를 반환할 수 있다
+
+URL 의 구성 >> " https://mail.naver.com/v2/folders?id=hong&page=12"
+	https >> 통신 프로토콜 중 하나.
+		:  Hyper Text Transport Protocol + Secure
+	mail.naver.com >> 도메인 네임. '호스트' 라고도 부름
+		: 호스트 >> 인터넷에 접속되어있는 각각의 컴퓨터
+
+	포트번호 >> 호스트 컴퓨터의 특정 입구
+		: 80 으로 설정했음 URL 상에서 생략 가능
+
+	v2/folders 	>> path. 호스트 컴퓨터 내부의 특정 경로.
+
+	? >> 쿼리스트링시작
+	id=hong&page=12 >> 쿼리스트링
+		: 중간ㄴ으ㅢ & >> 각 파라미터 구분
+		: id, page 같은거 >> 파라미터명
+		: = >> 파라미터와 값 바인딩
+
+
+------------------------------------------------------------------------------------------------------------
+
+<js 에서 URL 안의 값 추출하기>
+
+이건 곧 URL 을 분석, 즉 parse 한단 말이다. 
+	: 검색할 떄 nodejs url parse 로 검색
+
+
+
+네임스페이스>> 식별자의 유효 범위.
+
+
+__dirname , __filename >> node.js 에서 제공하는 파일경로 상수
+	__dirname : 현재 파일이 위치한 경로 (현재 파일명 이전 부분까지 표기)
+	__filename : __dirname + 현재 파일명
+ 
+
+모듈 >> 비슷한 기능을 가진 것끼리 그룹핑해놓은 것. 파일 .
+
+
+
+require( ) 함수 >>  Node.js 가 제공하는 메서드로 , "외부" 모듈을 "가져오는데" 사용한다.
+	: https://montoo.tistory.com/entry/NodeJS0420-require-URL
+	: https://velog.io/@sms8377/Javascript-require-%EA%B0%84%EB%8B%A8-%EB%8F%99%EC%9E%91-%EC%9B%90%EB%A6%AC-%EB%B0%8F-module.export-%EC%99%80-export%EC%9D%98-%EC%B0%A8%EC%9D%B4
+	: 자바에서 다른 패키지의 "클래스"를 "import" 하는 것처럼, js 에서는 "module" 을 "require" 한다고 표현한다.
+	: 내부 모듈을 "외부"로 내보낼 때에는 module.exports 를 사용한다.
+	: require 가능 대상
+		1. Node.js 에 내장되어있는 모듈  >> require('모듈명')
+			(1) 'http' 
+			(2) 'url' 
+			(3) 'fs'
+
+		2. 내가 만든 다른 js 파일에서 exports 한 것 >> require('해당파일의확장자를제외한경로명')
+			ex ) 현재 파일이 위치한 디렉터리에서 hehe.js 에서 exports 한 것을 받아오고 싶으면 require('./hehe'); 를 해서 받아오면 된다.
+
+	: 사용 방법 >> require 의 반환 값을 변수에 담아 그 변수를 대상으로 모듈의 property 에 접근한다
+		ex ) 
+		mimi.js 에서
+			module.exports = {
+			odd : 'this is odd',
+			even : 'this is even'  };
+		했으면 
+
+		같은 디렉터리에 위치한 uu.js 에서
+			let  foo= require('./hehe');
+			console.log(foo.odd);
+		와 같이 사용 가능하다
+
+
+콜백 >> 회신. 답신하다.
+	: 콜백함수 >> 회신되는 함수. 제어권을 가져갔다가 할 일 다 마치면 제어권을 돌려주는 함수/
+
+
+http 모듈 >> http 서버 , request , response 객체 생성 관련 기능을 담당
+	: https://inpa.tistory.com/entry/NODE-%F0%9F%93%9A-url-%EB%AA%A8%EB%93%88-http-%EB%AA%A8%EB%93%88
+	: request 객체 >> 클라이언트의 요청 내용을 담는 객체
+		: 이 객체가 없으면 클라이언트가 뭔가 데이터를 보내도 꺼내서 쓸 수 없다.
+	: response 객체 >> 클라이언트에게 응답할 내용을 담는객체
+		: 이 객체를 생성하지 않으면 응답이 없는거다. 즉., 클라이언트 측에서 출력되는 내용이 없다.
+
+	: http 모듈 get >>  let http = require('http');
+	: 웹 서버 및 request, response 객체 의 생성 >>
+		 let server = http.createServer( function( request, response ){
+			request ,response  객체를 대상으로 할 내용 작성.... 
+
+		} );
+	: 웹 서버의 실행 >> server.listen( 포트번호 );
+	: 웹 서버의 종료 >> server.close( );
+
+
+
+fs 모듈 >> File System 모듈. 파일 처리와 관련된 작업을 하는 모듈.
+	: https://inpa.tistory.com/326
+	: let fs = require('fs'); 으로 얻는다
+	: 기본적인 메서드
+		: 대부분의 메소드들이 동기/비동기로 나뉨 
+		: 비동기적 > 다른 작업을 동시해 수행 불가. 하나 끝내야 다음꺼함
+			1. fs.readFile( 파일명, [인코딩방식], [콜백함수] ) : 비동기식으로 파일 읽어들임.
+				: 콜백함수를 명시하면, 해당 파일을 다 읽어들인 다음 해당 콜백함수 실행
+
+			2. fs.writeFile( 파일명 , data , [인코딩방식], [콜백함수]  ) : 동기식으로 파일을 쓴다.
+
+		: 동기적 > 여러 작업을 동시에 . 병렬적으로 처리 
+			: Sync라는 이름이 붙어있는 메소드 >> 동기방식
+			1. readFileSync( 파일명, [인코딩방식]) : 동기식으로 파일 읽어들임
+			2. writeFileSync( 파일명 , data , [인코딩방식], [콜백함수]  ) : 비동기식으로 파일을 쓴다.
+ 
+	: append 하여 쓰기 >> fs.appendFile( 어쩌구 )
+	: Promise 객체 얻기 >> let fs_promise = fs.promises;
+		: 잊었을 까봐 추가 >> 비동기 처리를 위해 아래와 같이 then 과 catch 를 이용하여 체인처럼 연결하여 사용한다
+			promise객체명
+				.then( data => { 수행내용 .. return 값}  ).catch( err => { 수행내용 ... } )
+				.then .. 
+
+
+	: 폴더 내부의 파일 목록 가져오기 >> let list = fs.readdir('폴더경로'); // [ 'css3', 'file.js'  , /// ]
+	: 폴더 삭제 >> fs.rmdir(Path);
+	: 파일 이름 수정 >> fs.rename( '기존경로' , '새경로' , [콜백함수] );	
+	: 파일 복사 >> fs.copyFile( '기존경로' , '새경로' );		
+	: 파일 삭제 >> fs.unlink(Path, [ callback ] );
+
+
+
+url 모듈 >> request된 url 을 객체화하여 사용 가능
+	: https://inpa.tistory.com/entry/NODE-%F0%9F%93%9A-url-%EB%AA%A8%EB%93%88#url_querystring_%EB%AA%A8%EB%93%88
+	: let url = require('url');
+	: 제공 메서드
+		1. queryString
+	: URL 에서 쿼리스트링 추출하기
+		let url =  require('url');
+		let queryString = url.parse( '클라이언트가요청한URL' ,true).query; // 클라이언트가요청한URL 에서 쿼리스트링부분을 추출하여 객체로 제공
+		let val1 = queryString.파라미터명1; // 파라미터명을 속성으로 하여 접근해 사용
+
+
+------------------------------------------------------------------------------------------------------------
+
 
 
