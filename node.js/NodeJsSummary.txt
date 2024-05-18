@@ -1,0 +1,85 @@
+
+<서론>
+
+
+html 을 직접 타이핑하지 않아도 알아서 서버 쪽에서 만들어주는. 방문자들이 컨텐츠를 추가할 수 있게하는.  >> 귀찮게 반복되는 코드를 개발자가 직접 작성하지 않아도 되는  >> JavaScript 에 익숙한 개발자들이 새로 언어를 배우지 않고도 웹 페이지를 자동으로 생성하는 SSA Sever Side Application 을 만들 수 있게 하고 싶었음 . >> node.js 가 나옴
+
+
+NetScape 창시자가 JS 를 만들었고 이로 인해 웹이 사용자와 상호작용하는. 문서로 시작했던 웹이 애플리케이션으로 확장되는 혁신적인 순간. JS 는 웹 브라우져에서 거의 유일하게 사용 가능한 프로그래밍 언어
+
+구글이 2008 년 크롬에서 돌아가는 js 의 성능을 높이기 위해서 V8 엔진을 개발했고 오픈소스로 공개함. 그리고 이 엔진을 기반으로 어떤 사람이 Node.js 를 만듬. JS 가 웹 브라우져를 제어하기 위한 것이었다면 Node.js 는 js 를 이용해서 웹 브라우져가 아닌 컴퓨터 자체를 제어한다.
+
+
+Node.js 를 이용하여 JS 를 기반으로 웹 페이지를 자동으로 생성하는 Web Application 을 만들고자 한다. JS 를 단순 웹 브라우져에서만 사ㅇㅛㅇ하는게 아니라 그 밖에서도 사용할 수 있다.
+
+
+생산성의 향상을 위해 Node.js 를 사용하자.
+	: 1억개의 코드를 한번에 수정가능하게 해준다
+	: 사용자가 직접 js 파일을 만들 수 있게 해준다!!
+
+
+웹 어플리케이션 > 웹 브라우저 위에서 돌아가는 프로그램
+	: HTML 기반으로 표시됨
+
+Node.js 애플리케이션 > Node.js runtime 위에서 돌아가는 프로그램
+	: JS 기반으로 표시됨
+ 
+
+------------------------------------------------------------------------------------------------------------
+
+< node.js 로 웹서버 만들기 >
+
+
+node.js 는 Apache 와 유사하게 웹 서버로 사용될 수 있다. 웹 서버 기능을 내장하고 있기 떄문. 그러니까 Apache 웹 서버 + α 이다.
+	: apache 웹 서버와는 다르게 사용자에 따라 전송할 데이터를 생성할 수 있다.
+
+
+node.js 사용 방법
+	1. vs code 같은 에디터로 js 코드 작성
+	2. 해당 js 가 위치한 디렉터리 위치에서 프롬프트 창에서 node 풀파일명 를 입력.
+		: 여기서 node 는 명령어임
+		: 풀 파일명은 확장자까지 명시하란 말임
+	3. 웹 브라우져에서 이제 ' localhost:포트번호 ' 와 같이 접속 가능해짐
+		: 따로 five server 같은거 돌리는게 아님!
+	4. 서버 끄기 > ctrl + c
+
+
+console.log >> node 명령어로 실행시키면 f12 개발자 툴의 console 탭이 "아니라" 명령어 쓴 cmd 창에 logging 한 내용이 뜬다
+
+response.end( 어떤내용 ) >> node 명령어로 실행시키면 해당내용이 클라이언트의 화면에 랜더링해준다.
+
+
+
+main.js 코드 분석
+	: __dirname >>  해당 js 파일이 컴퓨터에 저장되있는 경로. 
+		ex ) C:\Cilab\myGitRepo\node_js_practice 폴더에 있는 main.js 를 실행시켰을 경우 __dirname 은 "C:\Cilab\myGitRepo\node_js_practice"
+
+	: url >> 클라이언트로부터 request 들어온 경로
+		: 앞에 '/' 붙는거다!
+		ex ) http://localhost:3000/index.html 로 요청 들어왔으면 " /index.html " .
+
+	: readFileSync( "경로" ) > 해당 경로의 파일을 읽어서 클라이언트화면에 출력한다
+		ex ) ...readFileSync( "C:\Cilab\myGitRepo\node_js_practice\index.html" ) 하면 사용자의 화면에 C:\Cilab\myGitRepo\node_js_practice 디렉터리의  index.html 이 클라이언트의 화면에 출력된다.
+
+var http = require('http');
+var fs = require('fs');
+var app = http.createServer(function(request,response){
+    var url = request.url;
+    if(request.url == '/'){
+      url = '/index.html';
+    }
+    if(request.url == '/favicon.ico'){
+        response.writeHead(404);
+        response.end();
+        return;
+    }
+    response.writeHead(200);
+    response.end(fs.readFileSync(__dirname + url));
+ 
+});
+app.listen(3000);
+
+
+------------------------------------------------------------------------------------------------------------
+
+
