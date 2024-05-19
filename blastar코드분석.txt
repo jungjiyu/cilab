@@ -1,1 +1,356 @@
 
+Tailwind CSS: 복잡한 CSS를 간단하게 만들어주는 CSS 프레임워크
+
+모달 modal >  사용자가 웹사이트를 사용할 때 나타나는 대화 상자. 팝업 창.
+
+
+nextjs 에서
+	baseurl : 절대경로의 시작지점
+	@어쩌구 를 포함하는 "경로" :  tsconfig.json 에서 정의한 별칭을 사용하여 경로를 간단히 표현한것
+		: ex ) import Something from '@template/PageTemplate';
+		: https://velog.io/@himprover/Next.js%EC%97%90%EC%84%9C-%EC%8D%A8%EC%84%9C-import%ED%95%98%EA%B8%B0-%EB%B3%84%EC%B9%AD-%EC%A0%88%EB%8C%80%EA%B2%BD%EB%A1%9C
+
+	@폴더 : parallel route 되는 폴더.
+
+	(.)폴더 : intercepting route 되는 폴더
+
+	괄호 폴더 : 라우트 그룹이라고 한다.  해당 폴더가 경로의 URL 경로에 포함되지 않게함
+		: https://rocketengine.tistory.com/entry/NextJS-13-Routing-Route-Groups
+	
+	대괄호폴더 :  경로 파라미터에 대응하는 폴더
+		: 동적 Routing을 구현한것. 
+	
+	라우팅으로 모달 구현하기 
+		(1) parallel route 병렬 라우트 : 같은 라우트 안에 여러개의 page.js 를 랜더링하는 방식.
+			:  컴포넌트가 각각 랜더링되기 때문에 각 컴포넌트 별로 로딩/에러 처리에 유리하는 장점이 있습니다. 
+			: 모든 컴포넌트가 로드되야 사용자에게 보여지는 것이 아니라 각 컴포넌트가 로드될 때마다 화면에 출력됨으로 빠르게 보여줄 수 있음
+			: 하는 방법 >> '@폴더명' 으로  폴더 생성 후 내부에 page.js 혹은 page.tsx 을 작성. 그리고 layout.js(tsx) 에서 폴더명을 파라미터로 하여 받아서 내부적으로 쓴다. 
+				ex ) @modal 폴더의 page.js 내용을 불러오기 위해 layout.tsx 에서 
+				const layout = ({ children, modal }: { children: React.ReactNode; modal: React.ReactNode }) => {
+				  return (
+				    <> {children} {modal} </>
+				  );
+				};
+
+		(2) intercepting route 라우트 가로채기:  현재 페이지를 유지하면서 다른 라우트의 레이아웃을 표시할 때(include) 사용
+			: https://rocketengine.tistory.com/entry/NextJS-13-Routing-Intercepting-Routes%EB%9D%BC%EC%9A%B0%ED%8A%B8-%EA%B0%80%EB%A1%9C%EC%B1%84%EA%B8%B0
+			: 기존 경로를 가로챈다. 그러니까 url 창에 표시되는 문자열이 변경된다는말이다.
+			: 하는 법 >> '(.)폴더명' 혹은 '(..)폴더명' 으로 폴더 생성
+				: 자식 라우트는 가로챌 수 없다
+				: (.)폴더명 >> 같은수준의. 형제 라우트를 표시
+				: (..)폴더명 >> 부모 라우트를 표시
+				: (...)폴더명 >> 루트 라우트를 표시
+
+	NextAuth.js 
+		: Next.js가 인증해준 Auth관련 라이브러리.
+		(0) SessionProvider : nextAuth.js 를 사용하고자 하는 컴포넌트를 감싸준다.보통 루트 컴포넌트에 넣어 전역적으로 쓰이게 한다.
+			: 생성된 session 을  React Context에 넣어 앱 전체에 배포하여 , session 를 따로 prop 으로 전달하지 않아도 사용할 수 있게 해준다.
+
+		(1) useSession : 현재 클라이언트 세션의 정보를 가져올 수 있도록 도와줌
+			: 로그인 여부를 알수있는 가장 간단한 방법
+			import { useSession } from "next-auth/react";
+		 	const { data:  session, status, update } = useSession( )
+				: status 변수 > 현재 상태를나타냄.
+					: "loading" | "authenticated" | "unauthenticated" 값을 가짐
+						: "authenticated"  >> 로그인 된 상태.
+
+				: session 변수 > 세션 객체. 이 객체에서 자잘한 내용들 다 뽑아 쓸 수 있다
+					ex ) session.user.name
+
+
+	리엑트쿼리 reactQuery
+		: https://tech.kakaopay.com/post/react-query-1/
+		: 애플리케이션에서 서버의 상태를 불러오고, 캐싱하며, 지속적으로 동기화하고 업데이트 하는 작업을 도와주는 라이브러리
+		: 주의 >> 쿼리스트링이랑 관련 없다
+		: QueryClientProvider >> reactQuery 를 사용하고자 하는 컴포넌트를 감싸준다.보통 루트 컴포넌트에 넣어 전역적으로 쓰이게 한다.
+			: 생성된 queryClient 를  React Context에 넣어 앱 전체에 배포하여 , queryClient 를 따로 prop 으로 전달하지 않아도 사용할 수 있게 해준다.
+
+		: QueryClient >> QueryClientProvider 의 props 로 들어간다. 
+			: QueryCache 를 포함하며, 캐시를 활용하기 위해 사용한다
+				:QueryCache : js 객체.
+					(1) QueryHash : queryKey 를 stringify 한 값으로, QueryCache 의 key 이다.
+						queryKey :  쿼리의 고유한 key를 바탕으로 해당 쿼리에 대한 캐싱을 관리
+					(2) Query : Query의 모든 정보들이 들어있다. QueryeChache 의 value 이다
+				: 캐시를 활용하는 상황들
+					: https://velog.io/@boyeon_jeong/React-query-%EC%BA%90%EC%8B%9C
+			: 생성방법 >> const queryClient = new QueryClient(); 
+				: QueryClientProvider 의 props 로 넣기 위해 생성한는거다
+
+			: 활용 방법 >> const queryClient = useQueryClinet( ) ;
+				: 앞서 저장했던 queryClient 를 꺼내서 쓰는거다
+
+
+	ThemeProvider : context api 기반 라이브러리로,  전역적으로(모든 리액트 컴포넌트에게) 스타일을 적용/변경 하는 것을 쉽게 해줌
+
+	Recoil : 전역적인 상태관리 라이브러리
+		: state 값들을 props 로 계속 타고들어가지 않고도 context 로 바로 접근할 수 있게 해준다
+		: RecoilRoot >> 사용 대상 컴포넌트를 감싼다. 보통 루트 컴포넌트에 넣어 전역적으로 쓰이게 한다.
+		: 종류	
+			: Atom >> 데이터 상태의 단위
+				: 업데이트와 구독이 가능	
+				: atom 의 값이 바뀌면 구독하고 있는 장소는 모두 리렌더링된다.
+				: 선언 
+					export default atom({
+					key: '키명',
+					default: 시작값,
+					});
+
+					: 이떄 키명은 애플리케이션 전체적으로 고유한 식별자여아된다
+
+			: selector >> 비동기처리, Atom 보다 복잡한 로직을 구현
+
+		: 선언한 Atom , selector 활용 
+			선언하기 >>  const [count, setCount] = useRecoilState( Atom명 || selector명 );
+				: useState 사용법과 유사.
+				: count 로 atom. selector 의 값을 쓸 수 있고, setCount 로 해당 값을 업데이트 시킬 수 있다.
+		
+	
+	비동기 Asynchronus == 동시적이지 않음 == 순차적 
+	동기 synchronus == 동시적 == 병렬적  
+
+	promise, async, await 
+		: async 키워드 >> 해당 함수를 비동기화함. async 와 함께 선언된 함수는 항상 프라미스 객체를 반환함.( 다른 값을 반환하게 되어있더라도 프라미스 객체로 wrap 해서 내보냄)
+		: await 키워드 >> async 함수 안에서만 사용 가능.  Promise가 다 처리될 때까지 기다리게함
+
+
+	AJAX Asynchronus JavaScript And Xml : 자바스크립트 기반의 비동기적 통신(request, response ) 관련 라이브러리
+
+	Fetch Api : 자바스크립트 내장 라이브러리로, api 연동을 위해 사용.
+		:  fetch( "url문자열' ).then(response => console.log(response)) 이 fetch api 쓴거다
+
+	AXIOS : Promise Api 를 활용하는 HTTP 비동기 통신 라이브러리
+		: backend, frontend 통신을 쉽게 하기 위해 Ajax와 더불어 사용
+		: 자바스크립트에는 fetch api 가 있지만, 프레임워크에서 ajax를 구현할때는 axios를 쓴다
+		: 다른 서버로 request 를 하고, 그 서버에게 받은 response 를 이용한 작업한 결과물을 클라이언트에게 respones 하게 해준다.
+		:  구성 
+		axios({
+ 		 url: 'URL문자열', 
+ 		 method: 'get',
+		header: { 메타데이터 ,, .. } ,
+		responseType: 'json',
+ 		 data: { 
+ 		   키명1: 값1 , ... 
+  		}
+		}). then ( 함수  ).then( 함수 ).. ; 
+			
+			: axios({  다른서버로 내가 request 하는데 사용될 설정 사항})  >> 타 서버에게 respones 하고, 그 결과를 promise 객체로 반환한다
+				: data >> 인자로 보낼 데이터
+				: method >> get post 같은 통신 방식
+				: url >> request 할 (서버) 주소
+				: header >> request header 에 실을 내용 적음
+				: responseType >> 타 서버에게 내가 response 받을 데이터의 형식 결정
+					: 기본 json
+
+			: then( 함수 ) >> 서버에게 받은 반환 결과를 이용한 작업수행.
+
+
+		: Axios 단축 메소드
+			axios.get( 'URL문자열'  , [ request body에실을메시지] )  >> 해당 url 로 get 방식 request 한다.
+				
+			axios.post( 'URL문자열' , [ request body에실을메시지] ) 
+
+			등등 있다.
+
+
+
+	옵셔널 체이닝 Optional Chaining
+		: js 제공 기능으로, 객체의 속성을 읽을 때, 해당 객체나 속성이 null이나 undefined일 경우에 에러를 발생시키지 않고 undefined를 반환하도록 한다.
+		: 표현 방법 >> 객체명?.속성명
+			ex ) user?.data >> user 객체에 data 속성값이 있는 경우 해당 값을 반환하고, user 객체 자체가 null 이거나 data 속성이 없거나 뭐 그런 상황에선 별도의 에러 발생 없이 undifined 를 반환시킴
+		
+
+여기서 user?.data는 다음과 같은 의미를 가집니다:
+
+user: axios.get 요청의 결과로 반환된 객체입니다.
+?.: 옵셔널 체이닝 연산자로, user 객체가 존재하지 않거나 null이면, data 속성에 접근하지 않고 undefined를 반환합니다.
+data: axios.get 요청으로부터 받은 응답 객체 내의 data 속성을 나타냅니다. 이 속성은 서버로부터 받은 실제 데이터를 포함하고 있습니다.
+
+
+
+	usePathName( )  : 쿼리스트링 부분을 제외한 현재 url 을 확인할 수 있는 훅
+		: URL -> `/dashboard?search=my-project` 이면 '/dashboard' 부분.
+	
+	useEffect( 함수, 변경감지대상 ) : 대상의변경이 일어나면 arg 의 함수를 실행시키는 훅
+ 
+--------------------------------------------------------------------------------------------------------------
+
+
+
+<청사진 분석>
+
+	(1)스택
+		0. turbo-repo (monorepo)	
+			: Turborepo 란 : JS 나 TypeScript 코드에 최적화된 빌드 시스템
+			: Mono Repo  Monolithic Repositories : 하나의 (깃허브)리포지토리에 여러개의 프로젝트코드를 저장해둔것
+				: 하나의 리포지토리에 하나의 프로젝트가 들어있는건 Multi-repo. Poly repo 라고 한다.
+
+		1. next.js 
+		2. typescript : typescript : JS 에 타입을 부여한 언어. JS 의 확장판.
+		3. prisma :  Node.js와 TypeScript를 위한 오픈소스 ORM. . SQL문법의 직접적 사용없이 데이터베이스에 접근할 수 있게 해주는 도구.. JPA 같은거다.
+		4. planet-scale SQL
+			: Planetscale  >>  MySQL과 호환(compatible)되는 서버리스s(서버를 내가 유지관리 및 유지보수할 필요가 없음)  데이터베이스 
+				:  MySQL을 쓰는게 아니라 MySQL과 호환되는 Vitess를 데이터베이스로 사용한다.
+					: Vitess  > MySQL을 좀 더 쉽게 스케일링할 수 있도록 하는 데이터베이스 클러스터링 시스템
+		5. firebase cloud messaging FCM >>  Google의 Firebase 플랫폼에서 제공하는 메시징 서비스로, 서버에서 클라이언트 앱으로 메시지를 안정적으로 전달할 수 있는 방법을 제공하는 툴
+		6. blackblaze B2 object storage 
+			: blackblaze >> 백업 전문 클라우드 스토리지이다
+			: B2 Cloud Storage >> blackblaze 에서 제공하는 아마존의 S3과 비슷한 오브젝트 스토리지 서비스.
+
+
+
+	(2)기능
+		1. post 기능
+		******: 이미지. 영상. post 생성 가능
+		******:: post 저장가능
+		******:: like , dislike 가능
+
+	******:2. comment 기능
+		3. profile 기능
+			: verifed 뱃지 표시
+		******:: 수정가능
+			: 이름 랜덤 추천가능
+		4. 라이브 스트리밍 가능
+
+	(3)라이브러리
+		clerk : authenticate 용
+		swiper.js : 터치 기반 compoent 작동
+		react HLS player : 비디오 재생 기능
+		react hot toast : toast 메시지 기능 
+			: toast 메시지 : 사용자에게  잠깐 보여졌다 알아서 사라지는 UI 요소.
+		react query : 데이터 fetch 용
+		pusher js : 실시간 웹소켓 라이브러리
+			: 주로 개인/단체 실시간 채팅위해 사용
+			: https://www.velotio.com/engineering-blog/scalable-real-time-communication-with-pusher
+		razorpay : 결제용
+
+
+	(3) 구조 (monorepo)
+		: post 업로드
+			1. 클라이언트가 이미지/비디오업로드 요청
+			2. blackblaze b2 object storage 에 해당 파일 저장됨
+			3. blackblaze b2 object storage 가 업로드된 게시물의 URL 반환
+			4. client 는 받은 URL 을 db로 보냄
+			5. db에 URL 이 저장됨.
+
+		: 실시간 push 알림
+			1. 클라이언트가 이벤트 발생시킴(채팅 . post 같은거)
+			2. pusher.js 가 이를 감지
+			3. firebase messaging 을 통해 그 채널 구독자(?) 에게 알림 전송
+
+
+
+
+
+
+
+--------------------------------------------------------------------------------------------------------------
+
+
+프로젝트 구조
+
+BLASTR-MAIN
+	▼ .idea
+	▼ .next
+	▼ .vscode
+	▼ app : App router 의 관리 대상 파일 저장 폴더. 라우팅용 폴더.
+		: Routing이란) 브라우저 경로에 따라 다른 화면을 보여주는 것
+		: Next.js 의 App router가 app 폴더 내의 page.tsx (page.js)를 라우트 정의 파일로 판단하여 그에 맞는 작업을 실행해준다.
+		: 오직 라우팅용으로만 사용해라.
+
+		▼ (chats)
+		▼ (communites)
+		▼ [tag]
+		▼ @modal
+			: https://velog.io/@cooljp95/Next.js-%EB%9D%BC%EC%9A%B0%ED%8C%85%EC%9C%BC%EB%A1%9C-%EB%AA%A8%EB%8B%AC-%EA%B5%AC%ED%98%84%ED%95%98%EA%B8%B0
+
+		▼ api
+		▼ explore
+		▼ home
+		▼ notifications
+		▼ post
+		▼ preview
+		▼ saves
+		▼ setup-profile
+		▼ signin
+		▼ signup
+		▼ user-not-found
+		▷ global.css : layout.css 에서 import 되어 전역적으로 적용되는 css
+		▷ layout.tsx : 루트레이아웃. 공통적으로 표시할 뼈대를 정의
+			: props.children >>  RootLayout을 사용하는 자식 컴포넌트들의 컨텐츠 표시
+			: props.modal >> 모달 창.팝업창이 있을경우 렌더링됨.
+			: AllProviders , RenderPages >> 루트 레이아웃의 children 을 받는다.
+
+
+		▷ page.tsx : 루트 경로에서 표시할 컨텐츠 정의. 
+			: 세션 객체 로딩 중에는 로딩중 페이지 같은걸 return 함. 띄움. 
+			: 세션 객체의 상태변화를 감지하여
+				(1) "atheticated" 인 상태면 >> "/home" 즉 메인페이지로 리디렉션
+				(2) "atheticated" 아닌 상태면 >> "/signin" 즉 로그인페이지로 리디렉션
+
+
+	▼ components
+		: 좀 전국구다. 이 곳에는 여러 페이지에서 공통으로 사용할 수 있는 공통 컴포넌트를 모아둔다. 
+		: 가령 표준으로 곳곳에서 사용되는 Button이나 Loading 컴포넌트 같은걸 여기다 넣어두고 그때그때 @/components/Loading 이런 식으로 불러와서 쓴다.
+
+		▼ skeletons : 
+		▼ ui : 디자인정의
+		▷ allProviders.tsx : 루트레이아웃의 children 을 받아서 해당 자식 컴포넌트가 allProviders.tsx 에서 등록된 session, queryClient, themeProvider, recoilroot, toaster 등을 ( 따로 props 로 받지 않아도 ) context 에서 활용할 수 있게 해준다.
+		▷ renderPages.tsx : 페이지 레이아웃을 관리하고, User 인터페이스는 사용자 데이터의 타입을 정의.
+			: pathname > request된 경로 get.
+			: headerLessRoutes > 헤더 , 그러니까 네비게이션바 같은거 필요없는 경로 정의 
+			: protectedRoutes > 권한 있어야, 그러니까 로그인 된 상태여야 접근 가능한 경로 정의
+			: footerLessRouteRegex > 푸터 필요없는 경로를 구하는 정규표현식정의
+			: isFooterLessRoute >> 현재경로가 푸터 필요없는 경로인지 정규표현식을 이용하여 구함
+				: pathname.match(footerLessRouteRegex);
+
+			: isHeaderLessPathName >> request된 경로가 header 을 포함해야하는 경로인지의 여부구함
+				: headerLessRoutes.includes(pathname);
+
+			: protectedRoutes.includes(pathname) && status === "unauthenticated" >> 별도의 권한을 필요로 하는 경로를 요청하면서도 로그인이 안된 상태인지 검사. 만약에 맞다면 signin 즉 로그인 페이지로 리디렉션시킴.
+			: fetchUser >> 
+			: useEffect >> session 객체의 user 객체값이 수정될 떄마다 
+			
+	▼ lib : 외부라이브러리 넣어두는 폴더
+	▼ node_modules
+	▼ prisma
+	▼ public : 정적 파일 저장 폴더
+	▼ state : 페이지 곳곳에서 사용될 state들을 모아두는 곳
+		▼ atom : recoil 라이브러리의 atom들을 모아둔 곳
+			: atom 들로 전역에서 상태를 context 기반으로 쉽게 get, update 가능하다.
+			▷ userState.ts : 유저의 상태 저장하는 틀 선언
+
+
+	▼ utils :  곳곳에서 사용되는 유틸성 함수들을 넣어서 관리
+	▷ components.json
+		: Blabstr 프로젝트의 UI 설정을 정의. 
+		: "$schema": JSON 파일의 구조를 정의
+		: "rsc": React Server Components를 사용할지 여부. ( true ==사용)
+		: "tsx": TypeScript의 JSX 문법을 사용할지 여부.
+		: "tailwind": Tailwind CSS 설정
+		: "aliases": 프로젝트 내에서 사용할 경로 별칭을 설정
+			ex )  "aliases": { "utils": "@/lib/utils" }
+				: utils 란 변수명은  lib/utils 디렉토리를 가리킴
+
+
+	▷package.json
+		: Node.js 프로젝트에서 사용되는 파일로, 프로젝트의 이름, 버전, 설명, 작성자, 라이센스, 프로젝트 실행에 필요한 의존성 목록을 포함.  스프링부트의 build.gradle 이랑 비슷.
+		: 개발자가 직접 만드는 것. 
+
+	▷ package-lock.json 
+		:  package.json에 의해 생성된 dependency 트리에 대한 정보를 가짐. npm 패키지 매니저에서 사용되며, 프로젝트 개발당시 사용됬던 패키지의 버전을 추적하게 해줌.
+		: 이 파일은 npm install을 실행할 때 자동으로 생성됨. ( 내가 만든게 아님 )
+
+
+	▷tailwind.config.ts : tailwind의 설정 파일
+		: content >> tailwind 가 쓰이는(쓸수있는) 파일경로
+
+	▷tsconfig.json : 타입스크립트를 자바스크립트로 변환 시키는 컴파일 설정을 한꺼번에 정의 해놓는 파일
+		: "paths">> 사용할 경로 별칭을 여기서 정의
+			: paths":{"@별칭명/*":["경로/*"]}
+			ex )   "paths":{ "@profileAPI/*" : ["./src/ core/apis/profile/*"] , }  설정한 경우 프로젝트에서 ./src/ core/apis/profile/hehe 경로의 hihi.js 파일은 @profileAPI/hehe 의 경로에 있는 것.
+
+    
+"path"에 원하는 별칭과 경로를 입력해주면 끝난다.
+이제 core/apis/profile내의 모든 파일들은 @profileAPI라는 별칭으로 접근이 가능하다		: include >> 프로젝트에서 컴파일할 파일들의 목록을 지정
+		: https://inpa.tistory.com/entry/TS-%F0%9F%93%98-%ED%83%80%EC%9E%85%EC%8A%A4%ED%81%AC%EB%A6%BD%ED%8A%B8-tsconfigjson-%EC%84%A4%EC%A0%95%ED%95%98%EA%B8%B0-%EC%B4%9D%EC%A0%95%EB%A6%AC
+
