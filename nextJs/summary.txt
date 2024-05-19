@@ -1,0 +1,449 @@
+Full Stack >> backend (expressJs) + frontend ( react )  
+Frameworkk >> 기본뼈대 제공
+
+Server Side Rendering 지원 >>완성된 페이지를 사용자에게 전달함으로써 속도가 빠르고 , js 가 지원되지 않는 환경에서도 보여질 수 있게 함.
+	: react 같은건 js 기반 애플리케이션은 다운 후에 브라우저에서 js 가 실행되어야 화면에 나타나는데 . 즉 CSR CLient Side Redering 으로 JS 가 동작하지 않는 환경에서는 화면이 표시되지 않는 단점 발생. 그리고 js 가 다운되어지고 실행되어지기 전까지는 화면에 보여지지 않음
+
+
+--------------------------------------------------------------------------------------------------------------
+
+일단 node.js 설치
+
+
+
+13 버전 부터 page router --> app router 가 도입됬는데 ㅈㄴ 좋다고 한다.
+
+
+프로젝트 만들기 >> vs code 터미널 창에서 
+	1. npx create-next-app@latest . >> 최신버전으로 현재 위치에 프로젝트 생성
+		: npx >> node 로 만들어진 프로그램을 설치 없이 바로 실행할 수 있는 명령어 
+			: 처음에는 이 명령어가 실행안됬었는데 원인 >> node.js 설치했는데도 npx 라는게 따로 깔리지가 않았음 .
+			: https://devscb.tistory.com/71
+			:https://cafe.naver.com/hacosa/323787?art=ZXh0ZXJuYWwtc2VydmljZS1uYXZlci1zZWFyY2gtY2FmZS1wcg.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjYWZlVHlwZSI6IkNBRkVfVVJMIiwiY2FmZVVybCI6ImhhY29zYSIsImFydGljbGVJZCI6MzIzNzg3LCJpc3N1ZWRBdCI6MTcxNjAyNDM0MzE4Nn0.5w5NH9V17jcwKeGuLTF6GsL_38asxw1jQr2Wy18qtnM
+
+		: . == 현재위치
+		: latest == 최신버전
+		
+	2. Ok to proceed? (y) >>  y
+	
+	3. 옵션 설정 
+ Would you like to use TypeScript? >> "No" : 우리는 js 기반
+√ Would you like to use ESLint? ...>> "Yes"
+√ Would you like to use Tailwind CSS? ..>> "Yes"
+√ Would you like to use `src/` directory? > " Yes"
+√ Would you like to use App Router? (recommended)  > 반드시 "Yes"
+√ Would you like to customize the default import alias (@/*)? >> "No"
+
+
+	4. 이제 만들어짐.
+
+프로그램 실행하기 > 터미널 창에 npm run dev
+	: 기본적으로 3000번 포트서 실행됨.
+
+프로그램 종료하기 > ctrl + c
+
+프로그램 빌드하기. 배포판 만들기 > npm run build
+	: 프로젝트 내부의 .next 폴더에 프로젝트의 배포판이 저장된다
+	: 배포판을 실행해보면 그냥 run dev 했을 떄랑 겉보기엔 차이가 없어보이지만 , f12 network 에서 서버에서 전송된 용량을 보면 확연히 더 용량이 작음을 알 수 있따. 
+
+프로그램 배포판을 실행하기. > npm run start 
+	: 배포판이 실행된다.
+	
+
+
+--------------------------------------------------------------------------------------------------------------
+
+프로젝트 구조
+
+프로젝트폴더
+	▶ .next : 사용자에게 서비스되는 내용이 저장되는 폴더
+	▼public : 이미지와 같은 정적 파일 저장. 불러올떄는 따로 public 을 명시하지 않고 "/내부폴더명/ .. 확장자를포함한파일명"
+	▼src/app
+		▶ globals.css : rootlayout 에서 import 되게 되어있기 때문에 매 페이지에 공통적으로 적용시키고 싶은 스타일은 여기 정의.
+		▶ layout.js : 프로젝트의 전체적인 뼈대 역할 . <head> 와 <body> 를 포함.
+			: 페이지마다 공통적으로 표시할 내용은 레이아웃에 표시하는게 좋음.
+			: 구성
+				(1) 제목과 같은 부가적인 요소 설정하는 부분
+				export const metadata = {
+ 					 title: " ... ",
+ 					 description: ". .. .",
+				};
+
+				(2) page.js을 include 하는 {children} 과 , 페이지마다 공통적으로 표시할 내용을 담고 있느 부분.
+				: 주의 >>  루트 레이아웃은 반드시 html, body 태그가 있어야한다. ( 모든 페이지에 공유되어서 )
+				export default function RootLayout({ children }) {
+  				return (
+   				 <html>
+   				   <body>{children}</body>
+   				 </html>
+ 				 );
+				}
+
+
+
+		▶ page.js : 이 페이지의 반환 값이 layout.js 의 children 으로 들어감 . 즉, 주요 컨텐츠.
+			: 항상 subtree 의 최하위계층.
+			: 구성
+				export default function 어쩌고( ){ 
+				 . . . 
+		
+				} 
+				: 솔직히 함수명은 어떻게 하든 상관없음. 눈치껏.
+
+		▶ global.css : layout.js 와 page.js 에서 import 되고 있는 css 파일
+
+	▶ package.json : 
+		: node.js 기반이라 "scripts" 내부에 유지보수하기 위한 설정들을 박아둔다
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  }
+
+			: "dev" >> npm run dev 명령어를 치면 next dev 라는 명렁어가 실행되는거다
+			: "budld" >> 실서버를 위한 배포판에 사용하는 명령어
+			: "start" >> 배포판을 서비스하는 명령어
+
+--------------------------------------------------------------------------------------------------------------
+
+라우팅 routing
+	: URL 뒤에 붙는 path 부분에 따라서 어떤 것을 보여줄 것인가 결정하는 것
+
+ 접속 가능 : Routable
+
+Next.js 가 돌아가는 방식
+	0 .request 들어옴
+	1. src/app 내부에서 request 된 path 에 대응하는 디렉터리를 찾음.
+	2. "해당 디렉터리 내부"에서 page.js 파일이 있나 찾음
+	3. "해당 디렉터리 내부"에서 layout.js 파일이 있나 찾음
+	3.5 if  해당 디렉터리 내부에 layout.js 파일이 없다면 >> 가장 가까운 조상 디렉터리의 layout.js 의 { children } 부분에 표시
+	3.5  if  해당 디렉터리 내부에 layout.js 파일이 있다면 >> 그 파일의 {children} 부분에 표시 
+
+--------------------------------------------------------------------------------------------------------------
+
+
+리액트
+
+
+element 엘리먼트 : 애플리케이션을 구성하는 가장 작은 단위
+	: https://www.snugarchive.com/blog/react-jsx-and-elements/
+	: 그냥 HTML 코드 한줄이 할당된 const 변수
+	: 선언방법 >> 어떤 방법을 사용하든 똑같은 거 만들어진다
+		(1) JSX 사용 : const 엘리먼트명 = <태그명 속성명="값" .. > innerHTML내용</태그명>
+			JSX JavaScriptXml . >>  자바스크립트(JavaScript) 코드 안에서 바로 HTML을 작성할 수 있도록 도와주는 리액트의 문법. 완전히 HTML 의 형식은 아님.
+			규칙1. 자바스크립트 표현식, 변수를 HTML태그 부분 혹은 내부에 쓸 때 중괄호 "히니"를 내부에 표현한다.
+				: react에서는 JSX를 javascript로 변환하기 때문에 javascript문법을 사용하기 위해서는 따로 mark를 해주어야 한다. 그것이 바로 { }인 것
+
+				ex1 ) 
+					function sayHello() {
+ 					 return `Hello!`
+					}
+
+					const element = (
+ 					 <h1>
+   					 Hello, {sayHello( )}! // 중괄호 사용
+ 					 </h1>
+					)
+
+				ex2 )
+					const style = {
+ 					 backgroundColor: 'blue',
+  					fontSize: '1.25rem'
+					}
+					const element = (
+  					<h1 style={style}>Hello, world!</h1>
+					)
+	
+
+				참고 >> 중괄호 "2개"는 별도의 표현법이 아니라 걍 변수로 썡 "객체" 를 넣은 것이다.
+					ex> 
+					<div
+    					    	style={{
+    					        	backgroundColor : 'black',
+           					  }}
+        					 >
+        					 hehehehe
+         					</div>
+
+					는
+						const style1={
+						backgroundColor: black
+						}
+
+    	         				<div style={style1}>
+               					  hehehehe 
+               					</div>
+         					와 동일
+					: https://minjoo-space.tistory.com/36
+
+			규칙2. JSX에서 HTML 태그를 반환할 때는 반드시 HTML 태그를 묶어주는 하나의 부모 태그가 있어야한다. 꼭 <div> 같은 실제하는 태그가 아니라 아예 빈 태그를 사용하여도된다
+				ex 1) 
+					return (
+ 					 <>
+  					  <h1>Hello, world!</h1>
+  					  <p>My name is Apple.</p>
+  					</>
+					)
+
+				ex 2 ) 
+					return (
+ 					 <div>
+  					  <h1>Hello, world!</h1>
+  					  <p>My name is Apple.</p>
+  					</div>
+					)
+
+			규칙3.  JSX 문법에서는 class를 사용하지 않고 대신 className을 사용해 클래스명을 추가. 클래스 여러개 작성시 띄어쓰기로 구분.
+
+		(2) JSX 미사용: React.createElement( "태그명", { 속성명:값}, innerHTML내용 )
+
+component >> 웹 페이지의 조각.
+	: https://www.snugarchive.com/blog/react-components-and-props/
+
+	: 여러개의 compoent 롤 조합하여 웹 페이지가 구성된다.
+	: 그냥 함수가 할당된 const 변수
+	: 선언방법 >> 어떻게 하나 만들어지는건 똑같다
+	******: 주의  ) 컴포넌트명은 "필수적"으로 대문자로 시작한다.
+		(1) 클래스 기반
+			:  받ㄴ드시 component 를 상속받고 render() 메서드를 구현해야된다.
+			import React from 'react';
+			export default class 컴포넌트명 extends React.component {
+ 			 render() {
+ 			   return  .. HTML코드 ... ;
+  			}
+			}
+
+	******(2) 함수 기반  << 간단하여 좋다.
+			export default function 컴포넌트명( ) {
+  			return (
+ 			  	. . . HTML코드 .. 
+ 			  	  );
+ 			  	}
+	
+	: 선언한 컴포넌트 사용방법 >> 
+		: (다른 파일에서) import 컴포넌트명 from '해당컴포넌트가들어있는파일경로' ; 한 후 <컴포넌트명/> 을 하면 해당 부분에 function 의 return 값이 들어간 것처럼 작동한다.
+
+
+Props >> 상위 컴포넌트에서 하위 컴포넌트로 프로퍼티를 전달해주는 "객체"
+	: 프로퍼티를 전달하는거라 Prop(ertie)s 인거다.
+	: 부모 컴포넌트에서 넘겨받을때, 자식 컴포넌트에서는 'props.속성명' 으로 접근할 수 있다
+		ex )
+		부모에서
+			function App() {
+ 			 return (
+  			  <div>
+  			    <Header />
+   			   <Main name="갓대희"/>
+   			  <Footer />
+    			</div>
+ 			 );
+			}
+
+		이었으면 자식에선
+			function Main(props) {
+  		  return (
+  		      <div>
+     		       <main>
+      		          <h1>안녕하세요. {props.name} 입니다.</h1>
+      		      </main>
+       		 </div>
+   		 );
+		}
+
+	: props 의 구조분해 할당 
+		: https://dalsong-00.tistory.com/13
+						
+	: 자식 컴포넌트에서 props는 읽기 전용 이다. 함수 컴포넌트, 클래스 컴포넌트 모두 컴포넌트의 자체 props를 수정할 수 없다
+	:  부모 컴포넌트의 props를 변경하면, 해당 props를 사용하고 있던 자식 컴포넌트는 리렌더링 된다
+	
+
+
+useParams : 요청URL 의 쿼리스트링의 param 들을 사용가능하게 해줌
+	: 이거 client componet 에서 사용 가능하다.
+	: 쓰는 법
+		1. 불러오기 >> import { useParams } from 'next/navigation';
+		2. 선언하기 >>  const params = useParams( );
+		3. 뽑아내서 활용하기 >> params.파라미터명 해서 값을 뽑아내 사용.
+
+
+state >> 컴포넌트의 내부에서 변경 가능한 데이터를 다루기 위해 사용하는 객체
+	: https://velog.io/@hamham/%EB%A6%AC%EC%95%A1%ED%8A%B8%EC%97%90%EC%84%9C-state%EB%A5%BC-%EC%82%AC%EC%9A%A9%ED%95%98%EB%8A%94-%EC%9D%B4%EC%9C%A0
+	: state는 간단하게 말해서 변수이다. 하지만 const, let 등으로 선언한 변수와 다르게 값이 변하면 관련 있는 컴포넌트들이 재렌더링되어 화면이 바뀐다
+	:즉 유동적인 변수를 사용할 때 화면에 그려지는 변수도 정상적으로 변경되길 원한다면 사용한다.
+	: 사용방법
+		1. import { useState } from 'react';
+		2. useState()를 선언 >> const [ 변수명, set변수명 ] = useState( 초기값 );
+			: 초깃값으로는 '' 혹은 [ ] 혹은 0 같은게 들어갈 수 있다. 해당 변수의 타입에 따라 눈치껏 써라.
+			: 변수명 == 현재 상태값
+			: set변수명 == 해당 변수를 업데이트하는 함수
+			: ex ) const [title, setTitle] = useState( '' );
+
+
+		3. 변수값을 변경할 때는 set변수명( 변수가지고 뭐 하는 코드 )  를 사용하여 update 하며 , 변수를 표시할 땐 걍 일반적인 변수처럼 사용하면 된다
+	: ex ) 
+import { useState } from 'react';
+
+const Counter = () => {
+  const [count, setCount] = useState(0);
+  console.log(count);
+
+  const plus = () => {
+    setCount(count + 1);
+  }
+  const minus = () => {
+    setCount(count - 1);
+  }
+  
+  return (
+    <div className='container'>
+      <h2 className='int'>{ count }</h2>
+      <button className='plus' onClick={plus}>+</button>
+      <button className='minus' onClick={minus}>-</button>
+    </div>
+  )
+}
+
+export default Counter;
+
+--------------------------------------------------------------------------------------------------------------
+
+url 뒤의 id값( ex ) path/2 에서 2 가 id 값) 받는 법
+	>> path/[id] 라는 폴더 밑의 page.js 를 아래와 같이 구성
+
+export default function sub(props) {
+    return (
+      <>
+     <p>this is read[id]: {props.params.id}</p>
+     </>
+    );
+  }
+  
+--------------------------------------------------------------------------------------------------------------
+
+<Link> 와 <a> 태그:	<Link> 를 써라.
+	: <a> 는 Layer 의 내용을 매번 다시 다운로드 받는 반면 <Link> 는 한번 방문했던 Layer 는 저장해두었다가 또 방문하면 따로 서버와 통신하지 않고 저장해두었던거 바로 보여준다. 
+
+--------------------------------------------------------------------------------------------------------------
+
+서버 재실행 했는데도 이유 모를 에러 > .next 폴더를 걍 삭제하고 서버 재실행
+
+--------------------------------------------------------------------------------------------------------------
+
+fetch('URL주소') >> API 호출이 성공했을 경우에는 응답(response) 객체를 resolve하고, 실패했을 경우에는 예외(error) 객체를 reject 하는 Promise 타입의 객체를 반환.
+	: 이때 URL 주소를 백틱을 이용해 변수 삽입된 문자열로 할수 있다.
+
+
+리액트의 hooks >> 컴포넌트에서 다양한 기능을 사용할 수 있게 해주는 라이브러리다. 
+	: 아래 적은 useState,  useRouter 같은게 hook 이다.
+	: https://xiubindev.tistory.com/100
+
+Server Component: 사용자와 상호작용하지 않는 부분. 단순 보여주기 용 부분.
+	: 클라이언트에게 정적인 페이지를 response 한다. js 를 전송하지 않는다.
+	: 별도로 페이지의 맨 윗부분에 "use server" 이런거 안쓴다
+	: function 을 async 로 선언한다. 내부적으로 await 문법을 사용하기 위해서이다.
+	: 해당 url 주소의 반환 내용을 json 화 하여 활용하기 . 동기적으로.
+		const res = await fetch(' URL주소');
+		const topics = await res.josn( );
+
+	secure data
+	cookie
+	header
+
+
+
+
+Client Component : 사용자와 상호작용하는 부분.
+	: 기본적으론 server component 로 취급되기 떄무에 client component 를 사용하고 싶으면 해당 파일의 맨 앞부분에 "use client" 를 써줘야된다.
+	: client component 에서는 metadata 를 쓰지 못하기 때문에 있으면 주석처리해라
+	: 쓸려면 import { useEffect , useState } from 'react' 같은거 해줘야됨.
+	: 해당 url 주소의 반환 내용을 json 화 하여 활용하기 . 비동기적으로.
+		fetch('URL주소')
+		.then( res => res.json( ) )
+		.then( res => {
+			. . .res 가지고 뭐 처리하는 부분 .. 
+		 } )
+
+
+	useState >> 실시간으로 렌더링해줌
+	useRouter >> 리디렉션할 떄 사용
+		: 불러오기 ) import {useRouter} from 'next/navigation' ; 
+		: 선언하기 ) const router = useRouter( ) ;
+		: 활용하기 ) 
+			(0)  router.refresh( ); : 화면 새로고침해줌
+			(1) router.push( `/경로` ); :해당 경로로 리디렉션 시켜줌
+
+	useEffect : 특정 값이 변경될 때 실행되게하고 싶으면 사용한다
+		: 불러오기) import { useEffect } from 'react';
+		: 선언/사용하기 
+			(1) 변경감지대상명시 >> 해당대상들의 값이 변경될때마다 첫arg 로 들어간 함수실행됨
+			useEffect( ( ) => {
+
+				변경감지대상들이변경될때마다실행햘코드
+		
+			} ,  [ 변경감지대상변수1,  변경감지대상변수2 , ..  ]  )
+	
+			(2) 변경감지대상을아예명시하지않음 >> 해당 컴포넌트가 리렌더링될때마다 첫arg 로 들어간 함수 실행
+
+	onSubmit >>서버 쪽으로 create(폼데이터 등 전송)하게 할 때 사용.
+		: onSubmit 내부에서 이벤트 객체 활용
+			(1) preventDefault( ) >> onSubmit 의 경우 기본적으로 페이지가 변경되는데 이를 방지하기 위해 event 객체를 대상으로 사용
+				: <form onSubmit={ e=>{ e.preventDefualt()  } } >
+					.	.	.
+				</form>
+			(2) .target >> 해당 폼태그
+				: 이벤트객체.target.name명 >> 해당 name을가지는 input 태그 
+				: 이벤트객체.target.name명.value >> 해당 name을가지는 input 태그의 값
+				: <form onSubmit={ e=>{ 
+					const title = e.target.title.value
+					console.log(title)
+					e.preventDefualt() 
+					 } 
+					} >
+					.	.	.
+				</form>
+
+
+	onClick
+	onChange :  이벤트가 변경됐을때 작동하는 함수
+		<input name="hehehe" value={ blabla } onChange={ e=> setBlabla( e.target.value )}>
+
+	userRouter
+	userParams
+
+
+특정 부분만 client component 로 하고 싶다면?? 
+	: 일단 한 js 페이지에서 일부만 client component 화 하는 것은 불가능하다
+	: 하는 법
+		1 . client component 화 하고 싶은 부분을 따로 떼어내 "use client" 정의된 별도의 파일을 만든다.
+		2. server component 에서 해당 component 를 import 하여 원래 있던 부분을 <해당컴포넌트명/> 으로 대체한다.
+
+--------------------------------------------------------------------------------------------------------------
+
+cache
+	: "최초"로 fetch(접속)할 떄 데이터를 가지고 오고, .next 폴더에 cache 로 저장해둔다. 이후 접속할떄는 또 다운받지 않고 cache 로 저장된 데이터를 사용한다.
+	: ( cache: MISS ) >> 캐시가 한번도 사용되지 않았다
+	: ( cache:HIT ) >> 캐시가 한번이상 사용되었다.
+	: 단점 > 갱신하고싶은데 갱신이 안된다.
+	: 새로운 내용을 반영하는 법 >> 
+		sol(1) revalidating : cache 를 지우고 새로 다운받게하는것
+		sol(2) 걍 fetch 한 것을 cache 로 저장하지 않는다
+			sol1. fetch 의 옵션으로 { next: { revalidate: 0 } } 과 같이 준다.
+				: const resp = fetch( 'URL주소' ,  { next: { revalidate: 0 } } ) ; 
+		
+			sol2.  fetch 의 옵션으로 { cache: 'no-store' } 과 같이 준다. 
+				:  const resp = fetch( 'URL주소' ,  { cache: 'no-store' } ) ; 
+
+
+--------------------------------------------------------------------------------------------------------------
+환경변수 environemnt variable
+	: 선언방법
+		: .env.local 파일에  (없으면 젤 상위 위치에 파일 만들어라)
+			키명=값그자체
+				의 형식으로 저장. application.properties 와 비슷.
+
+		: 키명의 접두사로 NEXT_PUBLIC_ 을 붙이면 보안 관리에 용이.
+	: 사용방법 >> process.env.키명
+
+
+
