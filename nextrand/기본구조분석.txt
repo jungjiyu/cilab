@@ -1,1 +1,103 @@
+swagger
+docker
+crolling
+flask
+
+
+
+Knlab MSA -------------------------------------------------------------------------------------------------
+ 
+개발 > 배포 > 운영
+- 개발 : 필요한 걸 만들자
+- 배포 : 많은 사람들에게 전달하자
+- 운영 : 지속 가능하게 관리하자
+
+DevOps : Development + Operation
+	: 개발+  운영 을 결합하자는 것.
+	: DevOps 엔지니어 >> 개발 및 운영에 대한 광범위한 지식을 갖춰야 하는 IT 전문가
+
+
+
+인프라 :  서비스의 기반이 되는 구성 요소들의 집합( 서버, 스위치, 스토리지 같은 하드웨어 장비 +  운영체제(OS) 같은 소프트웨어 및 네트워크)
+
+
+----------------------------------------------------------------------------------------------------------
+
+모노릭스 Monolithic >> 단일시스템
+	: 화면, API, 회원 등 정보를 하나의 어플리케이션으로 구현한 것
+	: 소규모 프로젝트일경우 합리적인방식. 일정 규모 이상은 MSA 써야.
+	: 기존 방식
+	: 문제점 > 강한 결합성으로 인해 일부에서 애러나도 전체적으로 에러가 발생된다
+	
+MSA Micro Service Architecture
+	Micro >>작다 ! 그러니까 
+	: 스스로 돌아갈 수 있는 , 독립적 배포 가능한 서비스 단위로 쪼갠것( == 서비스를 모듈화한것) 
+	: 요즘에 각광받고있다
+	: 왜 쪼겠나? 
+		1. 장애가 나도 그부분만 장애가 생기는거지, 사이트 전체적으로 생기는게 아니다
+		2. 부분적인 증/감 축 가능
+		3. 부분적인 배포 가능
+
+	: 단점 > 복잡도 증가.
+	:: 구조
+		Inner Architecture : 내부 서비스 관련 
+		Outer Architecture : 
+
+	: https://velog.io/@tedigom/MSA-%EC%A0%9C%EB%8C%80%EB%A1%9C-%EC%9D%B4%ED%95%B4%ED%95%98%EA%B8%B0-1-MSA%EC%9D%98-%EA%B8%B0%EB%B3%B8-%EA%B0%9C%EB%85%90-3sk28yrv0e
+
+
+----------------------------------------------------------------------------------------------------------
+
+
+
+NAS  Network Attached Storage 란
+	: 네트워크 결합 저장장치. 네트워크가 되는 외장하드
+	: 데이터 저장과 공유 목적
+	: OS 제약도 따로 없고, 인터넷이 되는 곳이면 어디서든 접근 가능.
+
+	: 클라우드와의 차이점
+		비용  >> 클라우드는 월정액 방식, NAS는 초기투자비용은 좀 들지만, 이후 비용은 거의 안든다. 
+	******용량 >>클라우드에 비해 NAS가 용량 널널함. 2TB 이상 쓸꺼면 NAS 써야됨
+		속도 >> NAS가 클라우드 보다 대체적으로 빠름
+		서버의 안전성 >> 개인이 아닌 대규모로 운영되는 클라우드가 NAS 보다 더 안정적. (휴지통, 서버 해킹)
+		계정 자체의 보안성 >> 클라우드 보다 NAS 가 개인정보 유출에 강함
+		
+
+
+
+
+하나의 api gateway 를 통하여 외부와 통신
+	: 해당 gateway 는 내부적으로 Auth Server , Admin Server  , Document Server , Common Server 과 연결되어있음.
+		(1) Auth Server
+			: MySQL 의 Auth 에 유일하게 접근 가능
+		(2) Admin Server
+			: Admin Server 에서 Common Server 쪽으로 갈 수 있다
+			: NAS Server 에 유일하게 접근 가능
+			: MySQL 의 Crawl Info 에 유일하게 접근 가능하다
+
+		(3) Document Server
+			: ElasticSearch 전체(politica, screening,project), MySQL 의 Document Meta 에 접근 가능하다.
+
+		(4) Common Server
+			: ElasticSearch 전체(politica, screening,project), MySQL 의 Document Meta 와 Common에 접근 가능
+
+
+
+db 는 MySQL 과 ElasticSearch 를 사용
+	MySQL
+		Auth
+		Document Meta
+		Crawl Info
+		Common
+
+	ElasticSearch
+		Politica
+		Screening
+		Project
+
+
+nextrend -------------------------------------------------------------------------------------------------
+
+
+
 
