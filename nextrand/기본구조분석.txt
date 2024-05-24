@@ -21,6 +21,40 @@ DevOps : Development + Operation
 인프라 :  서비스의 기반이 되는 구성 요소들의 집합( 서버, 스위치, 스토리지 같은 하드웨어 장비 +  운영체제(OS) 같은 소프트웨어 및 네트워크)
 
 
+토폴로지 topology: 망구성방식 . 네트워크의 물리적인 구성 방식, 형상.
+	: ex) 망형 , 트리형, 성형(star) ... 
+
+프로토콜 protocol : 서로 다른 시스템에 있는 개체 간 데이터를 전송하는 통신 규약
+	: 계층적구조(7 layer)로 정의되어있음
+		application > HTTP , FTP , ..
+		transport > tcp, udp
+		 . . .
+
+network protocol != network topology
+	ex)) broadband network(광대역통신)는 사용자끼리 모두 다른 사용자와 연결 가능해서 매시형으로 "보이지만", 실제로는 wifi hub 와 같은 중앙 노드가 있어 가능한 것. 그러니까 논리적으로는 풀매시일 지라도, 실제로는 풀 매시가 아닐 수 있다.
+
+
+
+
+
+Mesh >> 그물망.
+Mesh 네트워크 >> 네트워크 장치가 그물망처럼 연결되어 하나의 큰 네트워크를 이루는것. topology
+	: 메시 네트워크를 이루는 장치들은 각각 "노드" 라고 부름
+		: 각 노드는 다른 노드들에 대해 여러 경로를 가짐(다양한 경로로 접근 가능)
+		: full mesh network >> 모든 노드가 다른 노드에 "직접" 연결됨. 모두 "직접" 통신 가능
+		: partial mesh network >> 일부 노드들만 직접적으로 연결됨.
+	: 유선(wire) 일 수도 , 무선(wireless)일 수도 있음
+
+
+리피터 >> 먼 거리의 기계들 간 통신 중계를 해줌. 언제든 다른 디바이스의 신호를 중계할 준비가 되어있어야되서 대체로 배터리가 아닌 상시 전원을 사용
+	: 무선 장치는 철근 과 같은 구조물과 다른 무선 장치로부터 전파 간섭을 받을 수 있다. 구조물의 영향을 덜 받고 전파간섭을 줄이기 위해 리피터를 설치 할 수 있다.
+				
+
+
+Layer 
+https://velog.io/@hyun6ik/Layer-%EA%B3%84%EC%B8%B5
+
+					
 ----------------------------------------------------------------------------------------------------------
 
 모노릭스 Monolithic >> 단일시스템
@@ -39,9 +73,36 @@ MSA Micro Service Architecture
 		3. 부분적인 배포 가능
 
 	: 단점 > 복잡도 증가.
-	:: 구조
-		Inner Architecture : 내부 서비스 관련 
-		Outer Architecture : 
+	: 구조
+		Inner Architecture : 내부 서비스 관련 . 내부 서비스를 어케 잘 쪼개는가.
+			: 정해진 것은 없고 직접 결정해야.
+			1. 마이크로 서비스를 어케 정의할 것인가? 서비스를 얼마나 잘게 쪼갤것인가? ex) 쇼핑몰에서 주문하기와 카트에 넣기를 같은 서비스로 넣을 것인가?
+			2. db access 구조를 어떻게 설계할 것인가? 그러니까 각 마이크로 서비스 단위로 모두 자체 db 를 가지게 할 것인가, 아님 일부 서비스는 같은 db 를 가지게 할 것인가? 
+			3. 마이크로 서비스 내 api 를 어떻게 설계할 것인가?
+			4. 논리적인 컴포넌트들의 layer 를 어떠한 방식으로 설계할 것인가?
+			5. . .
+
+		Outer Architecture :
+			: 구성 요소
+			(1) External Gateway: 서비스의 외부로부터 들어오는 access 를 내부구조를 드러내지 않고 처리하기 위한 요소. 
+				: 사용자인증 Consumer Identity Provider  , 정책관리 Policy Management 작업을 여기서 수행
+				: API Gateway 는 서버 최앞단에 위치하여 모든 API 호출(request)을 받음
+				: 받은 API 호출을 인증한 후 , routing( 해당 경로의 서비스들에게 request 를 전달 ) 할 수 있게 함.
+
+			(2) Service Mesh : 마이크로서비스 구성 요소간의 네트워크를 제어하는 역할함.
+				: 서비스 간 통신을 위해서는 service discovery, service routing , 트래픽 관리 및 보안 등을 실행
+				: MicroService Architecture 를 적용한 시스템의 내부 "통신"이 Mesh 네트워크 형태를 띄는것에 빗대어 이름이 붙여진것. 
+
+				: 네트워크를 구성하는 각 노드들은 다른 노드의 작동 불/가능 에 상관없이 자신은 항상 켜져있어 서버 역할을 직접 수행할 수 있다
+					: 중앙 서버의 필요성이 낮아진다.
+					: 노드가 하나라도 살아있으면 전체 네트워크가 작동된다
+					: 살아있는 노드들과 통신하는 과정에서 자원소모가 심하다
+				: https://medium.com/dtevangelist/service-mesh-%EB%9E%80-8dfafb56fc07
+
+			(3) Container Management
+			(4) Backing Services
+			(5) Telemetry
+			(6) CI/DI Automation
 
 	: https://velog.io/@tedigom/MSA-%EC%A0%9C%EB%8C%80%EB%A1%9C-%EC%9D%B4%ED%95%B4%ED%95%98%EA%B8%B0-1-MSA%EC%9D%98-%EA%B8%B0%EB%B3%B8-%EA%B0%9C%EB%85%90-3sk28yrv0e
 
@@ -97,7 +158,6 @@ db 는 MySQL 과 ElasticSearch 를 사용
 
 
 nextrend -------------------------------------------------------------------------------------------------
-
 
 
 
