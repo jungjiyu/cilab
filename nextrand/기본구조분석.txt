@@ -50,11 +50,81 @@ Mesh 네트워크 >> 네트워크 장치가 그물망처럼 연결되어 하나�
 	: 무선 장치는 철근 과 같은 구조물과 다른 무선 장치로부터 전파 간섭을 받을 수 있다. 구조물의 영향을 덜 받고 전파간섭을 줄이기 위해 리피터를 설치 할 수 있다.
 				
 
+모듈 : 독립적으로 실행 가능한 단위.
 
-Layer 
-https://velog.io/@hyun6ik/Layer-%EA%B3%84%EC%B8%B5
+응집도Cohesion: 모듈에 포함된 내부 요소들이 서로 연관된 정도
+	: 높을 수록 좋다
 
-					
+결합도 Coupling: 다른 모듈과의 의존성 정도
+	: 낮을 수록 좋다
+
+
+
+ Composition, Aggregation, Delegation 
+	: Composition ) Has-a 관계.  A, B 관계에서 A 가 B 를 포함하고 있고, A 가 사라진다면 포함하고 있는 B 도 같이 사라지는것
+	: Aggregation ) 집합. Is-Part-Of 관계. A 가 B 의 집합의 개념이기 때문에 A 가 사라지더라도 B 는 사라지지 않는다.
+		: 레고로 만들어진 집이 있다고할 때 이 집이 없어진다고해서 레고까지 없어지는게 아니다
+	: Delegation )  위임. 특정 클래스의 역할을 또 다른 클래스에게 위임하는 구조
+ 
+	: https://ch4njun.tistory.com/275
+
+
+
+
+
+DIP Dependency Inversion Principle 의존성 역전 원칙
+	: 객체에서 어떤 Class를 참조해서 사용해야하는 상황이 생긴다면, 그 Class를 직접 참조하는 것이 아니라 그 대상의 상위 요소(추상 클래스 or 인터페이스)로 참조하라는 원칙이다.
+	: 왜 >> 하위 요소를 직접적으로 사용하면  구체적인 내용에 클라이언트가 의존하게 되어 하위 요소에 변화가 있을 때마다 코드를 자주 수정해야 되기 때문이다.
+
+
+
+
+DDD(Domain-Driven Design) 도메인 주도 설계 : 비즈니스 도메인별로 나눠 설계하고, 도메인들이 상호작용하게 하는 것.
+	: : https://dev-coco.tistory.com/166
+	: Domain 도메인 == 사건이 발생하는 집합, 영역
+	: DDD 에서의 Domain > 비즈니스 도메인. 유사한 로직의 집합.
+		ex )  쇼핑몰 --> 손님들이 주문하는 도메인 + 직원입장에선 옷들을 관리하는 도메인 + 결제를 담당하는 도메인
+
+	: 주요 목표 >> 변경과 확장에 유리
+		1. High cohesion : 높은 응집도.				
+		2. Loosely coupling : 낮은 결합도.
+
+
+
+ DDD의 Layered Architecuture (계층구조)
+	: https://velog.io/@hyun6ik/Layer-%EA%B3%84%EC%B8%B5
+	: 수직적 구조 : 상위 계층에서 하위계층으로의 접근은 가능하나 하위 계층에서는 상위 계층으로의 접근이 불가
+	: 일반적으로 3 계층 또는 4 계층으로 나눔
+		3계층 >> 표현계층(Presentation Layer) - 서비스계층(Business Layer) - 영속성계층(Persistence Layer)
+	*******4계층 >>
+			(1) 표현계층 Presentation Layer : 클라이언트의 request 를 받고 , response 하는 계층
+				: controller, DTO, Mapper(converter)
+
+			(2) 응용계층 Application Layer :  transaction등으로 묶여야 하는 로직을 aggregation 하는(집합화 하는 . 묶는. ) 역할을 한다.
+				: Facade
+					: 해당 Layer의 클래스 네이밍은 xxxFacade로 한다.
+					: Facade 파사드>>  건물 정면, 외관. 클래스라이브러리 같은 소프트웨어의 커다란 코드 부분에 대해 간략화된 인터페이스픞 제공하는 객체.
+
+
+			(3) 도메인 계층 Domain Layer : 비즈니스 로직에 대한 정보, 규칙을 표현하고 , 흐름을 제어한다. 세부 구현은 인프라 레이어에 위임한다.
+				: Entity, Sevice (interface), ServiceImpl,  Factory(interface)
+					: 주요 도메인 흐름을 관리하는 인터페이스 하나만 XXXService.java 로 정의하고, 이를 서포트 해주는 다른 서비스 인터페이스들은 XXXService 이외의 네이밍으로 정의한다.
+							ex )  XxxxReader , XxxxExecutor , XxxxFactory ... 
+					: XXXService 인터페이스만 이 레이어에서 구현(XXXServiceImpl )하고, 이외의 선언한 서비스 인터페이스 구현( XXXXImpl)은 infrastructure 에서 한다. 
+					: 서비스 인터페이스들끼리는 되도록 참조관계를 가지지 않게 한다. 그런 코드는 가독성이 떨어진다.
+						
+				
+
+
+			(4) 인프라 계층 Infrastructure Layer :domain layer 에서 선언된 interface 를 구현 .외부(DB, 메시징 시스템 등)와의 통신을 담당하는 계층.
+				:  ReaderImpl, StoreImpl, Spring JPA, RedisConnector ... 
+				
+				: 서비스 인터페이스 간의 참조 관계는 막았지만, infrastructure layer에서의 구현체 간에는 참조 관계를 허용한다.
+				:  @Service가 아닌 @Component를 활용한다.
+
+
+	: 주요 목표 >>각각의 도메인들을 위와 같은 Layer로 철처히 분리해서 만드는 것
+
 
 컴포넌트 == 재사용가능한 독립된 모듈.
 
@@ -82,6 +152,11 @@ third party : 보조적인 소프트웨어/하드웨어 를 개발하는 회사.
 
 legacy : 과거로부터 내려온 시스템/기술. 낡은 시스템/기술.
 	: 직역함 유산
+
+
+ Scale-out : 서버를 여러 대 추가하여 시스템을 확장하는 것.
+ Scale-up :  기존 서버의 사양을 업그레이드해 시스템을 확장하는 것
+
 ----------------------------------------------------------------------------------------------------------
 
 모노릭스 Monolithic >> 단일시스템
@@ -96,6 +171,10 @@ ESB Enterprise Service Bus
 
 SOA Service Oriented Architecture 서비스 지향 설계 방식
 	: 서비스 단위로 개발을 하고, 개발된 서비스들을 공유함으로써 재가용성을 늘리고 유연성을 확보
+	: 문제점  >> ESB
+		1.  당시 ESB 내부 처리 로직을 XML을 기반으로 하였는데, XML의 파싱은 오버헤드가 큰 작업이었음
+		2. , ESB는 가벼운 연산 뿐만 아니라, 과도한 Orchestration 등 무거운 로직을 가지고 있었음
+
 	: MSA 와의 공통점 : 모두 서비스 지향 설계 방식.
 	: MSA 와의 차이점
 		: SOA > 비즈니스 측면에서의 서비스 재사용성을 중요시하고, ESB 라는 서비스 채널 이용하여 서비스를 공유 및 재사용. 즉 , 중앙집중형식. 서비스 간 공유 최대화. 결합도가 높음.  SOAP/XML 기반의 무거운 기능.
@@ -149,10 +228,16 @@ MSA Micro Service Architecture
 						오케스트레이션 orchestration : 여러 마이크로 서비스를 묶어 새로운 서비스를 만드는 개념.
 							: 무턱대고 박으면 안되고 적절히 박아야
 
-					5.  서비스 디스커버리
-						: 내부 구조를 외부에 드러내지 않게(추상화)해줌
+					5.  서비스 디스커버리 기능
+						: Service Discovery >> 서비스의 위치(IP 주소와 포트번호)를 찾는 것
+						: legacy 환경이 아닌 클라우드 환경에서는 유동 IP 주소를 가지기 때문에 그냥 알기는 힘들다. API gateway 에서는 Server Side 나 Client Side 를 기준으로 서비스 디스커버리가 가능하다.
+	
+				: 단점
+					1. API Gateway가 내부 마이크로서비스와 결합된다는 것. 이는 SOA 의 ESB 에서 발생했던 문제를 일으킬 수 있따
+					2. API Gateway라는 추가적인 계층이 만들어지는 것이기 때문에, 그만큼 네트워크 latency가 증가
 
-			(2) Service Mesh : 마이크로서비스 구성 요소(서비스)간의 통신을 추상화하여 네트워크를 제어하는 역할함.
+			(2) Service Mesh : 마이크로서비스 구성 요소(서비스)간의 통신(네크워크) 를 담당
+				: 통신 및 네트워크 기능을 비즈니스 로직과 분리한 네트워크 통신 인프라
 				: MSA 가 유발하는 문제점(복잡성)을 보완한다.
 				: MicroService Architecture 를 적용한 시스템의 내부 "통신"이 Mesh 네트워크 형태(망형태)를 띄는것에 빗대어 이름이 붙여진것.
 				: 보통 서비스의 앞단에 경량화 프록시를 "사이드카 패턴"으로 배치하여, 공통기능처리를 분산화 하여 서비스 간 통신을 제어하는 방법으로 구현됨.
