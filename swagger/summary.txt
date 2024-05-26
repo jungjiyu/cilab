@@ -1,7 +1,5 @@
-s
-
 swagger
-	: API 명세 도와주는 도구. API를 어떤 식으로 사용해야하는지 상대(프론트엔드팀, 백엔드팀)에게 쉽게 알려주는것.
+	: API 명세 도와주는 도구. API를 어떤 식으로 사용해야하는지 상대(프론트엔드팀, 백엔드팀)에게 쉽게 알려주는것. OAS (Open Api Specification)을 위한 프레임워크
 	: 기본적으로 Rest API
 	: Open API >> Rest API 를 위한 표준 API 명세 규격
 		: yaml || json 형식 지원
@@ -12,7 +10,6 @@ swagger
 		2. (서버 프로그래밍 언어를 사용하지 않고) 별도의 웹 문서로 독립적으로 이용. yaml 파일 이용.
 
 
-swagger hub 이용하기
 
 # openapi 버전정보
 openapi: 3.0.0
@@ -84,15 +81,267 @@ paths:
               
 
 
+방식
+	(1) swagger hub 이용하기 >> 쩝... 할말 딱히 없고 걍 사이트 쓰는거임
 
-swagger UI 의 웹 문서 버전 >> 
+	(2) 독립된 형태로 swagger 사용하기 ( swagger UI 의 웹 문서 버전 )  >> 
 	: https://github.com/swagger-api/swagger-ui 다운로드
 		: dist 폴더만 바깥쪽으로 복붙, 나머지는 삭제해도됨.
-	: 만들어 둔거 export-downloadAPI-YAML
+	: 만들어 둔거 export-downloadAPI-YAML 하고 dist 폴더와 같은 수준의 디렉터리에 배치
+	: 웹 서버 구현하기
+		>> 해당 파일,디렉터리 있는 창에서  cmd 창열고 
+			http server 다운로드 : npm install -g http-server
+				: npm == node.js 에서 사용가능한 명령어
+				: -g == global. 전체 프로젝트에서 사용할 수 있게 하겠다.
+			http server 구동 : http-server --cors
+				: 구동 시 뜨는 avaliable on 의 주소로 cmd 창의 파일에 접근 가능해진거임.
+					:ex) http://172.30.72.200:8080 이 avaliable 하다고 떴으면
+						 http://172.30.72.200:8080/LIBRARYOFJIYU_1-API_Example-1.0.0-resolved.yaml 의 URL 로 해당 디렉터리 내부 LIBRARYOFJIYU_1-API_Example-1.0.0-resolved.yaml  파일에 접근 가능
 	
-DocumentMicroService
+			dist 폴더의 index.html 이 내가 만든 yaml 의 내용을 반영하게 하기
+				: dist 폴더 내부의 swagger-initializer.js 파일 내부 url 을 위의 url (http://172.30.72.200:8080/LIBRARYOFJIYU_1-API_Example-1.0.0-resolved.yaml) 로 교체 
 
 
-config
-	▼SecurityConfig : 
-https://velog.io/@crow/AuthenticationEntryPoint-%EC%9D%B4%ED%95%B4
+
+	(3) 서버 프로그램에 종속적인 형태로 Swagger UI 사용하기 ( 설치형 node.js 템플릿 활용)
+	: 프로젝트 생성하기
+		원하는 위치에서 cmd 창 열고
+		(1)swagger ui 가 탑재하기: npm install -g swagger
+			: js 언어로 swagger ui 가 탑재되어있는 node.js 가 자동생성됨
+
+		(2)프로젝트 생성하기 : swagger project create 프로젝트명
+			: 중간에 뜨는 설정사항 )  node.js 를 기반으로 하는 프레임워크 설정하기 >> express 사용 추천
+
+			: 이떄 생성되는 프로젝트는 
+				: 기본적인 api 가 미리 개발되어있는 형태로 제공됨.
+				: app.js 를 약간 변경하는 방식으로 api 개발 및 swagger ui 이용 가능
+					1. swagger ui 라이브러리를 불러오는 코드 추가
+						: SwaggerExpress 라이브러리 불러오는 코드( var SwaggerExpress = require('swagger-express-mw'); ) 바로 밑에 var SwaggerUi = require('swagger-tools/middleware/swagger-ui'); 를 명시
+						: 이케하면 미들웨어 형식으로 swagger ui 의 사용이 가능해짐
+
+					2. SwaggerUi 이용하기
+						: SwaggerExpress.create(config, function(err, swaggerExpress)  함수 내부의 //install middleware 부분( swaggerExpress.register(app); 바로 앞)에   swaggerExpress.runner.swagger.host='127.0.0.1:10010';
+  app.use(SwaggerUi(swaggerExpress.runner.swagger)); 추가
+
+		(생성된 프로젝트로 change directory 한 뒤) 서버 동작시키기 : swagger project start
+			: 해당 프로젝트 내의 app.js 가 실행되고, /api/swagger/swagger.yaml 에 정의된 파일이 출력되는거다.
+			: Error initializing middleware ... Error: Cannot find module 에러 
+				: 노드 버전 차로 발생하는 오류 >> 해당 프로젝트 내부의 user.js 파일 좀 수정
+				: https://maggie-a.tistory.com/215
+
+
+	: API key  
+		: api key 를 설정한 상황에서 그냥 api 테스트 진행하려하면 access denied (403) 뜬다. api key  를 입력한 상태에서만 test 가 가능하게 된다. 
+		(1) API key 설정하기 : 프로젝트 내부 app.js 파일 수정
+			: var config 부분의  appRoot: __dirname 다음에 swaggerSecurityHandlers 추가
+			var config = {
+			  appRoot: __dirname, // required config
+ 			 swaggerSecurityHandlers:{
+ 			   api_key:function(req,authOrSecDef, scopesOrApiKey, cb){
+    			    if('abcd1234'=== scopesOrApiKey) cb();    // 요청헤더값 == api_key 이고, 값이 abcd1234 일 경우만 실행을 허용
+        		    else cb(new Error('Access Denined'));
+   			 }
+ 			 }
+			};
+
+		(2) API KEy 적용하기 : 프로젝트 내부 swagger.yaml 파일 수정
+ 			 /swagger:
+   				 x-swagger-pipe: swagger_raw 의 밑 부분에 작성
+
+  			 /swagger:
+   			    x-swagger-pipe: swagger_raw
+
+   			 securityDefinitions:
+   			    api_key:
+    			     type: apiKey
+    			     in: query
+    			     name: api_key
+    			 security:
+     			  - api_key: [ ]
+
+	: api 추가/수정하기
+		1. 프로젝트 내부 /api/controllers/hello_word.js 를 수정
+			(1) request 와 repsonse 를 parameter 로 하는 커스텀 함수 추가 : 파일 마지막 부분에 기존 함수가 정의된 부분 가장 끝 자리에 작성
+				: 보통 함수명은 추가될 path명과 같게 하는 편
+				function adder(req,res){
+  				let one = req.query.one;
+ 				 let two = req.query.two;
+ 				 let result = Number(one) + Number(two);
+ 				 res.json(result); // 결과를 json 형식으로 반환
+				}
+
+			(2) 해당 함수 내보내기  : 새로 정의한 함수를 module.exports 에 추가하여 다른 파일에서도 해당 함수를 사용할 수 있게 함.
+				module.exports = {
+ 					 hello: hello,
+ 					 adder: adder // 내보내기 할 함수로 등록
+				};
+
+
+		2. 프로젝트 내부 /api/swagger/swagger.yaml 수정
+			1. 앞서 정의한 함수를 사용하는 path 를 새로 생성 >> 
+				(1) 기존 정의되어있는 path인 "/hello" 에 대한 정의 내용( 그러니까 "/hello" 부터 "/swagger"의 바로 앞까지)을 그대로 복붙하여 그 뒤에 일단 붙인다.
+
+				(2) 복붙한 내용을 새로 추가할 path 에 맞게 수정한다.
+					: path >> 보통 " /함수명 " 
+					:  x-swagger-router-controller >> api/controller/ 내부서 해당 함수가 정의되어있는 js 파일명 (확장자는제외)
+					: operationId >>operation 을 구별하는 "고유한" id로, 보통 함수명( controller 에서 export 시킨 모듈명)을 할당해준다.
+
+					: $ref >>  여러번 반복되는 schemas(데이터 모델), parameters, responses, examples 등 구조의 경우 매번 쓰기 보다는 전역 구성 요소 섹션에 이를 정의하고 $ref 를 사용하여 참조해 사용한다.
+						: youtube 예제에선 defintion 하위에 작성하였는데 보통 components 의 ㅏㅎ위에 작성하는 듯?
+						: ex ) 
+						components:
+						schemas:
+    						User:   # Can be referenced as '#/components/schemas/User'
+   						   type: object
+   						   properties:
+   						     id:
+     						     type: integer
+      						    format: int64
+     						   name:
+    						      type: string
+						
+						: https://velog.io/@hyex/Swagger-Components-Section-OpenAPI3
+
+ 				 /adder: 
+  				  x-swagger-router-controller: hello_world #api/controller/hello_world.js 에 이 path 대한 함수가 정의되어있다.
+  				  get:
+   				   description: adder api
+     				 operationId: adder   
+   				   parameters:
+    				    - name: one
+     				     in: query
+      				    description: first value
+   				       required: true
+    				      type: integer
+
+  				      - name: two
+    				      in: query
+     				     description: second value
+      				    required: true
+       				   type: integer
+
+  				    responses:
+   				     "200":
+   				       description: Success
+    				      schema:
+     				       $ref: "#/definitions/AdderResponse" # definition 하위에 AdderResponse 를 정의한다.
+
+      				  default:
+     				     description: Error
+      				    schema:
+       				     $ref: "#/definitions/ErrorResponse" # 얘도 definition 하위에 정의되어있는데 얘는 기본적으로 정의되어있는 얘였음
+
+
+				(3) 사용한 ref 부분에 대응하는 거 추가
+
+				definitions:
+				  .
+				  .
+				  .
+ 				   AdderResponse: # 내가 정의
+ 				     required:
+  				      - result
+  				    properties:
+ 				       result:
+  				        type: integer
+	
+
+	(4) node.js 로 api 기능을 구현하고 swagger ui 를 독립된 문서로 구현하기
+		: 프로그래밍 언어에 종속적이지 않게 쉽게 붙일 수 있게 된다.	
+		: https://www.youtube.com/watch?v=BqMJ7w4SppU&list=PLRx0vPvlEmdAezo0wkmUdT6WBCch0_1ie&index=5
+
+
+******(5) spring boot3 에서의 swagger 사용
+		: https://www.youtube.com/watch?v=-5CTDKzMqro
+		: https://jeonyoungho.github.io/posts/Open-API-3.0-Swagger-v3-%EC%83%81%EC%84%B8%EC%84%A4%EC%A0%95/
+
+		: swagger dependencies
+			implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.4'
+				: ui >> 화면으로 볼 수 있다.
+
+		: swagger ui 구성	
+			태그 : api 들을 그룹핑 해둔 것. 
+			model  : api 대해 response,  request 되는 데이터 뭉치. dto 느낌.  
+			schema : model 에 대한 상세 설명
+			discription vs summary 
+				summary >> fold 한 상태에서도 보이는 굉장히 간략한 설명
+				discription >> unfold 해야 보이는 좀 더 상세한 설명
+
+		: 주요 어노테이션
+			 @Tag : API들을 그룹핑 + 그룹에 대한 설명을 명시하는 어노테이션
+				: 주로 Controller 수준에서 쓰임. Controller 수준에서 명시하면 해당 controller 내부의 모든 API 는 해당 그룹에 속하게 된다.
+
+			 	: 속성
+					1. name: API 그룹의 이름을 지정
+					2. description: API 그룹의 설명을 지정
+
+
+			@Schema	: 모델에 대한 설명을 명시
+				: 주로 dto 클래스 수준과 dto클래스내부필드 수준에서 쓰임
+				: 속성 
+					1. description : 모델 자체 혹은 컬럼에 대한 설명
+					2. defaultValue : 컬럼의 기본값
+					3. allowableValues : 컬럼의 허용 가능한 값들
+						ex ) allowableValues = {"honggildong", "junggildong"}
+
+	
+			@ApiResponse : API response , 그러니까 클라이언트에게 response 되는 구조 정의
+				: 명시 위치
+					(1) @ApiResponse"s" 의 value 속성에 나열
+						ex ) @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "게시글 조회 성공", content = @Content(schema = @Schema(implementation = PostsResponseDto.class))),
+        @ApiResponse(responseCode = "404", description = "존재하지 않는 리소스 접근", content = @Content(schema = @Schema(implementation = ErrorResponse.class))) })
+
+					(2) @Operation의 response 속성에 나열
+						ex ) @Operation(summary = "게시글 조회", description = "id를 이용하여 posts 레코드를 조회합니다.", responses = {
+        @ApiResponse(responseCode = "200", description = "게시글 조회 성공", content = @Content(schema = @Schema(implementation = PostsResponseDto.class))),
+        @ApiResponse(responseCode = "404", description = "존재하지 않는 리소스 접근", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+})
+
+				: 속성
+					1. responseCode: http 상태코드
+					2. description: response에 대한 설명
+					3. content: Response payload 구조
+						schema : payload 의 schema. 즉, payload 에 실리는 model 의 상세 설명
+							: 속성 >> implementation : schema 대상 클래스"리터럴"를 명시. 이떄 .class 확장자까지 명시하는거 잊지 x. 
+							: 형식 >>  schema = @Schema(implementation = response될모델명.class )
+								: ex )   @ApiResponse(responseCode = "404", description = "존재하지 않는 리소스 접근", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+
+]
+
+			@Operation:  api 그룹 "내" 각 api의 동작에 대한 설명하는 어노테이션
+				: 주로 controller "내부"의 메서드 수준에서 쓰인다. 
+				: 속성
+					1. summary	: API에 대한 간략한 설명을 지정
+					2. description: API에 대한 상세 설명을 지정
+					3. response	: apiResponse 리스트
+					4. parameter: api 파라미터 리스트
+		
+		:  SwaggerConfig.java 
+			: 
+
+		: application.yml
+			: 필수로 설정할 필요는 없음
+			:  swagger-ui.path 
+				: Swagger UI 접속 경로 . 미설정시 /swagger-ui/index.html 가 디폴트
+					ex ) api gateway 가 http://localhost:8080 인데 따로 설정 안했으면 swagger ui 문서에 접근하는 경론 http://localhost:8080/swagger-ui/index.html
+
+			:  swagger-ui.tags-sorter , swagger-ui.operations-sorter : 태그 정렬기준,  태그 내 API의 정렬 기준
+				alpha >> 앞파벳 오름차순기준
+				method >> http 메서드 기준
+
+			springdoc:
+  				packages-to-scan: com.test.demo
+  				default-consumes-media-type: application/json;charset=UTF-8
+  				default-produces-media-type: application/json;charset=UTF-8
+  				swagger-ui:
+    					path: demo-ui.html          
+   					tags-sorter: alpha           
+   					operations-sorter: alpha      
+
+  				api-docs:
+   					path: /api-docs/json
+    				groups:
+    					enabled: true
+    				cache:
+      					disabled: true
