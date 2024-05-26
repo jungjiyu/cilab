@@ -315,8 +315,11 @@ paths:
 					2. description: response에 대한 설명
 					3. content: Response payload 구조
 						schema : payload 의 schema. 즉, payload 에 실리는 model 의 상세 설명
-							(1) hidden : 숨김 여부
-							(2) implementation : schema 대상 클래스 
+							: 속성 >> implementation : schema 대상 클래스"리터럴"를 명시. 이떄 .class 확장자까지 명시하는거 잊지 x. 
+							: 형식 >>  schema = @Schema(implementation = response될모델명.class )
+								: ex )   @ApiResponse(responseCode = "404", description = "존재하지 않는 리소스 접근", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+
+]
 
 			@Operation:  api 그룹 "내" 각 api의 동작에 대한 설명하는 어노테이션
 				: 주로 controller "내부"의 메서드 수준에서 쓰인다. 
