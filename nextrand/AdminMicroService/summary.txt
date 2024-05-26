@@ -6,365 +6,217 @@ js 에서의 모듈 module : 파일 하나를 여러개로 분리해 생성된 �
 	: 나중에 자세히 보기>> https://inpa.tistory.com/entry/JS-%F0%9F%93%9A-%EB%AA%A8%EB%93%88-%EC%82%AC%EC%9A%A9%ED%95%98%EA%B8%B0-import-export-%EC%A0%95%EB%A6%AC
 
 
+
+abstract 클래스를 쓰는 경우 : 직접적인 인스턴스화를 방지하고자 할때
+	: (ENUM 처럼 걍 이름만 띡 있는게 아니라) 값을 가지는 상수를 저장하는 용도로만 쓸 때.
+클래스가 직접적인 인스턴스화를 의도하지 않을 때.
+	: AdminMicroService 프젝의 ApiRoutes 클래스가 이에 해당 
+
+ENUM
+	: https://studyandwrite.tistory.com/106
+	: 한 클래스에 종속적이게 만들 수도 있고 별도로 만들 수도 있다
+
+	: 종류
+		(1) 기본적인 enum 선언 >> 상수들을 대문자로 선언
+			: 각 상수는 앞에서부터 0, 1, 2, .. 의 값을 가지게 됨
+		public enum 대문자시작이름{
+			상수명1, 상수명2, 상수명3 .. 
+			}
+
+		: 세미콜론 안쓰는거 주의
+
+		(2)멤버 변수를 추가 + 상수와 연관된 데이터를 상수 자체에 포함시켜 enum 선언 >> 
+		: enum 상수 이름 옆에 원하는 값을 괄호와 함께 적어주고, 괄호 내부 적은 값의 타입에 대응하는 필드를 만들어준다
+		: 메서드도 필요함 만들 수 있다.
+
+		: 선언 예시 >> 
+
+@Getter
+@AllArgsConstructor
+public enum ExceptionMessages {
+    INVALID_TOKEN("토큰이 올바르지 않습니다."),
+    NO_USER_FOUND("유저 정보를 조회할 수 없습니다."),
+    NO_ADMIN_FOUND("어드민 정보를 조회할 수 없습니다."),
+    SERVER_COMMUNICATION_FAILED("서버간의 통신에 문제가 있습니다."),
+    NAS_SERVER_FAILED("NAS 서버와의 통신 중 오류가 있습니다."),
+    CANNOT_FIND_DOCUMENT("문서를 조회할 수 없습니다"),
+    CANNOT_FIND_ENTITY("엔티티를 조회할 수 없습니다"),
+    INVALID_REQUEST("잘못된 요청값 입니다.");
+    private String message;
+}
+
+
+		: 사용예시>> ExceptionMessages.SERVER_COMMUNICATION_FAILED.getMessage( );
+			: "서버간의 통신에 문제가 있습니다." 의 값을 반환한다.
+		
+
+
 스프링 부트2 에서 javax 패키지명 >> 스프링 부트3에서는 jakarta 로 변경
 
 엔드포인트 : 백엔드 앞단 URL
 
 swagger
 	: API 명세 도와주는 도구. API를 어떤 식으로 사용해야하는지 상대(프론트엔드팀, 백엔드팀)에게 쉽게 알려주는것. OAS (Open Api Specification)을 위한 프레임워크
-	: 기본적으로 Rest API
-	: Open API >> Rest API 를 위한 표준 API 명세 규격
-		: yaml || json 형식 지원
-
-	: public 으로 다른 사람에게도 공개할 수 있음
- 	: 사용 방식
-		1. 특정 서버 프로그래밍 언어에 종속적으로 사용. 어노테이션으로 API 를 명세
-		2. (서버 프로그래밍 언어를 사용하지 않고) 별도의 웹 문서로 독립적으로 이용. yaml 파일 이용.
 
 
+-------------------------------------------------------------------------------------------------------------
 
-# openapi 버전정보
-openapi: 3.0.0
+AdminMicroService
 
-# 문서에 대한 기본적인 설명
-info: 
-  version: 1.0.0 #내가 설정한 개발버전
-  title: API_Example
-  description: swagger 실습을 위한 API_Example #설명
-
-# Added by API Auto Mocking Plugin : 간단한 테스트용용
-
-servers:
-  - description: SwaggerHub API Auto Mocking
-    url: https://virtserver.swaggerhub.com/LIBRARYOFJIYU_1/API_Example/1.0.0
-  - description: Json place holder 
-    url: https://jsonplaceholder.typicode.com
-    
-  - description: google 
-    url: https://www.google.com
-      
-paths:
-  /users/{id}/todos: #mapping 되는 url
-    get: #Get 방식
-      summary : Returns a user by ID
-      parameters: #URL로 받게 되는 파라미터
-        - name: id
-          in: path  #URL 사이에 ,즉 pathvariable 형태로 파라미터를 받음
-          required: true #id 파라미터는 필수적이다
-          description: 정보를 반환 받기 위한 id 
-          schema : #주로 type 정의
-            type: integer # 대문자로 안쓰는거 주의
-      responses:
-        '200': #상태코드
-          description: OK
-          content:
-            application/json: # response body 에 담길 데이터 형태
-              schema : 
-                type: object
-                properties: #반환되는 object가 가진 속성들
-                  userId :
-                    type: integer
-                  id :
-                    type: integer
-                  title: 
-                    type: string
-                  completed:
-                    type: boolean
-
-  /complete/search:
-    get:
-      summary : 자동완성 기능 반환
-      parameters: #URL로 받게 되는 파라미터
-        - name: q
-          in: query # 쿼리스트링 형태로 파라미터를 받음
-          schema : #주로 type 정의
-            type: string
-        - name: client
-          in: query
-          schema : 
-            type: string
-      responses:
-        '200': #상태코드
-          description: text file
-          content:
-            text/plain:
-              schema: 
-                type: string
-              
-
-
-방식
-	(1) swagger hub 이용하기 >> 쩝... 할말 딱히 없고 걍 사이트 쓰는거임
-
-	(2) 독립된 형태로 swagger 사용하기 ( swagger UI 의 웹 문서 버전 )  >> 
-	: https://github.com/swagger-api/swagger-ui 다운로드
-		: dist 폴더만 바깥쪽으로 복붙, 나머지는 삭제해도됨.
-	: 만들어 둔거 export-downloadAPI-YAML 하고 dist 폴더와 같은 수준의 디렉터리에 배치
-	: 웹 서버 구현하기
-		>> 해당 파일,디렉터리 있는 창에서  cmd 창열고 
-			http server 다운로드 : npm install -g http-server
-				: npm == node.js 에서 사용가능한 명령어
-				: -g == global. 전체 프로젝트에서 사용할 수 있게 하겠다.
-			http server 구동 : http-server --cors
-				: 구동 시 뜨는 avaliable on 의 주소로 cmd 창의 파일에 접근 가능해진거임.
-					:ex) http://172.30.72.200:8080 이 avaliable 하다고 떴으면
-						 http://172.30.72.200:8080/LIBRARYOFJIYU_1-API_Example-1.0.0-resolved.yaml 의 URL 로 해당 디렉터리 내부 LIBRARYOFJIYU_1-API_Example-1.0.0-resolved.yaml  파일에 접근 가능
-	
-			dist 폴더의 index.html 이 내가 만든 yaml 의 내용을 반영하게 하기
-				: dist 폴더 내부의 swagger-initializer.js 파일 내부 url 을 위의 url (http://172.30.72.200:8080/LIBRARYOFJIYU_1-API_Example-1.0.0-resolved.yaml) 로 교체 
-
-
-
-	(3) 서버 프로그램에 종속적인 형태로 Swagger UI 사용하기 ( 설치형 node.js 템플릿 활용)
-	: 프로젝트 생성하기
-		원하는 위치에서 cmd 창 열고
-		(1)swagger ui 가 탑재하기: npm install -g swagger
-			: js 언어로 swagger ui 가 탑재되어있는 node.js 가 자동생성됨
-
-		(2)프로젝트 생성하기 : swagger project create 프로젝트명
-			: 중간에 뜨는 설정사항 )  node.js 를 기반으로 하는 프레임워크 설정하기 >> express 사용 추천
-
-			: 이떄 생성되는 프로젝트는 
-				: 기본적인 api 가 미리 개발되어있는 형태로 제공됨.
-				: app.js 를 약간 변경하는 방식으로 api 개발 및 swagger ui 이용 가능
-					1. swagger ui 라이브러리를 불러오는 코드 추가
-						: SwaggerExpress 라이브러리 불러오는 코드( var SwaggerExpress = require('swagger-express-mw'); ) 바로 밑에 var SwaggerUi = require('swagger-tools/middleware/swagger-ui'); 를 명시
-						: 이케하면 미들웨어 형식으로 swagger ui 의 사용이 가능해짐
-
-					2. SwaggerUi 이용하기
-						: SwaggerExpress.create(config, function(err, swaggerExpress)  함수 내부의 //install middleware 부분( swaggerExpress.register(app); 바로 앞)에   swaggerExpress.runner.swagger.host='127.0.0.1:10010';
-  app.use(SwaggerUi(swaggerExpress.runner.swagger)); 추가
-
-		(생성된 프로젝트로 change directory 한 뒤) 서버 동작시키기 : swagger project start
-			: 해당 프로젝트 내의 app.js 가 실행되고, /api/swagger/swagger.yaml 에 정의된 파일이 출력되는거다.
-			: Error initializing middleware ... Error: Cannot find module 에러 
-				: 노드 버전 차로 발생하는 오류 >> 해당 프로젝트 내부의 user.js 파일 좀 수정
-				: https://maggie-a.tistory.com/215
-
-
-	: API key  
-		: api key 를 설정한 상황에서 그냥 api 테스트 진행하려하면 access denied (403) 뜬다. api key  를 입력한 상태에서만 test 가 가능하게 된다. 
-		(1) API key 설정하기 : 프로젝트 내부 app.js 파일 수정
-			: var config 부분의  appRoot: __dirname 다음에 swaggerSecurityHandlers 추가
-			var config = {
-			  appRoot: __dirname, // required config
- 			 swaggerSecurityHandlers:{
- 			   api_key:function(req,authOrSecDef, scopesOrApiKey, cb){
-    			    if('abcd1234'=== scopesOrApiKey) cb();    // 요청헤더값 == api_key 이고, 값이 abcd1234 일 경우만 실행을 허용
-        		    else cb(new Error('Access Denined'));
-   			 }
- 			 }
-			};
-
-		(2) API KEy 적용하기 : 프로젝트 내부 swagger.yaml 파일 수정
- 			 /swagger:
-   				 x-swagger-pipe: swagger_raw 의 밑 부분에 작성
-
-  			 /swagger:
-   			    x-swagger-pipe: swagger_raw
-
-   			 securityDefinitions:
-   			    api_key:
-    			     type: apiKey
-    			     in: query
-    			     name: api_key
-    			 security:
-     			  - api_key: [ ]
-
-	: api 추가/수정하기
-		1. 프로젝트 내부 /api/controllers/hello_word.js 를 수정
-			(1) request 와 repsonse 를 parameter 로 하는 커스텀 함수 추가 : 파일 마지막 부분에 기존 함수가 정의된 부분 가장 끝 자리에 작성
-				: 보통 함수명은 추가될 path명과 같게 하는 편
-				function adder(req,res){
-  				let one = req.query.one;
- 				 let two = req.query.two;
- 				 let result = Number(one) + Number(two);
- 				 res.json(result); // 결과를 json 형식으로 반환
-				}
-
-			(2) 해당 함수 내보내기  : 새로 정의한 함수를 module.exports 에 추가하여 다른 파일에서도 해당 함수를 사용할 수 있게 함.
-				module.exports = {
- 					 hello: hello,
- 					 adder: adder // 내보내기 할 함수로 등록
-				};
-
-
-		2. 프로젝트 내부 /api/swagger/swagger.yaml 수정
-			1. 앞서 정의한 함수를 사용하는 path 를 새로 생성 >> 
-				(1) 기존 정의되어있는 path인 "/hello" 에 대한 정의 내용( 그러니까 "/hello" 부터 "/swagger"의 바로 앞까지)을 그대로 복붙하여 그 뒤에 일단 붙인다.
-
-				(2) 복붙한 내용을 새로 추가할 path 에 맞게 수정한다.
-					: path >> 보통 " /함수명 " 
-					:  x-swagger-router-controller >> api/controller/ 내부서 해당 함수가 정의되어있는 js 파일명 (확장자는제외)
-					: operationId >>operation 을 구별하는 "고유한" id로, 보통 함수명( controller 에서 export 시킨 모듈명)을 할당해준다.
-
-					: $ref >>  여러번 반복되는 schemas(데이터 모델), parameters, responses, examples 등 구조의 경우 매번 쓰기 보다는 전역 구성 요소 섹션에 이를 정의하고 $ref 를 사용하여 참조해 사용한다.
-						: youtube 예제에선 defintion 하위에 작성하였는데 보통 components 의 ㅏㅎ위에 작성하는 듯?
-						: ex ) 
-						components:
-						schemas:
-    						User:   # Can be referenced as '#/components/schemas/User'
-   						   type: object
-   						   properties:
-   						     id:
-     						     type: integer
-      						    format: int64
-     						   name:
-    						      type: string
-						
-						: https://velog.io/@hyex/Swagger-Components-Section-OpenAPI3
-
- 				 /adder: 
-  				  x-swagger-router-controller: hello_world #api/controller/hello_world.js 에 이 path 대한 함수가 정의되어있다.
-  				  get:
-   				   description: adder api
-     				 operationId: adder   
-   				   parameters:
-    				    - name: one
-     				     in: query
-      				    description: first value
-   				       required: true
-    				      type: integer
-
-  				      - name: two
-    				      in: query
-     				     description: second value
-      				    required: true
-       				   type: integer
-
-  				    responses:
-   				     "200":
-   				       description: Success
-    				      schema:
-     				       $ref: "#/definitions/AdderResponse" # definition 하위에 AdderResponse 를 정의한다.
-
-      				  default:
-     				     description: Error
-      				    schema:
-       				     $ref: "#/definitions/ErrorResponse" # 얘도 definition 하위에 정의되어있는데 얘는 기본적으로 정의되어있는 얘였음
-
-
-				(3) 사용한 ref 부분에 대응하는 거 추가
-
-				definitions:
-				  .
-				  .
-				  .
- 				   AdderResponse: # 내가 정의
- 				     required:
-  				      - result
-  				    properties:
- 				       result:
-  				        type: integer
-	
-
-	(4) node.js 로 api 기능을 구현하고 swagger ui 를 독립된 문서로 구현하기
-		: 프로그래밍 언어에 종속적이지 않게 쉽게 붙일 수 있게 된다.	
-		: https://www.youtube.com/watch?v=BqMJ7w4SppU&list=PLRx0vPvlEmdAezo0wkmUdT6WBCch0_1ie&index=5
-
-
-******(5) spring boot3 에서의 swagger 사용
-		: https://www.youtube.com/watch?v=-5CTDKzMqro
-		: https://jeonyoungho.github.io/posts/Open-API-3.0-Swagger-v3-%EC%83%81%EC%84%B8%EC%84%A4%EC%A0%95/
-
-		: swagger dependencies
-			implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.4'
-				: ui >> 화면으로 볼 수 있다.
-
-		: swagger ui 구성	
-			태그 : api 들을 그룹핑 해둔 것. 
-			model  : api 대해 response,  request 되는 데이터 뭉치. dto 느낌.  
-			schema : model 에 대한 상세 설명
-			discription vs summary 
-				summary >> fold 한 상태에서도 보이는 굉장히 간략한 설명
-				discription >> unfold 해야 보이는 좀 더 상세한 설명
-
-		: 주요 어노테이션
-			 @Tag : API들을 그룹핑 + 그룹에 대한 설명을 명시하는 어노테이션
-				: 주로 Controller 수준에서 쓰임. Controller 수준에서 명시하면 해당 controller 내부의 모든 API 는 해당 그룹에 속하게 된다.
-
-			 	: 속성
-					1. name: API 그룹의 이름을 지정
-					2. description: API 그룹의 설명을 지정
-
-
-			@Schema	: 모델에 대한 설명을 명시
-				: 주로 dto 클래스 수준과 dto클래스내부필드 수준에서 쓰임
-				: 속성 
-					1. description : 모델 자체 혹은 컬럼에 대한 설명
-					2. defaultValue : 컬럼의 기본값
-					3. allowableValues : 컬럼의 허용 가능한 값들
-						ex ) allowableValues = {"honggildong", "junggildong"}
-
-	
-			@ApiResponse : API response , 그러니까 클라이언트에게 response 되는 구조 정의
-				: 명시 위치
-					(1) @ApiResponse"s" 의 value 속성에 나열
-						ex ) @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "게시글 조회 성공", content = @Content(schema = @Schema(implementation = PostsResponseDto.class))),
-        @ApiResponse(responseCode = "404", description = "존재하지 않는 리소스 접근", content = @Content(schema = @Schema(implementation = ErrorResponse.class))) })
-
-					(2) @Operation의 response 속성에 나열
-						ex ) @Operation(summary = "게시글 조회", description = "id를 이용하여 posts 레코드를 조회합니다.", responses = {
-        @ApiResponse(responseCode = "200", description = "게시글 조회 성공", content = @Content(schema = @Schema(implementation = PostsResponseDto.class))),
-        @ApiResponse(responseCode = "404", description = "존재하지 않는 리소스 접근", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-})
-
-				: 속성
-					1. responseCode: http 상태코드
-					2. description: response에 대한 설명
-					3. content: Response payload 구조
-						schema : payload 의 schema. 즉, payload 에 실리는 model 의 상세 설명
-							: 속성 >> implementation : schema 대상 클래스"리터럴"를 명시. 이떄 .class 확장자까지 명시하는거 잊지 x. 
-							: 형식 >>  schema = @Schema(implementation = response될모델명.class )
-								: ex )   @ApiResponse(responseCode = "404", description = "존재하지 않는 리소스 접근", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-
-]
-
-			@Operation:  api 그룹 "내" 각 api의 동작에 대한 설명하는 어노테이션
-				: 주로 controller "내부"의 메서드 수준에서 쓰인다. 
-				: 속성
-					1. summary	: API에 대한 간략한 설명을 지정
-					2. description: API에 대한 상세 설명을 지정
-					3. response	: apiResponse 리스트
-					4. parameter: api 파라미터 리스트
-		
-		:  SwaggerConfig.java 
-			: 
-
-		: application.yml
-			: 필수로 설정할 필요는 없음
-			:  swagger-ui.path 
-				: Swagger UI 접속 경로 . 미설정시 /swagger-ui/index.html 가 디폴트
-					ex ) api gateway 가 http://localhost:8080 인데 따로 설정 안했으면 swagger ui 문서에 접근하는 경론 http://localhost:8080/swagger-ui/index.html
-
-			:  swagger-ui.tags-sorter , swagger-ui.operations-sorter : 태그 정렬기준,  태그 내 API의 정렬 기준
-				alpha >> 앞파벳 오름차순기준
-				method >> http 메서드 기준
-
-			springdoc:
-  				packages-to-scan: com.test.demo
-  				default-consumes-media-type: application/json;charset=UTF-8
-  				default-produces-media-type: application/json;charset=UTF-8
-  				swagger-ui:
-    					path: demo-ui.html          
-   					tags-sorter: alpha           
-   					operations-sorter: alpha      
-
-  				api-docs:
-   					path: /api-docs/json
-    				groups:
-    					enabled: true
-    				cache:
-      					disabled: true
-
-	
-DocumentMicroService
 
 swagger
-	: http://localhost:8080/swagger-ui/index.html 로 접근 가능
+	: swagger-ui.path를 딱히 지정하지 않았기 때문에 기본 path 인  swagger-ui/index.html 를 경로로 하여 http://localhost:8080/swagger-ui/index.html 로 접근 가능
+	
+restTemplate : spring에서 제공하는  "http 메서드기반으로 rest api 통신을 쉽게 할 수 있게 설계되어있는 템플릿" 
+	: https://blog.naver.com/hj_kim97/222295259904
+	: REST API 호출이후 응답을 받을 때까지 기다리는 동기방식으로 작동
+		: 비동기/동기방식 모두 가능하게 한건 WebClient  >> Spring 5에 추가된 논블럭, 리엑티브 웹 클리이언트로 동기, 비동기 방식을 지원
+
+	: 동작 원리: RestTemplate은 통신 과정을 ClientHttpRequestFactory(ClientHttpRequest, ClientHttpResponse)에 위임하고,  ClientHttpRequestFactory가 해당 API 로 request 하고 response 해서 RestTemplate에게 반환해주면 최종적으로 해당 response 결과를 json 의 형태로 반환한다.
+
+		1. 애플리케이션 내부에서 REST API에 요청하기 위해 RestTemplate의 메서드를 호출한다.
+		2. RestTemplate은 MessageConverter를 이용해 java object를 request body에 담을 message(JSON etc.)로 변환한다. 메시지 형태는 상황에 따라 다름
+		3. ClientHttpRequestFactory에서 ClientHttpRequest을 받아와 요청을 전달한다.
+		4. 실질적으로 ClientHttpRequest가 HTTP 통신으로 요청을 수행한다.
+		5. RestTemplate이 에러핸들링을 한다.
+		6. ClientHttpResponse에서 응답 데이터를 가져와 오류가 있으면 처리한다.
+		7. MessageConverter를 이용해 response body의 message를 java object로 변환한다.
+		8. 결과를 애플리케이션에 돌려준다.
+		
 
 
-config
-	▼SecurityConfig : 
+	: 대표 메서드	
+		(0) any : 
+		****** 1. ResponseEntity exchange :  http 헤더를 생성하여 추가할 수 있고 , 모든 형식의 요청에서 다 사용 가능
+
+		(1) HTTP GET 방식 : get 방식 요청 결과를 object|| ResponseEntity 로 반환
+			1. Object getForObject 
+			2. ResponsEntity getForEntity   
+
+
+		(2) HTTP POST 방식 : post 방식 요청 결과를 object|| ResponseEntity 로 반환
+			1. Object postForObject 
+			2. ResponseEntity postForEntity
+
+		(3) HTTP DELETE 방식
+			1. void delete
+
+		(4) HTTP PUT 방식
+			1. void put
+	
+		(5) HTTP PATCH 방식
+			1. void patchForObject 
+
+
+	: 사용방법
+
+spring security
+	: 일반적인 spring security의  전체 프로세스
+		: UsernamePasswordAuthenticationFilter 
+			: 해당 url 에 접근 권한이 없는 경우 로그인 폼을 반환하는 얘임
+				: 얘때문에 spring security 처음에 아무 설정안하면 로그인화면 뜨는거임
+
+		1. 클라이언트 request 가 들어오고,  서블릿 필터에 도달
+		2. 서블릿 필터의 request 를 security filter , 그 중에서도 UsernamePasswordAuthenticationFilter ( 이하 AuthenticationFilter )가 가로챔
+		3. AuthenticationFilter 에서 username 과 password 를 추출해 UsernameAuthenticationToken(이하 인증객체) 를 생성
+		4. AuthenticationFilter에서 AuthenticationManager (구현체 : ProviderManager) 에게 인증 객체를 전달
+		5. ProviderManager 는 인증을 위해 AuthenticationProvider에게 인증 객체를 전달
+		6. AuthenticationProvider 는 전달받은 인증객체의 정보(일반적으로 사용자id)를 UserDetailsService 에 넘김
+		7. UserDetailsService에서 db 뒤져서 해당 사용자 정보와 일치하는 UserDetails객체를 AuthenticationProvider에 반환
+		8. AuthenticationProvider은 반환받은 UserDetails를 인증하고, 성공하면 ProviderManager에게 권한 (Authorities) 을 담은 검증된 인증 객체를 반환
+
+		9. ProviderManager는 검증된 인증 객체를 (event 기반 으로) AuthenticationFilter에게 반환
+		10. AuthenticationFilter는 검증된 인증 객체를 SecurityContextHolder의 SecurityContext에 저장.
+
+	: jwt 를 사용하는 spring security 의 전체 프로세스
+		: UsernamePasswordAuthenticationFilter의 앞에 커스텀JWT인증필터(JwtAuthenticationFilter) 를 배치하여 권한 처리를 하게 된다.
+		:  JwtTokenProvider >> Jwt Token을 생성, 인증, 권한 부여, 유효성 검사 등의 다양한 기능을 제공하는 클래스
+			: JwtAuthenticationFilter 내부에서 주로 쓰임
+			: JwtUtil 등의 네이밍도 괜춘
+			
+		: JwtAuthenticationFilter >> 
+			doFilter 오버라이드
+				: AuthenticationManager가 아닌 직접 커스텀한 JwtTokenProvider를 통해서 인증 후 SecurityContextHolder 에 authentication 저장
+				: 마지막으로 chain.doFilter(request,response); 해서 다음 필터로 넘기기
+
+		: CustomUserDetailsService >>> 
+			:  인터페이스인 UserDetailsService를 상속받아 작성한 클래스로 JwtTokenProvider가 제공한 사용자 정보를 이용하여 DB에서 알맞은 사용자 정보를 가져와 UserDetails 생성
+			: loadUserByUsername 오버라이드
+
+		: CustomUser
+			: User를 상속받아 작성한 클래스로 userName, password, authorities + a 를 제공
+			: 대부분의 경우 Spring Security의 기본 UserDetails로는 필요한 정보를 모두 담을 수 없기에 CustomUser를 구현하여 사용한다.
+
+			case1 : 토큰 발급이 안되어있을 경우
+				1. 클라이언트 요청
+				2. SecurityConfig에 등록된 JwtAuthenticationFilter 호출
+				3. 토큰정보가 없기 때문에 다음 필터 호출
+
+			case2 :  토큰을 발급하는 경우(로그인)
+				1. 클라이언트 요청
+				2. SecurityConfig에 등록된 JwtAuthenticationFilter 호출
+				3. 토큰정보가 없기 때문에 다음 필터 호출
+				4. UsernamePasswordAuthenticationFilter에서 로그인 폼 response 및 로그인 데이터를 받음
+				5. UsernamePasswordAuthenticationFilter에서 사용자의 로그인id, pw를 사용하여 UsernamePasswordAuthenticationToken 객체 생성
+				6. UsernamePasswordAuthenticationFilter에서 authenticationManagerBuilder를 이용하여 CustomUserDetailsService 의 loadUserByUsername 메소드 호출
+				7. loadUserByUsername 의 반환값인 UserDetails 객체를 Authentication 타입의 객체로 반환
+				8. Authentication을 이용하여 토큰 생성
+
+			case3: 토큰 발급이 되어있는 경우
+				1. 클라이언트 요청
+				2. SecurityConfig에 등록된 JwtAuthenticationFilter 호출
+				3. JwtAuthenticationFilter 에서 토큰 유효성 검사 후 통과되면 다음 필터 호출
+
+		: https://velog.io/@jeon0728/Spring-Security-JWT-%EC%88%9C%EC%84%9C
+
+
+
+
+
+	: 인증객체
+		: principal >> 최상위 인터페이스
+		: Authentication >> principal 을 상속한 인터페이스
+			: Principal 과 GrantAuthority를 제공
+				: 대부분의 경우 Principal로 UserDetails 반환함. 이 정보는 @AuthenticationPrincipal 어노테이션을 통해 컨트롤러에서 사용 가능하며, 필요할 경우 UserDetails를 상속받아 커스텀하여 추가 정보 저장
+				: GrantAuthority >> ROLE_ADMIN, ROLE_USER등 Principal이 가지고 있는 권한 나타냄
+					: prefix로 ‘ROLE_’ 이 붙음
+					: 인증 이후에 인가를 할 때 사용. 권한은 여러개일 수 있으므로 Collection형태로 제공
+
+		: AbstractAuthenticationToken >> Autentication 을 상속한 추상 클래스
+
+		: UsernamePasswordAuthenticationToken >> AbstractAuthenticationToken 의 구현 클라스
+
+	: SecurityContext >> Authentication을 저장하고 있음
+	: SecutiryContextHolder
+		: SecurityContext 객체를 저장하고 감싸고 있는 wrapper 클래스
+		: getContext() 전역 메소드를 제공하여 securityContext에 접근이 가능함
+		: 기본적으로 THREADLOCAL
+
+
+	: doFilter 와 doFilterInternal
+		doFilter 메소드: 
+			:  javax.servlet.Filter 인터페이스에 정의된 메소드로, 모든 서블릿 필터가 구현해야 하는 메소드
+			: 클라이언트의 요청이 서블릿에 도달하기 전과 서블릿이 응답을 클라이언트에게 반환한 후에 호출됨. 
+			:  FilterChain 객체를 매개변수로 받아 체인의 다음 필터로 요청을 전달하거나, 필터 처리 후 요청을 서블릿이나 다른 리소스로 전달하는 역할을 함
+
+		doFilterInternal 메소드:
+			: 스프링의 OncePerRequestFilter를 상속받는 필터들이 구현해야 하는 메소드로, 요청당 한 번만 실행되어야 하는 로직을 정의함.
+
+
+
+	: pre-authentication 방식 >> 인증을 spring 외부에서 진행
+		: 시스템 내 다른 모듈에 api 를 제공하거나 이미 인증된 사용자에 대해 api 를 제공하는 spring 모듈을 만들어야 할 경우 유용
+		: AbstractPreAuthenticatedProcessingFilter를 이용해 구현
+		: https://bitgadak.tistory.com/9
+
+
+	: OncePerRequestFilter
+		: http request (요청)하나당 딱 한번만 실행되는 filter
+			: 그러니까 forward 같은게 발생하더라도 여러번 수행되지 않는다.
+	
+		: doFilter(request,response ); 
+		: https://junyharang.tistory.com/378
+		
+
+
 https://velog.io/@crow/AuthenticationEntryPoint-%EC%9D%B4%ED%95%B4
