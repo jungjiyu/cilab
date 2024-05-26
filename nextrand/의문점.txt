@@ -1,1 +1,2 @@
 1. system 과 user 의 차이점?
+2. application.yml 의 system.key?
