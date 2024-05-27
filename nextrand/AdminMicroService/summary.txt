@@ -111,6 +111,72 @@ restTemplate : spring에서 제공하는  "http 메서드기반으로 rest api �
 	: 사용방법
 
 spring security
+	: 인증과 인가 >> Authentication 절차를 성공하면 Authorization 절차 진행
+		: principal 을  id 로 , credential 을 비밀번호로 사용
+			: Principal( 인증 객체 ): 보호받는 Resource에 접근하는 대상
+			: Credential(비밀번호): Resource에 접근하는 대상의 비밀번호
+		: https://mangkyu.tistory.com/76
+
+	: 권한의 종류 : USER < AMDIN< SYSTEM 
+		System >> 일반적으로 시스템 레벨의 접근 권한을 의미합니다. 이는 애플리케이션 내에서 가장 높은 수준의 권한을 가진 사용자나 프로세스가 할당받는 권한으로, 시스템 관련 작업을 수행할 수 있는 권한. 예를 들어, 관리자가 시스템 설정을 변경하거나 중요한 데이터에 접근할 때 ‘system’ 권한이 필요할 수 있다.
+
+	: claim >> 사용할 정보의 조각. 사용자에 대한 프로퍼티를 담고있는 정보.
+		: json 형식의 key&value 형태로  jwt 토큰의 페이로드에 담겨있다
+		: 종류
+			(1) 등록된 클레임 : 토큰 정보를 표현하기 위해 이미 정해진 종류의 데이터들로, 모두 선택적으로 작성이 가능하며 사용할 것을 권장
+				ex ) 
+				iss: 토큰 발급자(issuer)
+				exp: 토큰 만료 시간(expiration)
+
+			(2) 공개 클레임 : 사용자 정의 클레임으로, 공개용 정보를 위해 사용. 충돌방지를 위해 이름을 URI 형식으로 짓는편.
+				ex) https://mypage.com/jwt_claims/is_admin
+			(3) 비공개 클래임 :  사용자 정의 클레임으로,  보통  클라이언트 와 서버 간의 협의하에 사용되는 클레임 이름들
+				ex )  username
+
+	: JWT JSON Web Token =  header(json) + payload(json) + signature 
+		: 헤더>>  시그니처를 해싱하기 위한 알고리즘 정보들
+		: 페이로드 >>  실제 데이터. 사용자에 대한 프로퍼티.
+		: 시그니쳐 >>  토큰의 유효성을 검증하기 위한 문자열
+
+	: JWS JSON Web Signature  :  claim 을 디지털 서명화 하는 방식
+		:  claim의 내용이 노출되지만 서명을 이용하여 원본이 맞는지 무결성을 파악할 수 있다
+		: 대부분의 JWT 에선 JWE 가 아닌 JWS 를 사용한다.
+		: 토큰 검증 코드에서 Jwts 클래스를 자주 사용한다.  secretKey로 서명했을 때 토큰에 포함된 signature와 동일한 signature가 생성되는지 확인한다.
+			ex ) 
+   			 public TokenVerificationResult verify(String token) { 
+			            Jws<Claims> claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
+
+    			        return TokenVerificationResult.builder()
+          			          .uid((String)claims.getBody().get("uid")) // 토큰에서 추출한 사용자의 UID
+      			              .email((String)claims.getBody().get("email")) //  토큰에서 추출한 사용자의 email
+               			     .userId((String)claims.getBody().get("userId")) //  토큰에서 추출한 사용자의 id
+                 			   .userRole(UserRole.valueOf((String)claims.getBody().get("role"))) //  토큰에서 추출한 사용자의 역할
+                  			  .build();
+
+
+	: JWE JSON Web Encryption : claim 을 암호화 하는 방식
+		: JWE 의 경우  claim 자체를 암호화시켜 내용을 파악할 수 없다.보안은 당연히 암호화 방식이 좋지만, 클라이언트가 claim의 데이터를 사용하려면 디지털 서명 방식을 사용해야한다. 
+		: https://velog.io/@dae-hwa/JWTJSON-Web-Token-%EC%95%8C%EC%95%84%EB%B3%B4%EA%B8%B0
+
+/**
+* 토큰생성
+*/
+String jwt = Jwt.builder()
+	    //header
+            .setHeaderParam("typ","JWT") // 토큰타입
+            .setSubject("EXMAPLE") // 토큰제목
+            //payload
+            .claim("username","uk") // private claim
+            .claim("userage","26") // private claim
+            .setIssuedAt(new Date(System.currentTimeMillis()) // 토큰 생성날짜
+            .setExpiration(new Date(System.currentTimeMillis() + 3600) // 토큰 유효시간
+            //signatue
+            .signWith(SignatureAlgorithm.HS512, "Uk".getByte("UTF-8"))
+            .compact();
+            
+
+
+
 	: 일반적인 spring security의  전체 프로세스
 		: UsernamePasswordAuthenticationFilter 
 			: 해당 url 에 접근 권한이 없는 경우 로그인 폼을 반환하는 얘임
@@ -203,11 +269,50 @@ spring security
 			: 스프링의 OncePerRequestFilter를 상속받는 필터들이 구현해야 하는 메소드로, 요청당 한 번만 실행되어야 하는 로직을 정의함.
 
 
-
+	: @PostAuthorize ,  @PreAuthorize
+		: 이 어노테이션들을 쓰기 위해선 "SecurityConfig 클래스"에 @EnableMethodSecurity(prePostEnabled = true)  를 적어야된다.
+		: 컨트롤러 "내부" 메서드 수준에서 쓰인다
+		: SpringConfig 에서 url 을 특정하는 requestMatchers 다음에 쓰이는  .permitAll , hasRole 등 특정 역할을 가진 사용자로 접근을 제한하는 것과 비슷한 역할을 수행한다.
+		: @PostAuthorize >>  요청이 들어와 함수를 실행하기 전에 권한을 검사하는 어노테이션
+		: @PreAuthorize >> 함수를 실행하고 클라이언트한테 응답을 하기 직전에 권한을 검사하는 어노테이션
+			: 속성 >> hasRole( ) 접근 가능한 권한을 의미
+				ex)    @PreAuthorize("hasRole('ADMIN')") 과 함꼐 선언된 메서드(에 매핑된 url)의 경우 ADMIN 권한을 가진 사용자는 호출 가능하지만, 일반 USER 는 호출 불가하다 
+	
 	: pre-authentication 방식 >> 인증을 spring 외부에서 진행
 		: 시스템 내 다른 모듈에 api 를 제공하거나 이미 인증된 사용자에 대해 api 를 제공하는 spring 모듈을 만들어야 할 경우 유용
-		: AbstractPreAuthenticatedProcessingFilter를 이용해 구현
-		: https://bitgadak.tistory.com/9
+						
+
+		: http request 헤더 키의 유형
+			1. (인증된) 사용자 요청
+				(1) USER-ID-HEADER : 사용자 id를 나타내는 키
+				(2) USER-ROLES-HEADER : 사용자 권한을 나타내는 키
+				ex) 
+					USER-ID-HEADER: admin
+					USER-ROLES-HEADER : ADMIN 
+					USER-ROLES-HEADER : USER 
+
+			2. 시스템 요청 
+				(1) SYSTEM-AUTH-HEADER : 인증용 토큰을 나타내는 키
+				ex) SYSTEM-AUTH-HEADER : 비밀번호쏼라쏼라
+
+		: AbstractPreAuthenticatedProcessingFilter를 extends 하여 필터 구현
+			: SystemAuthenticationFilter 가 UserAuthenticationFilter 의 앞에 위치한다.	
+			: 둘다 AbstractPreAuthenticatedProcessingFilter를 extends 하는 거임
+			: 근데 우리 프젝에선 System, user 구분 없이 하나의 AuthenticationFIlter 만 만들었다.
+			1. SystemAuthenticationFilter
+				(1) http request header 검사	
+				(2)  SYSTEM-AUTH-HEADER 가 있으면 System 요청으로 간주하여 System 권한을 부여
+				(3) 갱신된 Authentication 을 다음 필터에게 전달
+
+			2. UserAuthenticationFilter
+				(1) http request header 검사	
+				(2) 사용자의 id 와 권한정보를 추출하여 적절한 권한을 부여
+				(3) 갱신된 Authentication 을 다음 필터에게 전달
+
+		: AuthenticationProvider 를 implements 하여 SystemAuthenticationProvider 를 구현
+			: 우리 프젝에선 com.knlab.admin.utils.customAuthProvider 가 이에 해당
+
+	: https://bitgadak.tistory.com/9
 
 
 	: OncePerRequestFilter
