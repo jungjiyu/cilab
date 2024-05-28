@@ -1,4 +1,5 @@
 ElasticSearch 
+	: https://bbidag.tistory.com/10
 	: https://velog.io/@sa1341/Elasticseach-%ED%81%B4%EB%9F%AC%EC%8A%A4%ED%84%B0-%EA%B5%AC%EC%84%B1%ED%95%98%EA%B8%B0
 	: Apache Lucene(아파치 루씬) 기반의 Java 오픈소스 분산 검색 엔진
 	:  역 색인(Inverted Index)를 사용하여 ES는 문서 -> 내용으로 저장하는 것 외에 단어 -> 문서로 찾을 수 있는 테이블을 추가로 만든다. >> 특정 단어가 포함된 문서를 빠르게 찾을 수 있다
@@ -7,7 +8,7 @@ ElasticSearch
 		: Kibana: Elasticsearch의 빠른 검색을 통해 데이터를 시각화 및 모니터링
 
 	: 인덱스 >> RDB 의 테이블. document 를 저장하는 논리적 구분자
-		: 하나의 인덱스에 다수의 document 가 포함
+		: 하나의 인덱스에 다수의 document . shard 가 포함
 		: 동일한 index 에 있는 docuemnt 들은 동일한 schema 를 가짐
 			: schema 따라 index 를 구분하여 저장
 		; indexing >> docuemnt 를 index 에 포함시키는 것 . 즉 , 새 데이터를 인덱스에 insert 하는 것
@@ -20,16 +21,18 @@ ElasticSearch
 	: Mapping >> RDB의 Schema.  대용량 데이터를 빠르게 실시간 검색 가능하게 하는 과정
 		: Json 형태의 데이터를 Lucene 이 이해할 수 있도록 바꿔주는 과정
 
-	: cluster 클러스터 >> Elasticsearch에서 가장 큰 시스템 단위.. 
-		: 최소 하나 이상의 노드로 이루어진 노드들의 집합
+	: cluster 클러스터 >> Elasticsearch에서 가장 큰 시스템 단위. 노드의 집합
 		: 서로 다른 클러스터는 데이터 접근, 교환을 할 수 없는 독립적인 시스템으로 유지
 		: 여러 대의 서버가 하나의 클러스터를 구성할 수 있고, 한 서버에 여러개의 클러스터가 존재할 수도
+		:  document ⊂  인덱스 ⊂ 샤드  ⊂ 노드  ⊂ 클러스
 
-	: node 노드 >> Elasticsearch를 구성하는 하나의 단위 프로세스
+	: node 노드 >> Elasticsearch를 구성하는 하나의 단위 프로세스. 물리적인 서버 한대.
+		: 서버가 넉넉할 경우 한 서버에서 2개이상의 노드도 운영 가
 		: 역할 따라 Master-eligible, Data, Ingest, Tribe 등으로 구분
 			: Master-eligible >> 클러스터를 제어(인덱스 생성, 삭제 . 클러스터 노드들의 추적, 관리 .. )하는 노드
-			: Data >> 데이터와 관련된 CRUD 작업과 관련있는 노드
-			: Ingest >> 클러스터 노드들의 추적, 관리
+			: Data >> 문서가 실제로 저장되는 노드. 데이터와 관련된 CRUD 작업과 관련있는 노드
+				: 여러 인덱스를 배치 가능
+			: Ingest >> 색인에 앞서 데이터를 전처리하기 위한 노드
 
 	: shard >> RDB의 물리적 분할.  index의 document를 분할한 것
 		: 노드 끼리 서로 다른 데이터를 저장하게 됨
@@ -39,16 +42,22 @@ ElasticSearch
 
 		: 기본적으로 1개가 존재하며, 검색 성능 향상을 위해 클러스터의 샤드 갯수를 조정하는 튜닝을 하기도 함
 
-	: Replica >> 노드를 손실할 경우를 대비하여 샤드를 복제한 것.
-		: 노드끼리 동일한 데이터를 저장
-
+		: 종류
+			: Replica shard >> 노드를 손실할 경우를 대비하여 샤드를 복제한 것.
+				: 노드끼리 동일한 데이터를 저장
+			: primary shard >> 찐 샤드. replica shard 로부터 복제된 원본.
 		
 	: route >> RDB의 논리적 분할
 	: Query DSL >> RDB의 SQL 문
 
 
 	: status >> 현재 클러스터의 상태
-		: 
+		: cat API 중 health 를 이용하면 현재 클러스터의 상태에 대해 간략한 정보 확인 가능
+			:"도메인/_cat/health?v" 를 request하여 확인 가능
+		: 종류
+			1. green >> 모든 사드가 정상적으로 동작되고 있는 상태
+			2. yellow >> 모든 인덱스의 쓰기/읽기 는 정상적으로 되지만, 인덱스의 replicas 샤드가 정상적으로 동작하고 있지 않은 상태. (primary 샤드에 문제가 생기면 데이터 손실이 발생할 수 있는 상태)
+			3. red >> 인덱스의 쓰기/읽기도 정상적으로 되지 않고, replicas 샤드가 정상적으로 동작하지 않는 상태
 		: https://brunch.co.kr/@alden/43
 
 
