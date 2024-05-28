@@ -1,1 +1,54 @@
 
+API Gateway
+	:  마이크로 서비스 아키텍처에서 각 서비스의 엔드포인트 대신 API Gateway로 요청을 보내게 되며, 요청을 받은 API Gateway는 설정에 따라 각 엔드포인트로 클라이언트를 대신하여 요청하고, 응답을 받으면 다시 클라이언트에게 전달하는 프록시(proxy) 역할을 수행.
+	: https://wildeveloperetrain.tistory.com/205
+
+
+SCG Spring Cloud Gateway를 이용한 API Gateway 구축
+	: MSA 환경에서 사용되는 API Gateway 중 하나
+	: 구성
+		(1) predicate : API Gateway로 "들어온" 요청이 만족해야하는 조건
+			: 하나 이상의 조건을 정의할 수 있으며, 만약 Predicate 조건에 맞지 않는 경우 HTTP 404 Not Found 응답을 반환
+			: 이 조건을 만족해야 라우팅시켜줌
+		(2) filter :   API Gateway로 "들어온" 요청에 대해 Filter를 적용하여 선처리 및 후처리를 할 수 있게 해주는 구성요소
+
+	: 동작 원리
+		1. 클라이언트에서 들어온 요청이 Gateway Handler Mapping에 의해 predicate 조건을 만족하는 형식인지 확인
+		2. Gateway Web Handler에서 요청과 관련된 필터 체인을 통해 요청이 전송
+		3. 해당 필터를 통해 요청/응답에 대한 전처리 , 후처리가 이뤄짐
+
+	: uri VS predicates
+		: spring.cloud.gateway.routes.uri >> api gate way 에서 라우팅 되는, 나가는 url . 
+		: spring.cloud.gateway.routes.predicates >>  api gateway 로 들어올수 있는 request url 의 형식. 
+
+	: application.yml 설정 ex ) 
+		: locallost:8000/first-service/** 요청이 gateway 로 들어오면 http://localhost:8081/ 로 요청을 전달
+
+		server:
+ 		 port: 8000
+
+		spring:
+		  cloud:
+ 		   gateway:
+ 		     routes:
+ 		       - id: first-service
+  		         uri: http://localhost:8081/
+   		       	 predicates:
+      		      	    - Path=/first-service/**
+ 		       - id: second-service
+ 		         uri: http://localhost:8082/
+     		         predicates:
+      		           - Path=/second-service/**
+      		         filters:
+      		           - AddRequestHeader=second-request, second-request-header
+      		           - AddResponseHeader=second-response, second-response-header
+
+	: https://wildeveloperetrain.tistory.com/207 
+
+
+
+		: Route
+			1. id : 요청"할" 서비스의 식별자
+			2. uri : 요청"할" uri . 라우팅될 uri.
+
+
