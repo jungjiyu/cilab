@@ -1,0 +1,738 @@
+db
+
+elasticsearch 
+	클러스터 상태 확인 >> http://index.knlab.kr:9200/_cat/health?v
+	클러스터 전체 인덱스 조회 >> http://index.knlab.kr:9200/_cat/indices?v
+
+health status index                          uuid                   pri rep docs.count docs.deleted store.size pri.store.size
+green  open   .kibana-event-log-7.9.3-000028 g_cOcHjNQfihDcZo0Qyo7A   1   1          0            0       416b           208b
+green  open   .kibana-event-log-7.9.3-000027 1SCbfj76S325FSEoc2dXAA   1   1          0            0       416b           208b
+green  open   .apm-agent-configuration       e-5wb1JxRZqEkL5GA3p_tQ   1   1          0            0       416b           208b
+green  open   caption                        Jx5648k4SHqS5yYfOpfxLA  24   0      11250            0      7.8mb          7.8mb
+green  open   politica_full_text             0B67kjveTM-Vqpy85GJaRA  24   0          0            0      4.8kb          4.8kb
+green  open   .kibana-event-log-7.9.3-000029 Nrce8n9FQTaqIPEmg6xcmQ   1   1          0            0       416b           208b
+green  open   .kibana_2                      DeKVmMAmTOiC0XoeMEOZVg   1   1         18            7     20.8mb         10.4mb
+green  open   .kibana_1                      nXDbMZJySzmS_UefRrjO5w   1   1          3            0     17.9kb          8.9kb
+green  open   $rnd_projects                  owWVdgRPQ3-FQsA3LDxi9Q   1   1          0            0       416b           208b
+green  open   .tasks                         Nr7tA15BQhKJas_gnt6nSQ   1   1          1            0     13.3kb          6.6kb
+green  open   politica_documents             Ti64uUTUSpuJOsUq1H9bJA   1   1       5491           25     27.4mb         13.7mb
+green  open   politica_service               pY2bKAHWTaW0K3_SOrsq6Q   1   1       6336           10     33.3mb         16.5mb
+green  open   .apm-custom-link               _PQE7JiHQuyNly_sN5O-zg   1   1          0            0       416b           208b
+green  open   politica_caption               l2X02PJjQNm0gwNRXpPRbg  24   0          0            0      4.8kb          4.8kb
+green  open   .kibana_task_manager_1         hZdmHVlHTO-lEEpnAA5rOg   1   1          6       442302    259.4mb        129.7mb
+green  open   full_text                      VmNxtfvGQ4CfSrMzNyYc_Q  24   0      19783            0    213.7mb        213.7mb
+green  open   screening_documents            FKHizk7RS6KBJzU-BlEXcw   1   1      67277           79    378.5mb        188.6mb
+green  open   crawler_counter                Wsj05KFqS-aTNgtgm4pXUg   4   0        882            0    140.9kb        140.9kb
+green  open   .kibana-event-log-7.9.3-000030 zNV06QLBSt2hAKafhfWBlQ   1   1          0            0       416b           208b
+green  open   rnd_projects                   eGoCr95pRXG8xVoNsB3Kow   1   1     811487            0      3.1gb          1.5gb
+
+
+	주요 클러스터 인덱스
+		0. screening_documents 인덱스 
+			: 아마 크롤된 데이터가 등록되는 곳인 듯?
+
+{
+	"query": {
+		"match" : {
+            "summary":"Microsoft Word - FINAL REPORT.doc"
+        }
+	}
+}
+
+            {
+                "_index": "screening_documents",
+                "_type": "_doc",
+                "_id": "_bu9h4oBVYNUDmViqEMj",
+                "_score": 1.0,
+                "_source": {
+                    "item_id": "140732",
+                    "job_id": "57",
+                    "host": "www.bicc.de",
+                    "status": "COLLECTED",
+                    "url": "https%3A//www.bicc.de/uploads/tx_bicctools/bulletin22.pdf",
+                    "file_type": "pdf",
+                    "intro_url": [
+                        "https%3A//www.bicc.de/publications/publicationpage/publication/bicc-and-the-changing-political-arena-62/"
+                    ],
+                    "created_at": "2020-02-12T12:55:50Z",
+                    "updated_at": "2020-02-12T12:55:50Z",
+                    "pages": 4,
+                    "fileName": "bulletin22.pdf",
+                    "fileExtension": ".pdf",
+                    "downloadDate": "2021-12-30T00:00:00Z",
+                    "fileSrc": "/mnt/data_nas/pdf/files/archived/2021/12/www.bicc.de/140732_bulletin22.pdf",
+                    "storageSrc": "2021/12/www.bicc.de/140732_bulletin22.pdf",
+                    "fileSize": 173.4462890625,
+                    "title": "Bull22p65",
+                    "contents": [
+                        "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nBull22.p65\n\n\n2002January\n\nbulletin\nNo. 22 1 January 2002\n\n“There can be no doubt that our\nresearch agendas must be\nreviewed and amended as\n\ndevelopments evolve.”\n\nBICC and the Changing\nPolitical Arena\nby Sverre Lodgaard\n\nBICC is a product of  the end of  the Cold War. It waslogical that an international center for conversion\nstudies should have its venue in Central Europe. BICC\nwas still in an entrepreneurial mode a few years later, as\nBig Power relations deteriorated and reductions in world\nmilitary expenditure seemed to be grinding to a halt. It\nquickly and successfully amended and enlarged its\nagenda accordingly.\n\nAnd then came 11 September, a dramatic event with\nfar-reaching repercussions. Will this lead to a conceptual\nand paradigmatic shift from which new modes of\nunderstanding, new priorities\nand new political agendas will\nevolve?\n\nThe Western world is known\nfor its greed. The United Nations\nEnvironment Programme (UNEP)\nhas estimated that if  all human beings were to\nadopt Western lifestyles, we would need five planets to\nproduce the necessary raw materials and to absorb the\npollution left behind. The Western world is also known\nfor its language of  power, and some would say for its hubris:\nour decision-makers apparently believe that things can\ncontinue more or less as they are. Has 11 September\ndone anything to transform this state of  affairs? By and\nlarge, electorates seem to think that things should\nremain the same and want their representatives to\nuphold their privileges. Evidently, we are not there yet.\n\nThese days, large parts of  the world are busily\nstudying political Islam and the Middle East in order to\nbetter understand the oppression, humiliation and\npowerlessness under which people in the Middle East\nare laboring. In the mindset of  many Muslims, the\nsuicide bomber is pitted against the super military\npower; theology against technology—only God is with\nthem. As more and more people throughout Europe\nhear, read and see this, does 11 September change\nWestern policies towards the Muslim world, and the\nMiddle East in particular? Certainly, changes are taking\n\nplace. But most of  them are dictated by the US agenda,\nwhich does not allow much scope for the emancipation\nof  the Middle East. There is little indication that\nhumility is substituting the language of  power.\n\nDramatic events do open windows of  opportunity,\nhowever. What are the implications for the conversion/\ndisarmament agenda, and what does it mean for BICC?\nHere are a few points for consideration:\n\nThe non-proliferation agenda has become more\nimportant. In Russia, some 1,350 tons of  fissile\nmaterial are kept in 300 depots at 50 sites. About half\nof  this material is contained in nuclear warheads, but\nproliferation concerns relate mainly to the other half.\nImprovements in material protection, control and\naccounting (MPC&A) are the first line of  defense.\nMaking weapons unusable is the second, and\n\ndisarmament/elimination the\n"
+                    ],
+                    "author": [
+                        "bends"
+                    ],
+                    "creationdate": "2001-12-17T07:42:38Z",
+                    "lastmodified": "2009-02-17T09:17:18Z",
+                    "lastsave": "2009-02-17T09:17:18Z",
+                    "language": "en",
+                    "summary": [
+                        "Bull22.p65\nBICC and the Changing\nBICC is a product of  the end of  the"
+                    ],
+                    "keywords": [
+                        "bulletin",
+                        "bicc",
+                        "january",
+                        "changing",
+                        "arena",
+                        "sverre",
+                        "lodgaard",
+                        "arena by sverre",
+                        "evolve",
+                        "developments"
+                    ],
+                    "thumbnail": [
+                        "/mnt/data_nas/pdf/files/thumbnail/2021/12/www.bicc.de/bulletin22"
+                    ],
+                    "stat": "0",
+                    "recentWorkDate": "2021-12-30T18:37:21Z",
+                    "id": "8cf54aef-8a6d-46d2-ae2a-0731e3847d6b",
+                    "_version_": 1720597287399325696,
+                    "doc_step": "SCREENING"
+                }
+            }
+
+
+		1. Politica_service인덱스>> http://index.knlab.kr:9200/politica_service
+			:  politica_service 인덱스 에  색인된게 아카이브 데이터 조회인듯?
+{
+	"query": {
+		"match" : {
+            "doc_url":"https://www.medipana.com/article/view.php?news_idx=315388&sch_cate=D"
+        }
+	}
+}
+
+
+
+            {
+                "_index": "politica_service",
+                "_type": "_doc",
+                "_id": "BLfY-IkBVYNUDmViNNZv",
+                "_score": 1.0,
+                "_source": {
+                    "doc_bundle_title": "글로벌 보건산업 동향 Vol.476",
+                    "doc_bundle_url": "https://www.khidi.or.kr/board/view?pageNum=1&rowCnt=10&menuId=MENU01784&maxIndex=00488971879998&minIndex=00488515749998&schType=0&schText=&categoryId=&continent=&country=&upDown=0&boardStyle=&no1=472&linkId=48896947",
+                    "doc_category": [
+                        "2012"
+                    ],
+                    "doc_collect_date": "2023-05-15",
+                    "doc_content": "<p><span style=\"font-size:20px;\"><strong>시카고에 본사를 둔 디지털 직원 복리후생 플랫폼인 HealthJoy社가 가상 의료 제공업체인 Teladoc社와 파트너십을 확장하여 가상 일차의료 서비스를 제공</strong></span><br>&nbsp;</p><p><span style=\"font-size:14px;\">● Teladoc과 HealthJoy는 ’22년 파트너십을 체결하여 HealthJoy의 케어 내비게이션 플랫폼 내에 가상 의료 옵션을 포함했으며, 이번 파트너십의 확장으로 Teladoc의 가상 일차의료 서비스를 고용주를 위한 HealthJoy의 서비스에 완전히 통합</span><br><span style=\"font-size:13px;\">&nbsp;* HealthJoy는 고용주, 중개인 및 제3자 관리자에게 정신 건강, 영양 및 근골격 치료 등의 다양한 혜택을 직원과 연결해주는 모바일 플랫폼을 제공하며, 뉴욕 Purchase에 본사를 둔 Teladoc은 일차의료, 정신건강, 복합 진료, 상태 관리 및 만성 질환 관리를 위한 가상 서비스를 제공</span><br>&nbsp;</p><p><span style=\"font-size:14px;\">● 현재 미국인의 약 1/3이 일반적인 일차의료를 받을 수 없는 상황에서 두 회사는 일차의료에 대한 접근성을 개선하고 고용주의 비용을 줄이는 것을 목표로 설정</span></p>",
+                    "doc_content_category": [
+                        "1024"
+                    ],
+                    "doc_content_type": [
+                        "1024"
+                    ],
+                    "doc_country": [
+                        "101210"
+                    ],
+                    "doc_custom": [
+                        "191034"
+                    ],
+                    "doc_keyowrd": [
+                        "헬스테크",
+                        "일차진료",
+                        "원격의료"
+                    ],
+                    "doc_kor_summary": "미국 시카고에 본사를 둔 디지털 직원 복리후생 플랫폼을 제공하는 헬스조이(HealthJoy)사는 가상의료 제공업체인 텔라닥(Teladoc)사와의 파트너십으로 고용주에게 가상 일차 진료 서비스 제공",
+                    "doc_kor_title": "미국 HealthJoy와 Teladoc, 고용주에게 가상 일차의료 서비스 제공",
+                    "doc_language": [
+                        "1011"
+                    ],
+                    "doc_memo": "476호",
+                    "doc_origin_title": "Expanded HealthJoy, Teladoc Partnership Brings Virtual Primary Care Offering to Employers",
+                    "doc_page": 1,
+                    "doc_project": "KHIDI 글로벌보건산업동향분석",
+                    "doc_publish_country": [],
+                    "doc_publisher": "MedCityNews",
+                    "doc_publish_date": "2023-05-15",
+                    "doc_publishing": "글로벌 보건산업 동향",
+                    "doc_register_date": "2023-07-13",
+                    "doc_relate_title": "Teladoc Health, HealthJoy expand partnership to include virtual primary care",
+                    "doc_relate_url": "https://www.mobihealthnews.com/news/teladoc-health-healthjoy-expand-partnership-include-virtual-primary-care",
+                    "doc_thumbnail": [
+                        "/2023/07/cc1b885d-8117-44bf-92e0-8c6d55e0576c/GettyImages-1218524442-768x427.jpg"
+                    ],
+                    "doc_topic": [],
+                    "doc_url": "https://medcitynews.com/2023/05/expanded-healthjoy-teladoc-partnership-brings-virtual-primary-care-offering-to-employers/",
+                    "doc_write_date": "2023-05-15",
+                    "is_crawled": true,
+                    "status": 8
+                }
+            }
+
+
+		2.  politica_documents 인덱스 >> http://index.knlab.kr:9200/politica_documents
+			: 아마도 큐레이션까지 다 완료된 . publication 인 듯.
+
+		3. rnd_projects
+			:  아래처럼 쿼리 했을 때 rnd 사이트의 project 부분 처럼 뜬다.
+{
+	"query": {
+		"match" : {
+            "id":2137351
+
+        }
+	}
+}
+
+
+
+	인덱스 전체 document 조회
+		 >> http://index.knlab.kr:9200/politica_documents/_search
+		>> body 부분
+{
+	"query": {
+		"match_all" : {}
+	}
+}
+
+		>> 응답  예시
+                "_index": "politica_documents",
+                "_type": "_doc",
+                "_id": "BLfY-IkBVYNUDmViNNZv",
+                "_score": 1.0,
+                "_source": {
+                    "doc_bundle_title": "글로벌 보건산업 동향 Vol.476",
+                    "doc_bundle_url": "https://www.khidi.or.kr/board/view?pageNum=1&rowCnt=10&menuId=MENU01784&maxIndex=00488971879998&minIndex=00488515749998&schType=0&schText=&categoryId=&continent=&country=&upDown=0&boardStyle=&no1=472&linkId=48896947",
+                    "doc_category": [
+                        "2012"
+                    ],
+                    "doc_collect_date": "2023-05-15",
+                    "doc_content": "<p><span style=\"font-size:20px;\"><strong>시카고에 본사를 둔 디지털 직원 복리후생 플랫폼인 HealthJoy社가 가상 의료 제공업체인 Teladoc社와 파트너십을 확장하여 가상 일차의료 서비스를 제공</strong></span><br>&nbsp;</p><p><span style=\"font-size:14px;\">● Teladoc과 HealthJoy는 ’22년 파트너십을 체결하여 HealthJoy의 케어 내비게이션 플랫폼 내에 가상 의료 옵션을 포함했으며, 이번 파트너십의 확장으로 Teladoc의 가상 일차의료 서비스를 고용주를 위한 HealthJoy의 서비스에 완전히 통합</span><br><span style=\"font-size:13px;\">&nbsp;* HealthJoy는 고용주, 중개인 및 제3자 관리자에게 정신 건강, 영양 및 근골격 치료 등의 다양한 혜택을 직원과 연결해주는 모바일 플랫폼을 제공하며, 뉴욕 Purchase에 본사를 둔 Teladoc은 일차의료, 정신건강, 복합 진료, 상태 관리 및 만성 질환 관리를 위한 가상 서비스를 제공</span><br>&nbsp;</p><p><span style=\"font-size:14px;\">● 현재 미국인의 약 1/3이 일반적인 일차의료를 받을 수 없는 상황에서 두 회사는 일차의료에 대한 접근성을 개선하고 고용주의 비용을 줄이는 것을 목표로 설정</span></p>",
+                    "doc_content_category": [
+                        "1024"
+                    ],
+                    "doc_content_type": [
+                        "1024"
+                    ],
+                    "doc_country": [
+                        "101210"
+                    ],
+                    "doc_custom": [
+                        "191034"
+                    ],
+                    "doc_kor_summary": "미국 시카고에 본사를 둔 디지털 직원 복리후생 플랫폼을 제공하는 헬스조이(HealthJoy)사는 가상의료 제공업체인 텔라닥(Teladoc)사와의 파트너십으로 고용주에게 가상 일차 진료 서비스 제공",
+                    "doc_kor_title": "미국 HealthJoy와 Teladoc, 고용주에게 가상 일차의료 서비스 제공",
+                    "doc_language": [
+                        "1011"
+                    ],
+                    "doc_memo": "476호",
+                    "doc_origin_title": "Expanded HealthJoy, Teladoc Partnership Brings Virtual Primary Care Offering to Employers",
+                    "doc_page": 1,
+                    "doc_project": "KHIDI 글로벌보건산업동향분석",
+                    "doc_publish_country": [],
+                    "doc_publisher": "MedCityNews",
+                    "doc_publish_date": "2023-05-15",
+                    "doc_publishing": "글로벌 보건산업 동향",
+                    "doc_register_date": "2023-07-13",
+                    "doc_relate_title": "Teladoc Health, HealthJoy expand partnership to include virtual primary care",
+                    "doc_relate_url": "https://www.mobihealthnews.com/news/teladoc-health-healthjoy-expand-partnership-include-virtual-primary-care",
+                    "doc_thumbnail": [
+                        "/2023/07/cc1b885d-8117-44bf-92e0-8c6d55e0576c/GettyImages-1218524442-768x427.jpg"
+                    ],
+                    "doc_topic": [],
+                    "doc_url": "https://medcitynews.com/2023/05/expanded-healthjoy-teladoc-partnership-brings-virtual-primary-care-offering-to-employers/",
+                    "doc_write_date": "2023-05-15",
+                    "is_crawled": true,
+                    "status": 8,
+                    "doc_keyword": [
+                        "헬스테크",
+                        "일차진료",
+                        "원격의료"
+                    ]
+                }
+            }
+
+
+
+	stat 확인 
+		>> http://index.knlab.kr:9200/politica_service/_search
+		>> body 부분 : 
+	{
+    "size": 0,
+    "query": {
+        "bool": {
+            "must": [
+                {
+                    "match": {
+                        "user_id": "1"
+                    }
+                }
+            ]
+        }
+    },
+    "aggs": {
+        "statDuration": {
+            "stats": {
+                "field": "duration"
+            }
+        }
+    }
+}
+
+
+swagger >>  swagger-ui.path를 딱히 지정하지 않았기 때문에 기본 path 인  swagger-ui/index.html 를 경로로 하여 http://localhost:8080/swagger-ui/index.html 로 접근 가능
+
+---------------------------------------------------------------------------------------------------------------
+
+restTemplate : spring에서 제공하는  "http 메서드기반으로 rest api 통신을 쉽게 할 수 있게 설계되어있는 템플릿" 
+	: https://blog.naver.com/hj_kim97/222295259904
+	: 그러니까 서버 내에서 다른 서버로 request 할 수 있게. 라우팅 할 수 있게 해주는 얘다.
+	: REST API 호출이후 응답을 받을 때까지 기다리는 동기방식으로 작동
+	: 동작 원리: RestTemplate은 통신 과정을 ClientHttpRequestFactory(ClientHttpRequest, ClientHttpResponse)에 위임하고,  ClientHttpRequestFactory가 해당 API 로 request 하고 response 해서 RestTemplate에게 반환해주면 최종적으로 해당 response 결과를 json 의 형태로 반환한다.
+
+		1. 애플리케이션 내부에서 REST API에 요청하기 위해 RestTemplate의 메서드를 호출한다.
+		2. RestTemplate은 MessageConverter를 이용해 java object를 request body에 담을 message(JSON etc.)로 변환한다. 메시지 형태는 상황에 따라 다름
+		3. ClientHttpRequestFactory에서 ClientHttpRequest을 받아와 요청을 전달한다.
+		4. 실질적으로 ClientHttpRequest가 HTTP 통신으로 요청을 수행한다.
+		5. RestTemplate이 에러핸들링을 한다.
+		6. ClientHttpResponse에서 응답 데이터를 가져와 오류가 있으면 처리한다.
+		7. MessageConverter를 이용해 response body의 message를 java object로 변환한다.
+		8. 결과를 애플리케이션에 돌려준다.
+
+
+: 대표 메서드	
+		(0) any : 
+		****** 1. ResponseEntity exchange :  http 헤더를 생성하여 추가할 수 있고 , 모든 형식의 요청에서 다 사용 가능
+
+		(1) HTTP GET 방식 : get 방식 요청 결과를 object|| ResponseEntity 로 반환
+		(2) HTTP POST 방식 : post 방식 요청 결과를 object|| ResponseEntity 로 반환
+		(3) HTTP DELETE 방식
+		(4) HTTP PUT 방식	
+		(5) HTTP PATCH 방식
+
+
+
+
+Multipart >> 웹 클라이언트가 요청을 보낼 때, HTTP 프로토콜의 바디 부분에 데이터를 여러 부분으로 나눠서 보내는 것
+	: 보통 파일을 전송할 때 사용
+
+FTP file transfer protocol
+	: 대용량의 파일을 네트워크로 주고 받기 위해 사용하는 프로토콜
+	: 인터넷을 접속할 떄 쓰는 HTTP 프로토콜은 많은 양의 파일을 주고 받기에는 좀 어렵기 때문에, 대용량의 파일을 네트워크로 전달하는 경우 FTP 를 주로 사용한다.
+	: 동작 원리
+		: 서버와 클라이언트 간의 연결이 2개 생성된다
+			: 하나는 데이터 전송을 제어하기 위한 신호를 주고받기 위함 (21번 포트)
+				: ftp 서버에 접속할 떄 입력하는 사용자 계정 및 암호등의 정보, 파일전송명령 및 결과등을 주고 받는다.
+			: 다른 하나는 실제 데이터 전송에 사용됨 ( 20 번 포트 )
+				: 실제 파일 송수신이 이뤄진다. 
+	: 여러 파일을 연속적으로 송수신 해야되기 떄문에 , 서버와의 지속적인 응답 메시지 전송을 통해 연결 상태 (세션) 을 유지한다
+
+	: SFTP 연결 == FTP + Secure >> ftp 프로토콜의 보안성을 강화한 것
+
+
+ftp 서버 : 프로젝트의 NAS 서버라고 볼 수 있다.
+	: NAS(Network Attached Storage)는 중앙 집중식 파일 서버로, 여러 사용자가 Wi-Fi 또는 이더넷 케이블을 통해 TCP/IP 네트워크에서 파일을 저장하고 공유.
+
+ftp 와 스프링부트
+	: ftp 서버 (연결) 정보는 외부 노출을 막기 위해 yaml 파일에 작성을 한 뒤 @Value 를 써서 주입해서 쓰는 편
+	: 원격지의 FTP 서버와 통신하는 법
+		: org.apache.commons.net.ftp.FTPFile
+			: java 에서 제공하는 , FTP 서버의 파일을 표현할 때 사용되는 클래스
+			: 파일명, 파일크기, 경로 등의 정보를 제공.
+
+		: org.apache.commons.net.ftp.FTPClient
+			:  java 에서 제공하는 , FTP 프로토콜 기반 작업(연결, 로그인, 파일 CRUD .. )을 가능하게 해주는 클래스
+			: 객체 생성 및 셋팅 절차
+				: https://aday7.tistory.com/entry/Java%EB%A1%9C-%EA%B5%AC%EC%B6%95%ED%95%98%EB%8A%94-FTP-%ED%81%B4%EB%9D%BC%EC%9D%B4%EC%96%B8%ED%8A%B8-%ED%8C%8C%EC%9D%BC-%EC%97%85%EB%A1%9C%EB%93%9C-%EB%B0%8F-%EB%8B%A4%EC%9A%B4%EB%A1%9C%EB%93%9C-%EC%B5%9C%EC%A0%81%ED%99%94
+				1. FTPClient객체 생성 >> FTPClient client = new FTPClient( ) ;
+				2. FTP서버에 연결 >> client.connect( nas서버호스트 , nas서버포트번호 );
+				3. FTP서버에 로그인 >> client.login( nas서버username , nas서버비밀번호 );
+				4. FTPClient를 패시브 모드로 설정  >> client.enterLocalPassiveMode();
+					: 대부분의 상황에 패시브 모드가 적절.
+					: 패시브 모드 >> 클라이언트가 서버에 데이터 포트 연결을 요청. 서버는 데이터 전송용 포트 번호를 클라이언트에게 알려주고, "클라이언트가" 그 포트로 연결을 시도한다.
+
+					: 액티브 모드 >>   클라이언트가 서버에게 연결 요청하고, 이후 "서버가" 해당 클라이언트의 포트로 연결을 시도.  클라이언트에 방화벽이 있다면 서버가 접근할 수 없음.
+
+
+       				5. 주고 받을 파일을 바이너리로 설정, >>>client.setFileType(FTP.BINARY_FILE_TYPE);
+					: 데이터의 손상 없이 전송하기 위해서.
+
+
+			: 주요 메서드 
+				1. booelan changeWorkingDirectory( String path );
+					: FTP 서버에서 해당 작업 디렉토리로 경로를 바꾼다. 
+					: 해당 경로로 정상적으로 이동하면 true 를 , 이동 못했으면(뭐 해당 폴더가 없었다던지 .. ) false 를 반환한다.
+
+				2. String printWorkingDirectory( ) : FTP 서버에서의 현재 작업 디렉터리를 구한다
+
+				3. FTPFile[ ] listFiles( ) : 현재 작업 디렉터리에 있는 파일들을 구한다
+				4. FTPFile[ ] listFiles( String path ) : arg 로 입력한 경로에 있는 파일들을 구한다
+				5. String[ ] listNames( ) : 현재 작업 디렉터리에 있는 파일"명"들을 구한다
+				6. boolean storeFile(String remote, InputStream local) : 해당입력스트림으로부터 데이터를 읽어와 FTP서버에 remoteName경로로 업로드.
+					: 주의 >> arg 로 받는 inputStream 은 FTP 서버와 FTPClient 간의 스트림을 말하는게 아니라, FTP 서버와는 별개로 FTPClient가 FTP서버에 업로드할 파일을 읽어오는 스트림이다.
+					
+			
+		: https://m.blog.naver.com/azurecourse/220414601968
+		
+
+ MultipartFile : 스프링에서 업로드 한 파일을 표현할 때 사용되는 인터페이스로, 해당 파일을 간단하게 다룰 수 있게 해준다.
+	: https://antstudy.tistory.com/308
+	: 스프링 부트에선 매개변수에 명시해주면 자동으로 빈 등록 해주고, DI 시켜준다
+	: 메서드
+
+
+ModelMapper >> 어떠한 Object에 있는 필드 값들을 원하는 Object에 자동으로 mapping 시켜주는 라이브러리이다. 
+	: dto <--> entity 같은 걸 굳이 setter 같은걸 써서 일일이 하지 않아도 되게 해준다
+	: dependency 추가 필요하다  >> implementation 'org.modelmapper:modelmapper:3.0.0'
+	: 주의 >> 전환되는 타입들끼리 필드명을 같게 한다
+		: 필드명이 같지 않으면 TypeMap<BaseScr, BaseDest> 을 통하여 추가 설정 한다 (이건 나중에 알아봐라)
+	: 기본적으로 매칭 전략에 맞지 않는 속성들은 null 값으로 초기화된다.
+	: 사용방법 >> ModelMapper.map(Object source, Class<D> destinationType) 을 이용
+		: 주의 >> 2번쨰 arg 에 그냥 띡 클래스명 을 쓰면 안되고 , .class 확장자까지 명시 필요 
+		: ex ) 
+			PersonEntity personEntity  = new PersonEntity("홍길동",18);
+			ModelMapper mapper = new ModelMapper();
+			PersonDTO personDto = mapper.map( personEntity, PersonDTO.class);
+
+	: https://velog.io/@easy_on7/JavaSpring-ModelMapper
+
+
+
+spring security
+	: 인증과 인가 >> Authentication 절차를 성공하면 Authorization 절차 진행
+		: principal 을  id 로 , credential 을 비밀번호로 사용
+			: Principal( 인증 객체 ): 보호받는 Resource에 접근하는 대상
+			: Credential(비밀번호): Resource에 접근하는 대상의 비밀번호
+		: https://mangkyu.tistory.com/76
+
+	: 권한의 종류 : USER < AMDIN< SYSTEM 
+		System >> 일반적으로 시스템 레벨의 접근 권한을 의미합니다. 이는 애플리케이션 내에서 가장 높은 수준의 권한을 가진 사용자나 프로세스가 할당받는 권한으로, 시스템 관련 작업을 수행할 수 있는 권한. 예를 들어, 관리자가 시스템 설정을 변경하거나 중요한 데이터에 접근할 때 ‘system’ 권한이 필요할 수 있다.
+
+	: claim >> 사용할 정보의 조각. 사용자에 대한 프로퍼티를 담고있는 정보.
+		: json 형식의 key&value 형태로  jwt 토큰의 페이로드에 담겨있다
+		: 종류
+			(1) 등록된 클레임 : 토큰 정보를 표현하기 위해 이미 정해진 종류의 데이터들로, 모두 선택적으로 작성이 가능하며 사용할 것을 권장
+				ex ) 
+				iss: 토큰 발급자(issuer)
+				exp: 토큰 만료 시간(expiration)
+
+			(2) 공개 클레임 : 사용자 정의 클레임으로, 공개용 정보를 위해 사용. 충돌방지를 위해 이름을 URI 형식으로 짓는편.
+				ex) https://mypage.com/jwt_claims/is_admin
+			(3) 비공개 클래임 :  사용자 정의 클레임으로,  보통  클라이언트 와 서버 간의 협의하에 사용되는 클레임 이름들
+				ex )  username
+
+	: JWT JSON Web Token =  header(json) + payload(json) + signature 
+		: 헤더>>  시그니처를 해싱하기 위한 알고리즘 정보들
+		: 페이로드 >>  실제 데이터. 사용자에 대한 프로퍼티.
+		: 시그니쳐 >>  토큰의 유효성을 검증하기 위한 문자열
+
+	: JWS JSON Web Signature  :  claim 을 디지털 서명화 하는 방식
+		:  claim의 내용이 노출되지만 서명을 이용하여 원본이 맞는지 무결성을 파악할 수 있다
+		: 대부분의 JWT 에선 JWE 가 아닌 JWS 를 사용한다.
+		: 토큰 검증 코드에서 Jwts 클래스를 자주 사용한다.  secretKey로 서명했을 때 토큰에 포함된 signature와 동일한 signature가 생성되는지 확인한다.
+			ex ) 
+   			 public TokenVerificationResult verify(String token) { 
+			            Jws<Claims> claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
+
+    			        return TokenVerificationResult.builder()
+          			          .uid((String)claims.getBody().get("uid")) // 토큰에서 추출한 사용자의 UID
+      			              .email((String)claims.getBody().get("email")) //  토큰에서 추출한 사용자의 email
+               			     .userId((String)claims.getBody().get("userId")) //  토큰에서 추출한 사용자의 id
+                 			   .userRole(UserRole.valueOf((String)claims.getBody().get("role"))) //  토큰에서 추출한 사용자의 역할
+                  			  .build();
+
+
+	: JWE JSON Web Encryption : claim 을 암호화 하는 방식
+		: JWE 의 경우  claim 자체를 암호화시켜 내용을 파악할 수 없다.보안은 당연히 암호화 방식이 좋지만, 클라이언트가 claim의 데이터를 사용하려면 디지털 서명 방식을 사용해야한다. 
+		: https://velog.io/@dae-hwa/JWTJSON-Web-Token-%EC%95%8C%EC%95%84%EB%B3%B4%EA%B8%B0
+
+/**
+* 토큰생성
+*/
+String jwt = Jwt.builder()
+	    //header
+            .setHeaderParam("typ","JWT") // 토큰타입
+            .setSubject("EXMAPLE") // 토큰제목
+            //payload
+            .claim("username","uk") // private claim
+            .claim("userage","26") // private claim
+            .setIssuedAt(new Date(System.currentTimeMillis()) // 토큰 생성날짜
+            .setExpiration(new Date(System.currentTimeMillis() + 3600) // 토큰 유효시간
+            //signatue
+            .signWith(SignatureAlgorithm.HS512, "Uk".getByte("UTF-8"))
+            .compact();
+            
+
+
+
+	: 일반적인 spring security의  전체 프로세스
+		: UsernamePasswordAuthenticationFilter 
+			: 해당 url 에 접근 권한이 없는 경우 로그인 폼을 반환하는 얘임
+				: 얘때문에 spring security 처음에 아무 설정안하면 로그인화면 뜨는거임
+
+		1. 클라이언트 request 가 들어오고,  서블릿 필터에 도달
+		2. 서블릿 필터의 request 를 security filter , 그 중에서도 UsernamePasswordAuthenticationFilter ( 이하 AuthenticationFilter )가 가로챔
+		3. AuthenticationFilter 에서 username 과 password 를 추출해 UsernameAuthenticationToken(이하 인증객체) 를 생성
+		4. AuthenticationFilter에서 AuthenticationManager (구현체 : ProviderManager) 에게 인증 객체를 전달
+		5. ProviderManager 는 인증을 위해 AuthenticationProvider에게 인증 객체를 전달
+		6. AuthenticationProvider 는 전달받은 인증객체의 정보(일반적으로 사용자id)를 UserDetailsService 에 넘김
+		7. UserDetailsService에서 db 뒤져서 해당 사용자 정보와 일치하는 UserDetails객체를 AuthenticationProvider에 반환
+		8. AuthenticationProvider은 반환받은 UserDetails를 인증하고, 성공하면 ProviderManager에게 권한 (Authorities) 을 담은 검증된 인증 객체를 반환
+
+		9. ProviderManager는 검증된 인증 객체를 (event 기반 으로) AuthenticationFilter에게 반환
+		10. AuthenticationFilter는 검증된 인증 객체를 SecurityContextHolder의 SecurityContext에 저장.
+
+	: jwt 를 사용하는 spring security 의 전체 프로세스
+		: UsernamePasswordAuthenticationFilter의 앞에 커스텀JWT인증필터(JwtAuthenticationFilter) 를 배치하여 권한 처리를 하게 된다.
+		:  JwtTokenProvider >> Jwt Token을 생성, 인증, 권한 부여, 유효성 검사 등의 다양한 기능을 제공하는 클래스
+			: JwtAuthenticationFilter 내부에서 주로 쓰임
+			: JwtUtil 등의 네이밍도 괜춘
+			
+		: JwtAuthenticationFilter >> 
+			doFilter 오버라이드
+				: AuthenticationManager가 아닌 직접 커스텀한 JwtTokenProvider를 통해서 인증 후 SecurityContextHolder 에 authentication 저장
+				: 마지막으로 chain.doFilter(request,response); 해서 다음 필터로 넘기기
+
+		: CustomUserDetailsService >>> 
+			:  인터페이스인 UserDetailsService를 상속받아 작성한 클래스로 JwtTokenProvider가 제공한 사용자 정보를 이용하여 DB에서 알맞은 사용자 정보를 가져와 UserDetails 생성
+			: loadUserByUsername 오버라이드
+
+		: CustomUser
+			: User를 상속받아 작성한 클래스로 userName, password, authorities + a 를 제공
+			: 대부분의 경우 Spring Security의 기본 UserDetails로는 필요한 정보를 모두 담을 수 없기에 CustomUser를 구현하여 사용한다.
+
+			case1 : 토큰 발급이 안되어있을 경우
+				1. 클라이언트 요청
+				2. SecurityConfig에 등록된 JwtAuthenticationFilter 호출
+				3. 토큰정보가 없기 때문에 다음 필터 호출
+
+			case2 :  토큰을 발급하는 경우(로그인)
+				1. 클라이언트 요청
+				2. SecurityConfig에 등록된 JwtAuthenticationFilter 호출
+				3. 토큰정보가 없기 때문에 다음 필터 호출
+				4. UsernamePasswordAuthenticationFilter에서 로그인 폼 response 및 로그인 데이터를 받음
+				5. UsernamePasswordAuthenticationFilter에서 사용자의 로그인id, pw를 사용하여 UsernamePasswordAuthenticationToken 객체 생성
+				6. UsernamePasswordAuthenticationFilter에서 authenticationManagerBuilder를 이용하여 CustomUserDetailsService 의 loadUserByUsername 메소드 호출
+				7. loadUserByUsername 의 반환값인 UserDetails 객체를 Authentication 타입의 객체로 반환
+				8. Authentication을 이용하여 토큰 생성
+
+			case3: 토큰 발급이 되어있는 경우
+				1. 클라이언트 요청
+				2. SecurityConfig에 등록된 JwtAuthenticationFilter 호출
+				3. JwtAuthenticationFilter 에서 토큰 유효성 검사 후 통과되면 다음 필터 호출
+
+		: https://velog.io/@jeon0728/Spring-Security-JWT-%EC%88%9C%EC%84%9C
+
+
+
+
+
+	: 인증객체
+		: principal >> 최상위 인터페이스
+		: Authentication >> principal 을 상속한 인터페이스
+			: Principal 과 GrantAuthority를 제공
+				: 대부분의 경우 Principal로 UserDetails 반환함. 이 정보는 @AuthenticationPrincipal 어노테이션을 통해 컨트롤러에서 사용 가능하며, 필요할 경우 UserDetails를 상속받아 커스텀하여 추가 정보 저장
+				: GrantAuthority >> ROLE_ADMIN, ROLE_USER등 Principal이 가지고 있는 권한 나타냄
+					: prefix로 ‘ROLE_’ 이 붙음
+					: 인증 이후에 인가를 할 때 사용. 권한은 여러개일 수 있으므로 Collection형태로 제공
+
+		: AbstractAuthenticationToken >> Autentication 을 상속한 추상 클래스
+
+		: UsernamePasswordAuthenticationToken >> AbstractAuthenticationToken 의 구현 클라스
+
+	: SecurityContext >> Authentication을 저장하고 있음
+	: SecutiryContextHolder
+		: SecurityContext 객체를 저장하고 감싸고 있는 wrapper 클래스
+		: getContext() 전역 메소드를 제공하여 securityContext에 접근이 가능함
+		: 기본적으로 THREADLOCAL
+
+
+	: doFilter 와 doFilterInternal
+		doFilter 메소드: 
+			:  javax.servlet.Filter 인터페이스에 정의된 메소드로, 모든 서블릿 필터가 구현해야 하는 메소드
+			: 클라이언트의 요청이 서블릿에 도달하기 전과 서블릿이 응답을 클라이언트에게 반환한 후에 호출됨. 
+			:  FilterChain 객체를 매개변수로 받아 체인의 다음 필터로 요청을 전달하거나, 필터 처리 후 요청을 서블릿이나 다른 리소스로 전달하는 역할을 함
+
+		doFilterInternal 메소드:
+			: 스프링의 OncePerRequestFilter를 상속받는 필터들이 구현해야 하는 메소드로, 요청당 한 번만 실행되어야 하는 로직을 정의함.
+
+
+	: @Secured("ROLE_어쩌구")  : 일단 간략하게 보자면 securityConfig 에서 requestMatchers("특정URL").hasRole("어쩌구") 써야했던걸, 컨트롤러 단( 혹은 그 내부의 메서드)에서 직접 해당 URL 에 맵핑되는 부분에 @Secured("ROLE_") 를 명시하는 것으로 대체하는 거다.
+		: @EnableMethodSecurity(securedEnabled = true) 를 SecurtiConfig 에 명시해줘야 사용 가능하다
+		: https://escapefromcoding.tistory.com/500
+	
+	
+	: pre-authentication 방식 >> 인증을 spring 외부에서 진행
+		:  (다른 서버에서) 이미 인증된 사용자에 대해 api 를 제공하는 spring 모듈을 만들어야 할 경우 유용
+			: 그러니까 다른 서버에서 인증됬으니 이 서버에서 또 인증 과정을 직접 처리하진 않고, 이미 인증된 사용자의 정보를 받아들여 활용하는데 초점을 맞추겠다는 것.
+						
+		: http request 헤더 키의 유형
+			1. (인증된) 사용자 요청 >> 사용자 수준에서의 인증
+				(1) USER-ID-HEADER : 사용자 id를 나타내는 키
+				(2) USER-ROLES-HEADER : 사용자 권한을 나타내는 키
+				ex) 
+					USER-ID-HEADER: admin
+					USER-ROLES-HEADER : ADMIN 
+					USER-ROLES-HEADER : USER 
+
+			2. 시스템 요청 >> 시스템 또는 애플리케이션 수준에서의 인증. 그러니까 시스템끼리 통신할 때 사용
+				(1) SYSTEM-AUTH-HEADER : 인증용 토큰을 나타내는 키
+				ex) SYSTEM-AUTH-HEADER : 비밀번호쏼라쏼라
+
+		: @PostAuthorize ,  @PreAuthorize
+			: 이 어노테이션들을 쓰기 위해선 "SecurityConfig 클래스"에 @EnableMethodSecurity(prePostEnabled = true)  를 적어야된다.
+			: 컨트롤러 "내부" 메서드 수준에서 쓰인다
+			: SpringConfig 에서 url 을 특정하는 requestMatchers 다음에 쓰이는  .permitAll , hasRole 등 특정 역할을 가진 사용자로 접근을 제한하는 것과 비슷한 역할을 수행한다.
+			: @PostAuthorize >>  요청이 들어와 함수를 실행하기 전에 권한을 검사하는 어노테이션
+			: @PreAuthorize >> 함수를 실행하고 클라이언트한테 응답을 하기 직전에 권한을 검사하는 어노테이션
+				: 속성 >> hasRole( ) 접근 가능한 권한을 의미
+					ex)    @PreAuthorize("hasRole('ADMIN')") 과 함꼐 선언된 메서드(에 매핑된 url)의 경우 ADMIN 권한을 가진 사용자는 호출 가능하지만, 일반 USER 는 호출 불가하다 
+
+
+		: AbstractPreAuthenticatedProcessingFilter를 extends 하여 필터 구현
+			: SystemAuthenticationFilter 가 UserAuthenticationFilter 의 앞에 위치한다.	
+			: 둘다 AbstractPreAuthenticatedProcessingFilter를 extends 하는 거임
+			: 근데 우리 프젝에선 System, user 구분 없이 하나의 AuthenticationFIlter 만 만들었다.
+			1. SystemAuthenticationFilter
+				(1) http request header 검사	
+				(2)  SYSTEM-AUTH-HEADER 가 있으면 System 요청으로 간주하여 System 권한을 부여
+				(3) 갱신된 Authentication 을 다음 필터에게 전달
+				(4) 뭐 여러 필터를 거쳐 controller 에 도달
+
+			2. UserAuthenticationFilter
+				(1) http request header 검사	
+				(2) 사용자의 id 와 권한정보를 추출하여 적절한 권한을 부여
+				(3) 갱신된 Authentication 을 다음 필터에게 전달
+				(4) 뭐 여러 필터를 거쳐 controller 에 도달
+
+		: AuthenticationProvider 를 implements 하여 SystemAuthenticationProvider 를 구현
+			: 우리 프젝에선 com.knlab.admin.utils.customAuthProvider 가 이에 해당
+
+	: https://bitgadak.tistory.com/9
+
+
+	: OncePerRequestFilter
+		: http request (요청)하나당 딱 한번만 실행되는 filter
+			: 그러니까 forward 같은게 발생하더라도 여러번 수행되지 않는다.
+	
+		: doFilter(request,response ); 
+		: https://junyharang.tistory.com/378
+
+	
+---------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+Nextrend ( knlab ) : 관리자 페이지
+
+
+수동데이터추가
+	: DocumentController
+		: @RequestMapping("/api/admin/document")
+   		 private final PoliticaDateFormatValidator dateFormatValidator;
+   		 private final ScreeningDocumentService screeningDocumentService;
+    		private final PoliticaDocumentService politicaDocumentService;
+
+	: PoliticaDocumentService >> 수동 적제 데이터에 대한 작업 수행
+		: 의존 >> 
+			1. private final DocumentServiceClient documentServiceClient;
+			2. private final NasServerClient nasServerClient;
+				: NAS 서버에 수동 적제 데이터의 썸네일, pdf 파일 , 로고 등을 저장 및 삭제를 수행하기 위해 사용
+
+	
+
+	: DocumentServiceClient
+		: 의존 >> 
+			1. private final RestTemplate restTemplate >> 다른 서버로 라우팅 하기 위해, 즉 현재 서버에서 다른 서버로 request 날리고 response 받아오기 위해 사용
+				:  spring에서 제공하는  "http 메서드기반으로 rest api 통신을 쉽게 할 수 있게 설계되어있는 템플릿" 
+				
+
+    			2. private final SystemAuthenticationInfoUtils systemAuthenticationInfoUtils;
+
+    			3. private final ModelMapper modelMapper;
+
+	: NasServerClient >> 수동 적제 데이터의 썸네일, pdf 파일 , 로고 등을 저장 및 삭제 할때 사용된다.
+		: 약간 리파지토리 급임
+		: 의존 >>  private final NanoIdProvider nanoIdProvider;
+			: nanoIdProvider 를 이용해 저장될 파일명을 구하는데 사용한다
+				: 굳이 파일에 새로 이름 붙여주는 이유 >>  겹칠수도 있으니까
+
+		: FTP 프로토콜을 사용하여 NAS 서버와 통신한다
+		: Nas 서버 연결 정보는 application.yml 에 정의되어있고, @Variable 을 이용해 주입해 사용한다
+		: 구현메서드
+			: 새로 생성(save) 시 
+				1. 내부적으로 nanoIdProvider 를 활용하여 파일명 붙여줌
+				2. NAS 서버에 접속하여 업로드
+				3. 라우팅할 경로를 (서비스 단에 ) 반환
+
+			: delete 시 따로 반환하는건 없음
+			
+			1. 로고 get/create/delete
+		******2. 썸네일 create/delete
+		******3. pdf create/delete
+		******4. image create/delete
+
+			
+
+
+	: NanoIdProvider >>  NasServerClient 에게 nanoId 를 발급해준다.
+		: nanoid >> 고유 식별자 생성 도구
+		: application.yml 에 nanoId.length 로 설정된대로 10 의 식별자가 생성됨을 알 수 있음
+
+
+
+
+
+	데이터 추가 
+		: 크롤링 데이터, 수동 적재 데이터 모두 NAS 서버에 저장됨 
+		: DATA WORK 카테고리에서 수행
+		(1) 자동 데이터 추가 (크롤링)
+			1. 크롤데이터 스크리닝 >> 웹 크롤링된 내역 확인
+				: 아마 screening_documents 인덱스 
+				: 스크리닝 완료 시 해당 데이터는 ElasticSearch 에 색인됨(indexing됨. 추가됨). 
+
+			2. 크롤데이터 정제: 크롤 데이터에서 거를거 거름
+
+			3. 크롤데이터 등록 == 아카이빙 : 선별된 크롤데이터를 시스템에 등록하고 인덱싱. 해당 데이터를 장기 보관시킴
+
+			4. 아카이브 데이터 조회 : 아카이빙 된 내용들 확인
+				: 아마 politica_service 인덱스
+
+			5. 큐레이션
+				: 아마 politica_documents 인덱스
+				: rnd 의 publication 에서도 확인 가능
+
+		(2) 수동 데이터 추가
+			1. 사용자가 엑셀데이터 등록 
+			2. /file/uploadExcelData 로 엑셀 파일이 전송됨
+			3. 
+
+---------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------
+Admin Micro Service
+			1. 문서 작업 (ADMIN, WORKER Only) : 문서를 CRUD 할 수 있다. 
+			2. 사용자 작업 (ADMIN Only) : 사용자를 CRUD할 수 있다.
+				Read >> UID를 통한 상세 조회, list 조회
+				Create , Delete
+					(1)유저의 LOGO
+					(2)사용자의 축 정보
+
+ 			3. NAS 서버 이미지 통신 
+				: Document Thumbnail, Image, PDF 를 업로드 할 수 있다. (ADMIN, WORKER Only)
+				: 이미지는 User LOGO 저장이 가능하다. (ADMIN ONLY)
+
+			4. Document 부가 정보 제어(ADMIN ONLY) : Document와 연관된 데이터(ex: Category, Host…)를 CRUD할 수 있도록 한다.
+
+			5. 다국어 사전 정보 제어(ADMIN ONLY) : 다국어 사전과 관련해 데이터를 CRUD 할 수 있도록 한다.
+			6. 크롤링 정보 조회(ADMIN ONLY) : 크롤링 DB를 조회해 크롤링 정보를 조회할 수 있다.
+
+
+			: Admin Server 에서 Common Server 쪽으로 갈 수 있다
+			: NAS Server 에 유일하게 접근 가능
+			: MySQL 의 Crawl Info 에 유일하게 접근 가능하다
+
+
