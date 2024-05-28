@@ -630,13 +630,102 @@ String jwt = Jwt.builder()
 Nextrend ( knlab ) : 관리자 페이지
 
 
-수동데이터추가
-	: DocumentController
-		: @RequestMapping("/api/admin/document")
-   		 private final PoliticaDateFormatValidator dateFormatValidator;
-   		 private final ScreeningDocumentService screeningDocumentService;
+: DocumentController >> 어드민 수준 문서 관리 컨트롤러
+    : 의존성 >> 
+   		private final PoliticaDateFormatValidator dateFormatValidator;
+			: 날짜형식의 유효성 검사
+   		private final ScreeningDocumentService screeningDocumentService;
+			: 스크리닝 문서관련 작업 수행
     		private final PoliticaDocumentService politicaDocumentService;
+			: 수동 적제 데이터에 대한 작업 수행
 
+		
+    : 구현메서드
+	: @PreAuthorize("hasRole('어쩌구')") 를 이용해 각 경로에 접근 제한을 걸어둠
+	    : 스크리닝 문서 관련
+		: 접근 권한 >> ADMIN, SCREENING_WORKER
+
+		0.  void screeningDelete(@RequestBody List<String> screeningDocumentIdList)
+			: 스크리닝 문서 일괄 삭제 API
+
+		1. void screeningKeep(@RequestBody List<String> screeningDocumentIdList)
+			: 스크리닝 문서 일괄 보류 API
+
+		2.  List<String> screeningToDocument(@RequestBody List<String> screeningDocumentIdList)
+			: 스크리닝 완료 버튼 클릭시 호출될 API로, 스크리닝에서 삭제되고 "정제"탭으로 넘어가게 된다. Request Body에는 스크리닝 문서의 ID가 필요
+
+	  : politica 문서 관련
+		: 접근 권한 >> ADMIN, REGISTER_WORKER
+		0. void uploadPolitica(@RequestBody List<PoliticaDocumentDto.Upload> reqBody)
+			: politica 문서 업로드 API
+
+		
+
+
+
+		1. List<String> screeningToDocument(@RequestBody List<String> screeningDocumentIdList)
+			: 
+
+  : 기타 중요한 
+	1. public enum PoliticaDocumentStep >> Uri pathVariable이 
+Elastic Index에서 검색할때 STAT값으로 들어감.
+또 STAT값이 다음 공정으로 넘어갈 때 2씩 더해짐을 확인
+
+    SCREENING(1), // 스크리닝
+    REFINED(2), REFINED_KEEP(3), // 정제
+    REGISTED(4), REGISTED_KEEP(5), // 등록
+    ARCHIVE(6), CURATION_REQUESTED(7), // 아카이브
+    CURATION(8), REMOVED(9); // 큐레이션
+
+    private int statusCode;
+
+    public static PoliticaDocumentStep statusCodeToEnum(int statusCode){
+        for(PoliticaDocumentStep enumObj : PoliticaDocumentStep.values()){
+            if(enumObj.getStatusCode() == statusCode){
+                return enumObj;
+            }
+        }
+
+        throw new IllegalArgumentException("Status Code가 올바르지 않습니다.");
+    }
+}
+
+
+   : dto 관련
+	(1) PoliticaDocumentDto
+		1. interface HasDates >> 문서의 날짜 관련 메서드 정의
+		2. Detail implements HasDates >> (문서의 날짜 관련 정보를 포함한) 문서 관련 여러 세부 정보 필드 보유
+			: 얘에서 데이터 뽑아서 upload 용 dto 만들거나 Update 용 dto 만들 수 있음. 그러니까 얘가 뭔가 오리지널한 dto 느낌.
+			: @Builder 
+			: @Schema(name="PoliticaDocumentDetail")
+
+		3. upload implements HasDates >> 업로드 위해 필요한 (문서의 날짜 관련 정보를 포함한) 문서 관련 여러 세부 정보 필드 보유
+			: @Builder 
+			: @Schema(name="PoliticaDocumentUpload")
+
+		4.  Update implements HasDates >> politica 문서 업데이트 위해 필요한 (문서의 날짜 관련 정보를 포함한) 문서 관련 여러 세부 정보 필드 보유
+			:  @Builder
+    			: @Schema(name="PoliticaDocumentUpdate")
+
+		5. DocumentUpdateInfo >> politica 문서의 세부정보 업데이트 위한 필드 보유
+			:  @Builder
+		******: 얘는 따로 @Schema 가 없음
+
+
+    : 주요 동작
+	(1)스크리닝 작업
+	: ScreeningDocumentService >> 크롤링 데이터 대해 스크리닝 작업 수행
+		:  의존 >> private final DocumentServiceClient documentServiceClient;
+
+	   : 구현 메서드
+		1.  PoliticaDocumentDto.Upload ScreeningToPolitica(ScreningDocumentDto.Detail screeningDocument)  >> arg 로 받은 스크리닝 문서(의 디테일한 사항)를  Politica업로드용 객체로 변환하여 반환
+
+			: 내부적으로 politica 문서 업로드 위한 데이터 담을 dto 객체를 생성한 후, 빌더패턴을 사용하여 해당 dto 의 필드를 채워 세팅하고 , 다 세팅하면 리턴해준다
+
+
+
+	(2)수동데이터추가작업
+	
 	: PoliticaDocumentService >> 수동 적제 데이터에 대한 작업 수행
 		: 의존 >> 
 			1. private final DocumentServiceClient documentServiceClient;
@@ -649,11 +738,20 @@ Nextrend ( knlab ) : 관리자 페이지
 		: 의존 >> 
 			1. private final RestTemplate restTemplate >> 다른 서버로 라우팅 하기 위해, 즉 현재 서버에서 다른 서버로 request 날리고 response 받아오기 위해 사용
 				:  spring에서 제공하는  "http 메서드기반으로 rest api 통신을 쉽게 할 수 있게 설계되어있는 템플릿" 
-				
 
-    			2. private final SystemAuthenticationInfoUtils systemAuthenticationInfoUtils;
+    			2. private final SystemAuthenticationInfoUtils systemAuthenticationInfoUtils; >>  pre-athentication 위한 시스템 인증 정보
 
-    			3. private final ModelMapper modelMapper;
+    			3. private final ModelMapper modelMapper; >> 객체간 변환을 쉽게 해줌. 그러니까 일일이 setter 안써도 이름 같은 필드끼리 자동으로 매칭시켜줌
+
+	
+		: 구현 메서드 
+   			1.  public Optional<ScreningDocumentDto.Detail> getScreeningDocumentById(String id)
+				: 스크리닝 데이터의 id 를 기반으로 elastic search 에 request 하여, 즉 라우팅 하여 해당 스크리닝데이터를 얻어온다		
+
+					
+      
+           
+
 
 	: NasServerClient >> 수동 적제 데이터의 썸네일, pdf 파일 , 로고 등을 저장 및 삭제 할때 사용된다.
 		: 약간 리파지토리 급임
@@ -693,7 +791,8 @@ Nextrend ( knlab ) : 관리자 페이지
 		(1) 자동 데이터 추가 (크롤링)
 			1. 크롤데이터 스크리닝 >> 웹 크롤링된 내역 확인
 				: 아마 screening_documents 인덱스 
-				: 스크리닝 완료 시 해당 데이터는 ElasticSearch 에 색인됨(indexing됨. 추가됨). 
+				: 스크리닝 완료 버튼 클릭시  스크리닝에서 삭제되고 "정제"탭으로 넘어가게 된다.
+					: screeningToDocument 작명으로 보아 아마도 정제 된게 Document 인 듯?
 
 			2. 크롤데이터 정제: 크롤 데이터에서 거를거 거름
 
