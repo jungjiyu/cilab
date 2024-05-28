@@ -1,1 +1,20 @@
+ElasticSearch 
+	: document >> ES 에서 데이터를 저장하는 단위
+		: RDB 의 row
+		: 여러 field 와 vlaue 의 쌍으로 구성
 
+	: 인덱스 >> document 를 저장하는 논리적 구분자
+		: RDB 의 테이블
+		: 하나의 인덱스에 다수의 document 가 포함
+		: 동일한 index 에 있는 docuemnt 들은 동일한 schema 를 가짐
+			: schema 따라 index 를 구분하여 저장
+		; indexing >> docuemnt 를 index 에 포함시키는 것 . 즉 , 새 데이터를 인덱스에 insert 하는 것
+
+	: Mapping >> 대용량 데이터를 빠르게 실시간 검색 가능하게 하는 과정
+		: RDB 의 schema 와 유사
+		: Json 형태의 데이터를 Lucene 이 이해할 수 있도록 바꿔주는 과정
+
+	: Dynamic Mapping >> 자동 인덱스 맵핑
+	: Explicit Mapping >> 인덱스 맵핑 직접 정의
+
+	: https://yeo0.tistory.com/entry/Elasticsearch-%EC%97%98%EB%9D%BC%EC%8A%A4%ED%8B%B1%EC%84%9C%EC%B9%98-%EA%B8%B0%EB%B3%B8-%EA%B0%9C%EB%85%90-Index-Document-Mapping-Template-Analyzer
