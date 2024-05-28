@@ -60,6 +60,38 @@ ElasticSearch
 			3. red >> 인덱스의 쓰기/읽기도 정상적으로 되지 않고, replicas 샤드가 정상적으로 동작하지 않는 상태
 		: https://brunch.co.kr/@alden/43
 
+	: aggergation >> 집합. 데이터를 그룹화 시키고 간단한 통계값 얻을 수 있음
+		: https://stdhsw.tistory.com/entry/Elasticsearch-Aggregation1-min-max-sum-avg-stats
+		:  min, max, sum, avg, stats 의 통계값을 얻을 수 있음
+			stats >> count, min, max, sum, avg의 모든 결과
+
+		: "aggs"를 통하여 쿼리에 Aggregation을 선언하고 원하는 값 따른 Aggregation의 이름을 사용자가 지정
+			: stats 의 경우 "statDuration" 명칭 사용
+			: ex ) 
+api 부분 >>	POST http://localhost:9200/test-log-index-2021-09-12/_search
+header 부분 >> content-type: application/json
+body 부분 >> 
+	{
+    "size": 0,
+    "query": {
+        "bool": {
+            "must": [
+                {
+                    "match": {
+                        "user_id": "1"
+                    }
+                }
+            ]
+        }
+    },
+    "aggs": {
+        "statDuration": {
+            "stats": {
+                "field": "duration"
+            }
+        }
+    }
+}
 
 
 	: Dynamic Mapping >> 자동 인덱스 맵핑
