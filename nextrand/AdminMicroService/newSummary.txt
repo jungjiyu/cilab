@@ -621,13 +621,10 @@ String jwt = Jwt.builder()
 
 	
 ---------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------
 
+<Admin Server >
 
-
-
-
-
-Nextrend ( knlab ) : 관리자 페이지
 
 
 : DocumentController >> 어드민 수준 문서 관리 컨트롤러
@@ -665,6 +662,221 @@ Nextrend ( knlab ) : 관리자 페이지
 
 		1. List<String> screeningToDocument(@RequestBody List<String> screeningDocumentIdList)
 			: 
+
+
+
+
+
+
+
+    @Operation(
+            summary = "politica 문서 업로드 API(ADMIN, REGISTER_WORKER)",
+            description = "politica 문서 업로드시 호출되는 API로, 썸네일 이미지와 PDF 파일은 이를 업로드 하는 API를 별도로 호출해야합니다.\n\n"+
+                    "코드로 보내주셔야하는 필드는 아래와 같습니다.\n\ndoc_country\n\ndoc_publish_country\n\ndoc_language\n\n" +
+                    "doc_content_category\n\ndoc_custom\n\ndoc_content_type\n\ndoc_category\n\ndoc_topic"
+    )
+    @PostMapping("/politica")
+    @PreAuthorize("hasRole('ADMIN') || hasRole('REGISTER_WORKER')")
+    public void uploadPolitica(@RequestBody List<PoliticaDocumentDto.Upload> reqBody){
+        setUpEmptyDateFieldsToNull(reqBody);
+        validFields(reqBody);
+
+        politicaDocumentService.saveAll(reqBody, PoliticaDocumentStep.ARCHIVE);
+    }
+
+    @Operation(summary = "politica 문서 작업 보류 API(ADMIN, CLEANING_WORKER, REGISTER_WORKER, CURATION_WORKER)",
+            description = "작업 보류 클릭시 호출될 API로, PathVariable로 현재 문서의 step을 적어야합니다. 각 단계에서 호출한 보류의 결과는 다음과 같습니다. \n\n" +
+                    "REFINE, REFINED_KEEP => REFINED_KEEP \n\n" +
+                    "REGISTED, REGISTED_KEEP => REGISTED_KEEP \n\n" +
+                    "ARCHIVE => ARCHIVE \n\n" + "CURATION_REQUESTED => CURATION_REQUESTED \n\n" + "CURATION => CURATION"
+    )
+    @PreAuthorize(
+            "hasRole('ADMIN') " +
+            "|| hasRole('CLEANING_WORKER')" +
+            "|| hasRole('REGISTER_WORKER') " +
+            "|| hasRole('CURATION_WORKER')"
+    )
+    @PutMapping("/keep/{documentId}")
+    public void patchDocument(@PathVariable String documentId, @RequestBody PoliticaDocumentDto.Update reqBody){ // 해당 문서를 보류 상태로 전환하는 메서드. 만약 이미 보류 상태인 문서면 걍 보류 상태를 유지
+        reqBody.setEsId(documentId);
+        politicaDocumentService.keepPolitica(reqBody);
+    }
+
+    @Operation(
+            summary = "Politica 문서 작업 완료 API(ADMIN, CLEANING_WORKER, REGISTER_WORKER, CURATION_WORKER)",
+            description = "작업 보류 클릭시 호출될 API로, 문서의 status가 다음으로 넘어갑니다. documentStatus는 현재 문서의 status를 의미하며, 큐레이션 문서는 호출될 수 없습니다.\n\n" +
+                    "REGISTED, REGISTED_KEEP => REFINED \n\n" +
+                    "REFINED, REFINED_KEEP => ARCHIVE \n\n" +
+                    "ARCHIVE, CURATION_REQUESTED => CURATION"
+    )
+    @PreAuthorize(
+            "hasRole('ADMIN') " +
+            "|| hasRole('CLEANING_WORKER')" +
+            "|| hasRole('REGISTER_WORKER') " +
+            "|| hasRole('CURATION_WORKER')"
+    )
+    @PutMapping("/stage/{documentId}")
+    public void stageDocument(@PathVariable String documentId, @RequestBody PoliticaDocumentDto.Update reqBody){
+        reqBody.setEsId(documentId);
+        politicaDocumentService.stagePolitica(reqBody);
+    }
+
+    @Operation(summary = "Politica 문서 삭제 API(ADMIN, CLEANING_WORKER, REGISTER_WORKER, CURATION_WORKER)")
+    @PreAuthorize(
+            "hasRole('ADMIN') " +
+            "|| hasRole('CLEANING_WORKER')" +
+            "|| hasRole('REGISTER_WORKER') " +
+            "|| hasRole('CURATION_WORKER')"
+    )
+    @DeleteMapping("/{documentId}")
+    public void deleteDocument(@PathVariable String documentId){
+        politicaDocumentService.delete(documentId);
+    }
+
+
+
+    @Operation(summary = "썸네일 업로드 API(ADMIN, CLEANING_WORKER, REGISTER_WORKER, CURATION_WORKER)")
+    @PreAuthorize(
+            "hasRole('ADMIN') " +
+            "|| hasRole('CLEANING_WORKER')" +
+            "|| hasRole('REGISTER_WORKER') " +
+            "|| hasRole('CURATION_WORKER')"
+    )
+    @PostMapping(value = "/thumbnail/{documentId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public void uploadThumbnail(@PathVariable String documentId, @RequestPart MultipartFile[] files){
+        politicaDocumentService.uploadFile(documentId, files, DocumentFileType.THUMBNAIL);
+    }
+
+
+    @Operation(
+            summary = "썸네일 삭제 API(ADMIN, CLEANING_WORKER, REGISTER_WORKER, CURATION_WORKER)",
+            description = "문서의 썸네일을 제거하는 API로, 문서의 thumbnails에 있는 경로를 정확하게 보내주시면 제거가 가능합니다."
+    )
+    @PreAuthorize(
+            "hasRole('ADMIN') " +
+            "|| hasRole('CLEANING_WORKER')" +
+            "|| hasRole('REGISTER_WORKER') " +
+            "|| hasRole('CURATION_WORKER')"
+    )
+    @DeleteMapping("/thumbnail/{documentId}")
+    public void deleteThumbnail(@PathVariable String documentId, @RequestBody PoliticaDocumentDto.FileDelete reqBody){
+        politicaDocumentService.deleteFile(documentId, reqBody.getPath(), DocumentFileType.THUMBNAIL);
+    }
+
+
+
+    @Operation(summary = "PDF파일 업로드 API(ADMIN, CLEANING_WORKER, REGISTER_WORKER, CURATION_WORKER)")
+    @PreAuthorize(
+            "hasRole('ADMIN') " +
+            "|| hasRole('CLEANING_WORKER')" +
+            "|| hasRole('REGISTER_WORKER') " +
+            "|| hasRole('CURATION_WORKER')"
+    )
+    @PostMapping(value = "/pdf/{documentId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public void uploadPdf(@PathVariable String documentId, @RequestPart MultipartFile[] files){
+        politicaDocumentService.uploadFile(documentId, files, DocumentFileType.PDF);
+    }
+
+
+
+    @Operation(summary = "PDF파일 삭제 API(ADMIN, CLEANING_WORKER, REGISTER_WORKER, CURATION_WORKER)")
+    @PreAuthorize(
+            "hasRole('ADMIN') " +
+            "|| hasRole('CLEANING_WORKER')" +
+            "|| hasRole('REGISTER_WORKER') " +
+            "|| hasRole('CURATION_WORKER')"
+    )
+    @DeleteMapping("/pdf/{documentId}")
+    public void deletePdf(@PathVariable String documentId, @RequestBody PoliticaDocumentDto.FileDelete reqBody){
+        politicaDocumentService.deleteFile(documentId, reqBody.getPath(), DocumentFileType.PDF);
+    }
+
+    @Operation(summary = "이미지 추가 API(ADMIN, CLEANING_WORKER, REGISTER_WORKER, CURATION_WORKER)", description = "본문 링크 추가용 이미지 추가 API입니다. 저장된 이미지의 경로를 보여줍니다.")
+    @PreAuthorize(
+            "hasRole('ADMIN') " +
+            "|| hasRole('CLEANING_WORKER')" +
+            "|| hasRole('REGISTER_WORKER') " +
+            "|| hasRole('CURATION_WORKER')"
+    )
+    @PostMapping(value = "/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public String saveImage(@RequestPart MultipartFile file){
+        return politicaDocumentService.saveImage(file);
+    }
+
+    @Operation(summary = "이미지 삭제 API(ADMIN, CLEANING_WORKER, REGISTER_WORKER, CURATION_WORKER)", description = "이미지 삭제 API입니다. 저장된 이미지의 경로를 request Body로 주셔야 합니다.")
+    @DeleteMapping("/image")
+    @PreAuthorize(
+            "hasRole('ADMIN') " +
+            "|| hasRole('CLEANING_WORKER')" +
+            "|| hasRole('REGISTER_WORKER') " +
+            "|| hasRole('CURATION_WORKER')"
+    )
+    public void deleteImage(@RequestBody PoliticaDocumentDto.FileDelete reqBody){
+        politicaDocumentService.deleteImage(reqBody.getPath());
+    }
+
+
+    private void setUpEmptyDateFieldsToNull(List<? extends PoliticaDocumentDto.HasDates> dataList){
+        for(PoliticaDocumentDto.HasDates data : dataList){
+            setUpEmptyDateFieldsToNull(data);
+        }
+    }
+
+    private void setUpEmptyDateFieldsToNull(PoliticaDocumentDto.HasDates data){
+        if(data.getDocCollectDate() != null && data.getDocCollectDate().isBlank()){
+            data.setDocCollectDate(null);
+        }
+        if(data.getDocPublishDate() != null && data.getDocPublishDate().isBlank()){
+            data.setDocPublishDate(null);
+        }
+        if(data.getDocWriteDate() != null && data.getDocWriteDate().isBlank()){
+            data.setDocWriteDate(null);
+        }
+    }
+
+    /**
+     * @description 입력값의 Field를 Validation 하는 메서드
+     * @author
+     * @param
+     * @throws
+     */
+    private void validFields(List<? extends PoliticaDocumentDto.HasDates> reqBody) {
+        // 검증 단계
+        List<String> errorStrings = validDateFields(reqBody);
+
+        if(!errorStrings.isEmpty()){
+            throw new ClientException(errorStrings.toString());
+        }
+    }
+
+
+    /**
+     * @description 업로드시 업로드된 데이터의  Date 필드를 확인하는 메서드
+     * @author minseok kim
+     * @param
+     * @throws
+     */
+    private List<String> validDateFields(List<? extends PoliticaDocumentDto.HasDates> reqBody) {
+        List<String> errorStringList = new ArrayList<>();
+
+        for(PoliticaDocumentDto.HasDates req: reqBody){
+            Errors errors = new BeanPropertyBindingResult(req, "req");
+
+            dateFormatValidator.validate(req, errors);
+
+            if(!errors.hasErrors()) {
+                continue;
+            }
+
+            List<String> list = errors.getFieldErrors().stream().map(FieldError::getField).toList();
+            String errorString = "저장에 실패했습니다. 문서들의 " + list.toString() + " 필드를 확인해 주세요.";
+            errorStringList.add(errorString);
+
+        }
+        return errorStringList;
+
+    }
+
 
   : 기타 중요한 
 	1. public enum PoliticaDocumentStep >> Uri pathVariable이 
@@ -734,7 +946,7 @@ Elastic Index에서 검색할때 STAT값으로 들어감.
 
 	
 
-	: DocumentServiceClient
+	: DocumentServiceClient >> document 서버로 라우팅하여 최종적으로는 es 에서의 CRUD 작업을 수행하게 한다 (직접 es 에 접근하진 않고 document 서버를 통해서.)
 		: 의존 >> 
 			1. private final RestTemplate restTemplate >> 다른 서버로 라우팅 하기 위해, 즉 현재 서버에서 다른 서버로 request 날리고 response 받아오기 위해 사용
 				:  spring에서 제공하는  "http 메서드기반으로 rest api 통신을 쉽게 할 수 있게 설계되어있는 템플릿" 
@@ -745,11 +957,19 @@ Elastic Index에서 검색할때 STAT값으로 들어감.
 
 	
 		: 구현 메서드 
-   			1.  public Optional<ScreningDocumentDto.Detail> getScreeningDocumentById(String id)
-				: 스크리닝 데이터의 id 를 기반으로 elastic search 에 request 하여, 즉 라우팅 하여 해당 스크리닝데이터를 얻어온다		
+		    :  header 에 SYSTEM_AUTH_HEADER 를 추가하여 request 하므로 document server 에서 system 권한으로 접근 한다.
 
-					
-      
+		   (1) screening 문서 관련
+   			1.  Optional<ScreningDocumentDto.Detail> getScreeningDocumentById(String id)
+				: 스크리닝 데이터의 id 를 기반으로 document 서버에 request 하여, 즉 라우팅 하여 해당 스크리닝데이터를 얻어온다		
+					: 궁극적으로는 es 에 접근하는게 목적인데, 설계 되어있는 구조를 보면 admin 서버에서 바로 es 에 접근은 못하게 되어있고, document 서버를 통해서만 es 에 접근 가능하게 되어있기 떄문에 document 서버로 라우팅 하는거다
+
+
+
+			2.  void savePolitica(PoliticaDocumentDto.Upload politicaDocument) 
+				: 업로드할 politca 문서를 arg 로 받고 그걸 document 서버로 라우팅 하여 최종적으로는 es 에 업로드 시킨다. 
+        					
+      	        (2) Politica 문서 관련
            
 
 
@@ -788,22 +1008,73 @@ Elastic Index에서 검색할때 STAT값으로 들어감.
 	데이터 추가 
 		: 크롤링 데이터, 수동 적재 데이터 모두 NAS 서버에 저장됨 
 		: DATA WORK 카테고리에서 수행
-		(1) 자동 데이터 추가 (크롤링)
-			1. 크롤데이터 스크리닝 >> 웹 크롤링된 내역 확인
-				: 아마 screening_documents 인덱스 
-				: 스크리닝 완료 버튼 클릭시  스크리닝에서 삭제되고 "정제"탭으로 넘어가게 된다.
-					: screeningToDocument 작명으로 보아 아마도 정제 된게 Document 인 듯?
+		: 주의 >> 이 프로젝트에서 es 의 stat 필드 혹은 status 는 es 의 클러스터의 status( green , red , yellow ) 를 나타내는게 아니라 docuemnt 의 필드 중 하나를 나타내는거다.
+			: 또 주의 >> ppt 상으로는 이 필드명이 stat 으로 통일되어있는 것처럼 설명되어있는데, 선배님이 헷갈렸는지 필드명이 stat 뿐 아니라 status 필드명으로 지어져있는 인덱스도 있다.
 
-			2. 크롤데이터 정제: 크롤 데이터에서 거를거 거름
+            {
+                "_index": "screening_documents",
+                "_type": "_doc",
+                "_id": "_bu9h4oBVYNUDmViqEMj",
+                "_score": 1.0,
+                "_source": {
+                    . . .. .  
+                    ],
+                    "created_at": "2020-02-12T12:55:50Z",
+                    "updated_at": "2020-02-12T12:55:50Z",
+                    "pages": 4,
+                    "contents": [
+                         . ..
+                    ],
+                    "stat": "0",  // 이 처럼 필드로써 들어간다
+                    "recentWorkDate": . . 
+                    "id": .. . 
+                    "_version_": ... ,
+                    "doc_step": "SCREENING"
+                }
+            }
 
-			3. 크롤데이터 등록 == 아카이빙 : 선별된 크롤데이터를 시스템에 등록하고 인덱싱. 해당 데이터를 장기 보관시킴
 
-			4. 아카이브 데이터 조회 : 아카이빙 된 내용들 확인
-				: 아마 politica_service 인덱스
 
-			5. 큐레이션
-				: 아마 politica_documents 인덱스
-				: rnd 의 publication 에서도 확인 가능
+
+	(1) 자동 데이터 추가 (크롤링)
+		: SCREENING => REFINE, REFINED_KEEP => REGISTED, REGISTED_KEEP => REFINED, REFINED_KEEP => ARCHIVE, CURATION_REQUESTED => CURATION
+		: 아마
+			정제과정미만 >> screening 문서
+			정제 과정 이상 >>  Politica 문서
+			>> 
+
+		1. 크롤데이터 스크리닝 >> 웹 크롤링된 데이터.
+			: 웹 크롤링 된 데이터는 elastic search 의  screening_documents 인덱스 에 저장되어있다
+				: 웹 크롤링 데이터는 제 3의 서버에 의해 screening_documents 인덱스 에 추가되는 거고, Admin server 나 Document server 에서 웹 크롤링 데이터를 추가 작업을 하진 않는다. . 
+				: Admin server 나 Document server 에서는   screening_documents 인덱스 대해 아래의 작업을 수행한다.
+					1. screening 문서의 삭제 
+					2. screening 문서를 보류 상태로 전환 
+					3. screening 문서 조회
+
+			: screening 문서의 step 은 1 , 즉 PoliticaDocumentStep.SCREENING 이다.
+			: 스크리닝 완료 버튼 클릭시 
+				(1) admin server 의 "/api/admin/document/SCREENING/clear" 로 요청 들어감
+				(2) screeningDocumentService 의 screeningToPolitica 메서드 에서 documentServiceClient 객체를 활용하여 document server 로 라우팅하여 
+					1. 해당 스크리닝 문서를 스크리닝 데이터 상에서 삭제시킴 
+						(1) DocumentServiceClient 가 document server 에 "/api/document/screening/스크리닝문서의id" 경로로 요청함
+						(2) document server  의 screeningService 의 delete 메서드에서 ScreeningDocumentRepository 를 활용하여 elasticSearch 에 접근하여 삭제를 진행.
+							: RestHighLevelClient 가 elasticSearch 에 delete request 날려서 삭제시킴.
+					2. . 해당 스크리닝 문서를 politica 문서로써 "정제" 데이터로 업로드 시킨다. 
+						: 넘어간 politica 문서의 step 은 2,  즉 PoliticaDocumentStep.REFINED 가 된다.
+					
+				
+
+		2. 크롤데이터 정제: 크롤 데이터에서 거를거 거름
+			: 만약 keep 상태로 변경하면 step 은3, 즉  PoliticaDocumentStep.REFINED_KEEP 이 된다.
+			: 
+		3. 크롤데이터 등록 == 아카이빙 : 선별된 크롤데이터를 시스템에 등록하고 인덱싱. 해당 데이터를 장기 보관시킴
+
+		4. 아카이브 데이터 조회 : 아카이빙 된 내용들 확인
+			: 아마 politica_service 인덱스
+
+		5. 큐레이션
+			: 아마 politica_documents 인덱스
+			: rnd 의 publication 에서도 확인 가능
 
 		(2) 수동 데이터 추가
 			1. 사용자가 엑셀데이터 등록 
@@ -812,6 +1083,63 @@ Elastic Index에서 검색할때 STAT값으로 들어감.
 
 ---------------------------------------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------------------------------------
+<Document server >
+
+
+RestHighLevelClient >> es 에 접근하여 CRUD 할 수 있는 객체
+	:  ElasticSearchConfig 클래스에서  요청 host 설정( ES 상에서 누구와 연결할건지 설정) 및 빈등록 해놔서 원하는 곳에서 빈 주입하여 사용 가능
+
+
+
+CrudDocumentRepository >> RestHighLevelClient 로 es 에 접근하여 문서 종류 상관 없이 CRUD 진행
+	: PoliticaDocumentRepository ,  ProjectDocumentRepositoryImplV7 , ScreeningDocumentRepository 가 이를 상속한다.
+		: 이 세 리파지토리는 각각 politica_documents , rnd_projects , screening_documents 를 (elasticsearch 의) index 로 한다. 각 레파지토리로 각 유형에 대한 crud 작업을 요청받고, 내부적으로 부모인 CrudDocumentRepository 의 메서드를 이용해 해당 index 에서의 CRUD 작업을 수행한다.
+
+
+		
+		: PoliticaDocumentRepository >> Politica 문서에 대해 쿼리 조건 따른 get 을 수행
+			:  politica_documents 를 인덱스로 함
+
+		: ProjectDocumentRepositoryImplV7 >> project 문서에 대해 get( 단순 search 와 aggreation) , delete 를 수행 
+			: rnd_projects 를 인덱스로 함
+
+		: ScreeningDocumentRepository >> screening 문서에 대해 delete(id 기반),  get(상세 조건 기반 검색 || id 기반 직방 검색) , update( 스크리닝 문서 세부 사항 변경 ||  스크리닝 문서 keep 상태 변경) 을  수행
+			: screening_documents  를 인덱스로 함
+
+
+	: 의존 >> 
+		1. RestHighLevelClient >> ElasticSearch 와 연결하여 CRUD request 하기 위함
+		2. ObjectMapper >> 객체간 변환을 쉽게 하기 위함
+
+
+
+ScreeningDocumentApiController >> screening 문서에 대한 조회 요청( 필터조합기반 기반 || id 기반) , 세부사항 수정 요청, 삭제 요청을 받아들임
+	: 스크리닝 문서 생성에 대한 건 없음
+	: 의존 >>  private final ScreeningDocumentService screeningService;
+	: 맵핑 경로 >> /api/document/screening/어쩌구
+
+
+ProjectDocumentApiController >> R&D Project 문서에 대한 조회요청( 집계 || 필터조합기반 || id 기반)  요청을 받아들임
+	:  조회에 대한 것만 있고 삭제/생성/업데이트 관한 것은 없음
+---------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------
+
+user-microService
+
+
+SecurityConfig 클래스에서 http.addFilterAt과 addFilterBefore를 사용하여 필터를 구성하는 방식에 따라, CustomUsernamePasswordAuthenticationFilter와 customAuthenticationFilter의 동작 순서가 결정됩니다.
+
+addFilterBefore 메소드는 customAuthenticationFilter가 UsernamePasswordAuthenticationFilter 이전에 실행되도록 지정합니다. 이는 customAuthenticationFilter가 요청을 먼저 처리하고, 그 다음에 UsernamePasswordAuthenticationFilter가 처리하게 됩니다.
+
+customAuthenticationFilter의 doFilterInternal 메소드 내에서, 시스템 인증 헤더나 사용자 JWT 인증 헤더를 확인하여 인증을 수행합니다. 만약 customAuthenticationFilter에서 인증이 성공적으로 이루어지면, SecurityContextHolder에 인증 정보가 설정됩니다.
+
+그 후, filterChain.doFilter(request, response); 호출을 통해 다음 필터로 요청이 전달됩니다. 이 때, 이미 인증이 성공적으로 이루어졌기 때문에, CustomUsernamePasswordAuthenticationFilter는 인증을 다시 수행하지 않습니다. 대신, CustomUsernamePasswordAuthenticationFilter는 다른 목적(예: 사용자 이름과 비밀번호를 사용한 인증)으로 사용될 수 있으며, 이는 구현에 따라 달라집니다.
+
+요약하자면, customAuthenticationFilter에서 인증이 성공하면, CustomUsernamePasswordAuthenticationFilter는 인증 절차를 거치지 않게 됩니다. 하지만, CustomUsernamePasswordAuthenticationFilter가 다른 목적으로 사용되는 경우에는 여전히 요청을 처리할 수 있습니다. 이는 필터의 구현과 구성에 따라 달라질 수 있습니다.
+
+
+---------------------------------------------------------------------------------------------------------------
+
 Admin Micro Service
 			1. 문서 작업 (ADMIN, WORKER Only) : 문서를 CRUD 할 수 있다. 
 			2. 사용자 작업 (ADMIN Only) : 사용자를 CRUD할 수 있다.
