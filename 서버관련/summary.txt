@@ -1,3 +1,9 @@
+<index 관련 elasticsearch>
+  : 주요 인덱스는  politica , screening_documents , rnd_projects 
+  : rnd_projects >> rnd 사이트의 문서 저장
+    : politica 와는 별개의 크롤러가 데이터 넣는다
+  : screening_documents >> 스크리닝 문서 저장
+  : politica >> screnning 단계 이상의 문서 저장
 
 GET http://index.knlab.kr:9200/_cat/indices
 
@@ -22,6 +28,11 @@ green open .kibana-event-log-7.9.3-000030 zNV06QLBSt2hAKafhfWBlQ  1 1      0    
 green open crawler_counter                Wsj05KFqS-aTNgtgm4pXUg  4 0    892      0 144.7kb 144.7kb
 green open rnd_projects                   eGoCr95pRXG8xVoNsB3Kow  1 1 811487      0   3.1gb   1.5gb
 
+
+
+
+<크롤링 관련 elasticsearch >
+  : a-Z 인덱스로 나눠져있음 - 근데 기준을 모르겠음
 
 GET http://crawl.knlab.kr:9200/_cat/indices
 
@@ -70,5 +81,130 @@ green open g-ind   mVlqxMtFSSq_I0o9Ah5ZVA 1 1   3523288   911228   1.7gb 890.3mb
 green open c-ind   Z2MlPxMLSROqNZ_dcvlZpw 1 1  48548563  1661413  32.4gb  16.1gb
 green open r-index -5PFbUKvQ-KSBZWB11GLXQ 8 0   1902556   433332 421.9mb 421.9mb
 green open m-index 2dr1jckCRGOf1f7NtGcqWQ 8 0   4481576   369372 638.5mb 638.5mb
+
+
+
+
+http://crawl.knlab.kr:9200/b-index/_search
+
+{
+    "took": 4,
+    "timed_out": false,
+    "_shards": {
+        "total": 8,
+        "successful": 8,
+        "skipped": 0,
+        "failed": 0
+    },
+    "hits": {
+        "total": {
+            "value": 10000,
+            "relation": "gte"
+        },
+        "max_score": 1.0,
+        "hits": [
+            {
+                "_index": "b-index",
+                "_type": "_doc",
+                "_id": "8ocq0IIBfmoWlDVtVja0",
+                "_score": 1.0,
+                "_source": {
+                    "type": "item",
+                    "url": "https%3A//www.nytimes.com/2020/09/16/opinion/biden-obama-trump-voters.html"
+                }
+            },
+            {
+                "_index": "b-index",
+                "_type": "_doc",
+                "_id": "-Ycq0IIBfmoWlDVtVja0",
+                "_score": 1.0,
+                "_source": {
+                    "type": "item",
+                    "url": "https%3A//www.bmwi.de/Navigation/EN/Topic/topic.html%3Fcl2Categories_LeadKeyword%3Denergieeffizienz%26cms_gtp%3D367762_list%25253D3%26listWithoutIds%3D-369436%2B-1739848%2B-1450310%2B-1363860%2B-866594%2B%253Bjsessionid%253D437A0B561843EDFD8279C68CCAAA63CD"
+                }
+            },
+            {
+                "_index": "b-index",
+                "_type": "_doc",
+                "_id": "EIcq0IIBfmoWlDVtVje0",
+                "_score": 1.0,
+                "_source": {
+                    "type": "item",
+                    "url": "https%3A//www.bmwi.de/Navigation/EN/Topic/topic.html%3Fcl2Categories_LeadKeyword%3Denergieforschung%26cms_gtp%3D367762_list%25253D4%26listWithoutIds%3D-1853918%2B-1236826%2B-809776%2B-805228%2B%253Bjsessionid%253D65841008E3DD04E629C0A57231A687BF%253Bjsessionid%253D701B81871613C12ABDBECF4E45799961"
+                }
+            },
+            {
+                "_index": "b-index",
+                "_type": "_doc",
+                "_id": "HYcq0IIBfmoWlDVtVje0",
+                "_score": 1.0,
+                "_source": {
+                    "type": "item",
+                    "url": "https%3A//www.bmwi.de/Navigation/EN/Topic/topic.html%3Fcl2Categories_LeadKeyword%3Denergieforschung%26cms_gtp%3D367762_list%25253D4%26listWithoutIds%3D-1853918%2B-1236826%2B-809776%2B-805228%2B%253Bjsessionid%253D65841008E3DD04E629C0A57231A687BF%253Bjsessionid%253D909085B049873D3C14CAC7BA51F69D0B"
+                }
+            },
+            {
+                "_index": "b-index",
+                "_type": "_doc",
+                "_id": "rYcq0IIBfmoWlDVtVje0",
+                "_score": 1.0,
+                "_source": {
+                    "type": "item",
+                    "url": "https%3A//www.bmwi.de/Navigation/EN/Topic/topic.html%3Fcl2Categories_LeadKeyword%3Deuropaeische-wirtschaftspolitik%26cms_gtp%3D367762_list%25253D3%26listWithoutIds%3D-1374436%2B-513790%2B-2081474%2B-2065116%2B-2063338%2B-2050232%2B%253Bjsessionid%253D1E4DFF97F4CCBA89FF2F7FCDBB39B865"
+                }
+            },
+            {
+                "_index": "b-index",
+                "_type": "_doc",
+                "_id": "SYcq0IIBfmoWlDVtVji0",
+                "_score": 1.0,
+                "_source": {
+                    "type": "item",
+                    "url": "https%3A//m.facebook.com/a/language.php%3Fgfid%3DAQD6qr2CKDcRiVYF%26index%3D3%26l%3Dfr_FR%26locale2%3Den_US%26lref%3Dhttps%253A%252F%252Fm.facebook.com%252Flogin.php%253Fskip_api_login%253D1%2526api_key%253D966242223397117%2526signed_next%253D1%2526next%253Dhttps%25253A%25252F%25252Fm.facebook.com%25252Fsharer.php%25253Fu%25253Dhttps%2525253A%2525252F%2525252Fbrook.gs%2525252F2RJwUGi%252526t%25253DOur%25252BNation%25252Bof%25252BImmigrants%2525253A%25252BOn%25252Bthe%25252Bborder%2526cancel_url%253Dhttps%25253A%25252F%25252Fm.facebook.com%25252Fdialog%25252Fclose_window%25252F%25253Fapp_id%25253D966242223397117%252526connect%25253D0%252523_%25253D_%2526display%253Dtouch%2526locale%253Den_US%26ref_component%3Dmbasic_footer%26ref_page%3DXLoginController%26refid%3D9%26sref%3Dlegacy_mbasic_footer"
+                }
+            },
+            {
+                "_index": "b-index",
+                "_type": "_doc",
+                "_id": "v4cq0IIBfmoWlDVtWTgQ",
+                "_score": 1.0,
+                "_source": {
+                    "type": "item",
+                    "url": "https%3A//www.brookings.edu/podcast-episode/our-nation-of-immigrants-on-the-border/%3Fmsg%3Dfail%26shared%3Demail"
+                }
+            },
+            {
+                "_index": "b-index",
+                "_type": "_doc",
+                "_id": "xocq0IIBfmoWlDVtWTgQ",
+                "_score": 1.0,
+                "_source": {
+                    "type": "item",
+                    "url": "https%3A//www.brookings.edu/blog/future-development/2020/09/21/doing-business-rankings-that-endanger-good-regulations/%3Fshare%3Dreddit"
+                }
+            },
+            {
+                "_index": "b-index",
+                "_type": "_doc",
+                "_id": "Tocq0IIBfmoWlDVtWTkQ",
+                "_score": 1.0,
+                "_source": {
+                    "type": "item",
+                    "url": "https%3A//www.bmwi.de/Navigation/EN/Topic/topic.html%3Fcl2Categories_LeadKeyword%3Denergiepreise-und-transparenz-fuer-verbraucher%26cms_gtp%3D367762_list%25253D3%26listWithoutIds%3D-418116%2B%253Bjsessionid%253DDB212E624D07D0DAD74E7851FA82D9F0"
+                }
+            },
+            {
+                "_index": "b-index",
+                "_type": "_doc",
+                "_id": "b4cq0IIBfmoWlDVtWTkQ",
+                "_score": 1.0,
+                "_source": {
+                    "type": "item",
+                    "url": "https%3A//www.bmwi.de/Navigation/EN/Topic/topic.html%3Fcl2Categories_LeadKeyword%3Denergiepreise-und-transparenz-fuer-verbraucher%26cms_gtp%3D367762_list%25253D3%26listWithoutIds%3D-418116%2B%253Bjsessionid%253D791778D652A8BEDF6F4743E50677C669"
+                }
+            }
+        ]
+    }
+}
 
 
