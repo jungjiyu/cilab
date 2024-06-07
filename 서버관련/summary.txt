@@ -2,6 +2,7 @@
   : 주요 인덱스는  politica , screening_documents , rnd_projects 
   : rnd_projects >> rnd 사이트의 문서 저장
     : politica 와는 별개의 크롤러가 데이터 넣는다
+    :현재는 얘만 사용한다고 함
   : screening_documents >> 스크리닝 문서 저장
   : politica >> screnning 단계 이상의 문서 저장
 
@@ -32,8 +33,8 @@ green open rnd_projects                   eGoCr95pRXG8xVoNsB3Kow  1 1 811487    
 
 
 <크롤링 관련 elasticsearch >
-  : a-Z 인덱스로 나눠져있음 - 근데 기준을 모르겠음
-
+  : a-Z 인덱스로 나눠져있음 - 근데 기준은 사이트 첫 글자라고 함
+  : 근데 현재는 안쓴다고 함
 GET http://crawl.knlab.kr:9200/_cat/indices
 
 green open b-index 9Py_mi_1TMeEUlfaszhFRw 8 0   4848024   466262   1.8gb   1.8gb
