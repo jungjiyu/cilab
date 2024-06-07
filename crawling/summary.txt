@@ -1,1 +1,42 @@
 
+: vs 코드 extenstion 설치 >> 주피터 + 파이썬 
+	: 실행 >> ctrl + enter
+	: 다음 셀을 만들면서 실행 >> shift + enter
+: python 설치 >> 3.12.3 설치
+
+
+객체 >> 데이터 + 명령어
+
+크롤링 기초
+	: https://youtu.be/Uf21RUo3KNc?si=YzsWN8a_8qBV9ffh
+		: 영상에서 크롤링 연습하는 사이트 >> https://startcoding.pythonanywhere.com/
+
+	: 웹 크롤링 >> Web 거미줄 + Crawling 기어다니다 . 거미줄 기어다니는 것처럼 웹 상의 정보를 수집한다
+		: 웹 스크래핑 >> web + scraping 긁어모으다 . 웹 크롤링과 같은 단어는 아니지만 , 혼용되어 자주 쓰임
+	: 활용 >> 방대한 데이터 수집용
+	: 정적 페이지 static page 크롤링 
+		: 정적페이지 >> 데이터의 추가적인 변경이 안일어나는 페이지. 
+		: 크롤링 
+		1. 데이터 받아오기 >>  파이썬에서 요청을 보내고 응답 받기
+			: requests 라이브러리 >> HTTP 통신으로 HTML 을 받아온다
+			    : 다운로드 >> pip install requests
+			    : 요청하기 >> requests.HTTP요청방식("요청할주소")
+				: 응답이 반환되고, 이걸 변수로 받아둔다. 
+					ex) response = requests.get("https://startcoding.pythonanywhere.com/basic");
+				: 반환 받은 응답 객체의 속성
+					1. status_code : 상태코드값 
+					2. text : 반환받은 html 문서. 문자열 타입.
+						: 문자열 자체로는 추출이 어려워서 BeautifulSoup4 를 이용하여 파싱한다.
+
+		2. 데이터 뽑아오기 >> 받은 응답에서 원하는 부분만 추출하기
+			: css 선택자를 잘 만드는 것이 핵심
+			: BeautifulSoup4 라이브러리 
+				: 다운로드 >> pip install bs4
+				: 
+html = response.text
+soup = BeautifulSoup(html, 'html.parser')
+
+	: 동적 페이지 크롤링
+		: 데이터의 추가적인 변경이 일어나는 페이지.
+
+
