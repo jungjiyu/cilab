@@ -97,10 +97,43 @@ for item in items :
 
 데이터 엑셀에 저장하는 법
 	: pandas 와 openpyxl 라이브러리 활용
-	: pandas 라이브러리
-		: 다운로드 >> pip install pandas
-	: openyxl 라이브러리
-		: 다운로드 >> pip install openyxl
+	: pandas 라이브러리 >> 데이터 프레임 생성
+		다운로드 : pip install pandas
+		데이터 프레임 : (행과 열이 있는) 표 형태의 데이터 구조
+		    : 생성하는 방법 : pandas라이브러리명.DataFrame( 데이터프레임화대상, columns= [ '컬럼명1', '컬럼명2' , '컬럼명3' , ... ])
+			: 만약 걍 import 했으면 pandas 그대로 쓰면 되겠지만,  import pandas as pd 이런식으로 import 했었다면 pd.DataFrame 사용하면 된다.
+			: 2번째 arg 로 들어가는 columns= 에는 생성할 데이터 프레임을 구성할 컬럼명을 정의해준다
+			: 프레임화대상은 주로 (크롤링데이터를담은) 2차원 리스트 타입의 객체
+				: 그러니까 프레임화대상구하는법
+				  1. 크롤링 반복문 돌리기 이전에 리스트를 선언한다
+				  2. 크롤링 반복문 돌리면서 해당 리스트에 데이터를 append 한다
+				  3. 반복문이 끝나고, 그 리스트객체를 DataFrame 의 arg 로 한다
+				: ex )
+					data = [] # 1. 크롤링 데이터 담을 리스트 선언
+					for i in range(1,5):
+					    response = requests.get(f"https://startcoding.pythonanywhere.com/basic?page={i}")
+					    html = response.text
+					    soup = BeautifulSoup(html, 'html.parser')
+					    items = soup.select('.product')
+					    for item in items :
+					        name = item.select_one(".product-name").text
+					        category = item.select_one(".product-category").text
+					        rawPrice = item.select_one(".product-price").text
+					        price = item.select_one(".product-price").text.split('원')[0].replace(',','')
+					        print(name,category,price)
+					        data.append([name,category,price]) #2. 리스트에 데이터 append
+
+					df = pd.DataFrame(data, columns=['이름','카테고리','가격']) # 3. 정리한 데이터 리스트를 DataFrame 의 arg로 한다
+
+		    : 활용 >> 해당 객체를 대상으로, 해당 데이터를 다른 형식의 파일로 변환할 수 있다.
+			: 데이터 셋을 엑셀화 하기 >> 데이터셋객체.to_excel('파일명.xslx')
+
+					
+	: openyxl 라이브러리 >> 데이터 프레임을 엑셀화 하는데 사용된다
+		다운로드 : pip install openyxl
+		    : 참고로 다운로드만 함 되지 , 별도로 import 할 필요는 없다
+		활용 : 직접적으로 명시하진 않고, 데이터 프레임객체를 대상으로 하는 메서드( .to_excel 같은)를 활용할 때, 보이진 않지만 내부적으로 사용된다
+
 
 
 
