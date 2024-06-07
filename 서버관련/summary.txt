@@ -1,0 +1,74 @@
+
+GET http://index.knlab.kr:9200/_cat/indices
+
+green open .kibana-event-log-7.9.3-000028 g_cOcHjNQfihDcZo0Qyo7A  1 1      0      0    416b    208b
+green open .kibana-event-log-7.9.3-000027 1SCbfj76S325FSEoc2dXAA  1 1      0      0    416b    208b
+green open .apm-agent-configuration       e-5wb1JxRZqEkL5GA3p_tQ  1 1      0      0    416b    208b
+green open caption                        Jx5648k4SHqS5yYfOpfxLA 24 0  11250      0   7.8mb   7.8mb
+green open .kibana-event-log-7.9.3-000029 Nrce8n9FQTaqIPEmg6xcmQ  1 1      0      0    416b    208b
+green open politica_full_text             0B67kjveTM-Vqpy85GJaRA 24 0      0      0   4.8kb   4.8kb
+green open .kibana_2                      DeKVmMAmTOiC0XoeMEOZVg  1 1     18      7  20.8mb  10.4mb
+green open .kibana_1                      nXDbMZJySzmS_UefRrjO5w  1 1      3      0  17.9kb   8.9kb
+green open $rnd_projects                  owWVdgRPQ3-FQsA3LDxi9Q  1 1      0      0    416b    208b
+green open .tasks                         Nr7tA15BQhKJas_gnt6nSQ  1 1      1      0  13.3kb   6.6kb
+green open politica_documents             Ti64uUTUSpuJOsUq1H9bJA  1 1   5491     25  27.4mb  13.7mb
+green open politica_service               pY2bKAHWTaW0K3_SOrsq6Q  1 1   6336     10  33.3mb  16.5mb
+green open .apm-custom-link               _PQE7JiHQuyNly_sN5O-zg  1 1      0      0    416b    208b
+green open politica_caption               l2X02PJjQNm0gwNRXpPRbg 24 0      0      0   4.8kb   4.8kb
+green open .kibana_task_manager_1         hZdmHVlHTO-lEEpnAA5rOg  1 1      6 483519 267.1mb 133.5mb
+green open full_text                      VmNxtfvGQ4CfSrMzNyYc_Q 24 0  19783      0 213.7mb 213.7mb
+green open screening_documents            FKHizk7RS6KBJzU-BlEXcw  1 1  67277     79 378.5mb 188.6mb
+green open .kibana-event-log-7.9.3-000030 zNV06QLBSt2hAKafhfWBlQ  1 1      0      0    416b    208b
+green open crawler_counter                Wsj05KFqS-aTNgtgm4pXUg  4 0    892      0 144.7kb 144.7kb
+green open rnd_projects                   eGoCr95pRXG8xVoNsB3Kow  1 1 811487      0   3.1gb   1.5gb
+
+
+GET http://crawl.knlab.kr:9200/_cat/indices
+
+green open b-index 9Py_mi_1TMeEUlfaszhFRw 8 0   4848024   466262   1.8gb   1.8gb
+green open u-ind   Xpx_niCjSp6VTMlxK3JPxQ 1 1  23752608  1368273  16.7gb   8.4gb
+green open n-index QVQ8y9QERjuvFzPOkzD5gg 8 0   2002190   918034 665.5mb 665.5mb
+green open z-index 0uA_oAxNRGmR7Q8GWPnHkg 8 0     94608    33651  31.2mb  31.2mb
+green open p-ind   0cHSk4EfTMekXCxo2V6Lbw 1 1  26310757   715619  14.3gb   7.1gb
+green open u-index 86uWG9wYRu68Js4__SLuHg 8 0 148163170  4514903  96.2gb  96.2gb
+green open k-ind   QlxkEwWdR9G9U7lbHIrAjw 1 1     29788    47967  71.4mb  35.7mb
+green open s-index nGgwrQSOR0y0h3LyW_OXrg 8 0    540671    57464 130.7mb 130.7mb
+green open p-index 00UJxpyURwacuNgN6TnnDA 8 0         4        0  18.8kb  18.8kb
+green open f-ind   PPTvHPp7SpydfHj47AISDA 1 1         0        0 102.9kb  51.4kb
+green open g-index ZGN0Yp3PQFi4Wi5DU9GSAw 8 0  14200295    27327   1.3gb   1.3gb
+green open x-index Op2t3SjQTAyZyOAqcDjnaw 8 0         0        0     2kb     2kb
+green open b-ind   A6paYdkORdeyFL69UaAzEA 1 1    487271      193 197.4mb  98.7mb
+green open e-ind   UK_OR6P2TcCT973vTQcxug 1 1  30550428  8090760  32.7gb  16.4gb
+green open q-index PSReD2zeTmeSrkIdYk2MsA 8 0         0        0     2kb     2kb
+green open l-index obdF8ukTTAySZ72ZuZQsoA 8 0         0        0     2kb     2kb
+green open j-ind   T39D75JBQQuVYyxSqjmkgw 1 1  21067878  2978183  20.7gb    10gb
+green open i-index g7wYgKhQQHyccF0mRuWacw 8 0  43547479   122587   8.7gb   8.7gb
+green open d-index E1J_hS-sRqeUxcLPDlTpfg 8 0  80793700 16562651 149.7gb 149.7gb
+green open v-index vXTtjJ8aR-CP5uWMmbwlpQ 8 0         0        0     2kb     2kb
+green open a-ind   T--KQ68VTdKwkr6cohPbpQ 1 1  26439551   754752   6.3gb   3.1gb
+green open h-index _Vl7Eu7ESu-tv7d971DzzQ 8 0  42320334  3658531   8.3gb   8.3gb
+green open t-index z3Zrj1mETYusJLEzIxnAZw 8 0   1618077   850965 430.4mb 430.4mb
+green open d-ind   uVJmQ5ctTiWSWy5MDkmiBA 1 1    775292   233466 239.3mb 119.6mb
+green open weforum GsB701AqRlSqf1EqiCph1Q 4 0         1        0   5.1kb   5.1kb
+green open n-ind   DA224ymORcGED8UR32tIzg 1 1   1225026   135793 407.3mb 203.6mb
+green open mpg     bbPsf-oZRhO_MXjrV1axwA 4 0         1        0   5.1kb   5.1kb
+green open i-ind   e-2l16eqTuWbre_5Zc1n1g 1 1  30430310  5983458 157.6gb  78.9gb
+green open c-index P28V0aRKSCGRV6F0mVHY_A 8 0 150352082  2756517  54.5gb  54.5gb
+green open a-index 2ZtZUP0eSqCkDZeRYtfBAg 8 0 145901422  4238450  40.9gb  40.9gb
+green open m-ind   bMZHlS3uSbuXOH9POx18fQ 1 1         0        0  34.8kb  34.5kb
+green open y-index ditKLa8PSc6PUf02B13eCQ 8 0         0        0     2kb     2kb
+green open f-index w6IWutMJRUuYCOYBE_t-6A 8 0         0        0     2kb     2kb
+green open w-ind   Tk9syKDBQsWDNLBOnG6i_w 1 1    518828   306725 441.4mb 220.7mb
+green open o-index leM2zwJjS3KcR2qDDFiySg 8 0  10091833    25265   2.3gb   2.3gb
+green open k-index LVPluN0RQXiCYdvsPYbcCw 8 0  55688107  2298278  32.1gb  32.1gb
+green open e-index x17LdPRwQSi7wZPNfmekEg 8 0 152918248  3649397  38.8gb  38.8gb
+green open o-ind   q2inO-LPQR6Di6gJHXtJLQ 1 1  23230210   868951    72gb    36gb
+green open h-ind   9FaK2onHTPGNedz6JPJy0w 1 1      7737      913   1.1mb 609.9kb
+green open j-index N3ScjFOzRsSEsX7VaOtEtg 8 0    405469    92540  64.7mb  64.7mb
+green open w-index EA5UmD-ZS9y5XFYzvWDebg 8 0  10381463   623387     4gb     4gb
+green open g-ind   mVlqxMtFSSq_I0o9Ah5ZVA 1 1   3523288   911228   1.7gb 890.3mb
+green open c-ind   Z2MlPxMLSROqNZ_dcvlZpw 1 1  48548563  1661413  32.4gb  16.1gb
+green open r-index -5PFbUKvQ-KSBZWB11GLXQ 8 0   1902556   433332 421.9mb 421.9mb
+green open m-index 2dr1jckCRGOf1f7NtGcqWQ 8 0   4481576   369372 638.5mb 638.5mb
+
+
