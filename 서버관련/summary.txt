@@ -1,10 +1,29 @@
+사이트
+   nextrend == GPS 
+      : 5173 포트
+      : politica 문서를 다룸
+
+   RnD
+      : 5272 포트
+      : "GPS 가 관리하는 politica 문서" + project 문서
+         :  publication 탭의 문서는 nextrend 의 큐레이션 단계의 문서
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 <index 관련 elasticsearch>
-  : 주요 인덱스는  politica , screening_documents , rnd_projects 
+  : 주요 인덱스는  politica_documents , screening_documents , rnd_projects 
   : rnd_projects >> rnd 사이트의 문서 저장
     : politica 와는 별개의 크롤러가 데이터 넣는다
-    :현재는 얘만 사용한다고 함
-  : screening_documents >> 스크리닝 문서 저장
-  : politica >> screnning 단계 이상의 문서 저장
+
+  : politica_documents >> GPS 가 관리하는 문서. screnning 단계 이상의 문서 저장
+         : politca_service 는 우리가 관리하는 인덱스가 아니다
+
+  : screening_documents >> 스크리닝 문서. politica 문서의 단계중 하나로, 크롤링되고 사람이 정제하는 과정을 거치기 이전의 초기 단계의 문서 
+      : politica 문서의 한 단계이긴 하지만 , 특별히 별도로 관리
+
+
+
+
 
 GET http://index.knlab.kr:9200/_cat/indices
 
@@ -30,7 +49,7 @@ green open crawler_counter                Wsj05KFqS-aTNgtgm4pXUg  4 0    892    
 green open rnd_projects                   eGoCr95pRXG8xVoNsB3Kow  1 1 811487      0   3.1gb   1.5gb
 
 
-
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 <크롤링 관련 elasticsearch >
   : a-Z 인덱스로 나눠져있음 - 근데 기준은 사이트 첫 글자라고 함
