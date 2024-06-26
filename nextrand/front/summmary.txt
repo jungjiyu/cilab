@@ -2,3 +2,8 @@
 
 
 라우팅 페이지 >> app.jsx
+
+publication-------------------------------------------------------------------------------
+엑셀 sortby 같은 >> publicationcontentright.jsx
+원문링크페이지 >> publicationcontnetright"item".jsx
+
