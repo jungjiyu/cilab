@@ -1,1 +1,4 @@
-start.js 에서 npm start
+시작방법 > start.js 에서 npm start
+
+
+라우팅 페이지 >> app.jsx
