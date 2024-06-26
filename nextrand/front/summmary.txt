@@ -4,6 +4,8 @@
 라우팅 페이지 >> app.jsx
 
 publication-------------------------------------------------------------------------------
+publicationPageContent 에   console.log(JSON.stringify(data, null, 2)); 추가해서 넘어오는 데이터 형식 관찰
+
 엑셀 sortby 같은 >> publicationcontentright.jsx
 원문링크페이지 >> publicationcontnetright"item".jsx
 
