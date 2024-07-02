@@ -9,5 +9,17 @@ export const getDocumentDetail = (documentId) => {
   });
 };
 
+
+export const useGetDocumentDetail = (documentId) => {
+  const { data, isLoading, isError } = useQuery(
+    [QUERY_KEYS.documentDetail, documentId],
+    () => getDocumentDetail(documentId),
+    {
+      enabled: !!documentId,
+    },
+  );
+
+  return { result: data?.result, isLoading, isError };
+};
 와 같이 정의되어있음을 알 수 있다.
 
