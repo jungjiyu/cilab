@@ -1,4 +1,13 @@
 실행방법 >> 모르겠음
 
-아카이브 편집 창 틀>> src/pages/dataArchaive/ArchaiveEditPage.jsx 
-아카이브 편집 창 내용물 >>  src/components/layouts/AdminContentsLayout.jsx
+아카이브 편집 창 >> src/pages/dataArchaive/ArchaiveEditPage.jsx 
+     /react-query/hooks/admin/document.js 에 정의된 useGetDocumentDetail 함수를 활용한다. 그리고 useGetDocumentDetail 함수 내부에서는 api/admin/documents.js 에 정의된 getDocumentDetail 을 활용한다. 그리고 확인해보면 
+export const getDocumentDetail = (documentId) => {
+  return myAxios({
+    method: HTTP_METHODS.GET,
+    url: `/worker/document/detail/${documentId}`,
+  });
+};
+
+와 같이 정의되어있음을 알 수 있다.
+
