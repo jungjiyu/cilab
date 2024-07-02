@@ -1,3 +1,4 @@
-실행방법
-  1. package.json 의 script 에 다음을 추가 >>     "start": "set PORT=5173 && react-scripts start"
-  2. 터미널에서 npm start . 만약에 추가적으로 install 해야하는 거(ex : react .. ) 있음 install 하고
+실행방법 >> 모르겠음
+
+아카이브 편집 창 틀>> src/pages/dataArchaive/ArchaiveEditPage.jsx 
+아카이브 편집 창 내용물 >>  src/components/layouts/AdminContentsLayout.jsx
