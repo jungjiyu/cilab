@@ -1,1 +1,156 @@
-ㅓ
+서버 스펙이 고성능이기 때문에, 하나의 물리적 서버에서 여러 개의 가상 서버를 실행하여 로드 밸런싱 실습을 할 수 있다
+
+
+
+----
+실전 지식
+	: Spring Data JPA 는 db와의 연동을 전제로 하기 때문에, db 관련 depency 가 없으면 걍 애플리케이션 실행이 안된다
+	: application.yml 에 여러 서버에 대해 정의를 했는데 프로파일설정? 그런걸 해줬다
+		: https://lucas-owner.tistory.com/22
+----
+
+Reverse Proxy 와 Forward Proxy
+	: Reverse Proxy 는 reverse response type ,  Forward Proxy는 front response type 라고도 한다
+	: 프록시Proxy >> 대리인. 중간에 낑기는 얘
+		: 종류 << 네트워크 상 어디에 위치하느냐, 혹은 어느 방향으로 데이터를 제공하느냐에 따라 갈린다
+			1. Forward Proxy >>클라이언트 쪽에 위치하여, 클라이언트 대신 프록시 서버가 대상 서버에 전달해주는 방식
+				: 대개 프록시라 하면 포워드 프록시
+				: 목적 >> 보안 강화, 캐싱(속도 향상)
+
+			2. Reverse Proxy >> web server 쪽에 위치하여 클라이언트의 요청을 특정 서버에 배분해주는 방식 
+				: 그러니까 로드 밸런싱 해준다.
+
+	: https://inpa.tistory.com/entry/NETWORK-%F0%9F%93%A1-Reverse-Proxy-Forward-Proxy-%EC%A0%95%EC%9D%98-%EC%B0%A8%EC%9D%B4-%EC%A0%95%EB%A6%AC
+
+
+-----
+Nginx를 사용한 로드밸런싱 환경 구축
+	: 절차1	
+		1. 스프링부트 프로젝트 생성 - 컨트롤러 정도만 구현
+		2. 프로젝트 빌드
+			: 해당 프로젝트의 루트 경로에서 CMD 열고 gradlew.bat bootJar 실행
+			: 빌드된 프로젝트 파일은 
+				: /build/libs 에서 확인 가능
+				: java -jar 빌드파일명.jar 명령어를 입력하여 실행 가능
+		3. 서버에 파일이 저장될 환경 구성
+			(1) 디렉터리 생성>> sudo mkdir -p /var/www/myapp/deployments/v1.0.0/
+			(2) 폴더 권한부여>> sudo chmod 755 /var/www/myapp/deployments/v1.0.0/
+			(3) 폴더 소유자 변경>> sudo chown -R user:user /var/www/myapp/deployments/v1.0.0/
+
+
+
+		4. 서버로 빌드된 jar 파일을 전송 >>  scp 로컬파일명.jar 서버상의사용자명@서버IP주소:/서버상에저장될경로/저장될파일명T.jar
+`			: 다음을 입력했음>> scp loadbalancingtest01-0.0.1-SNAPSHOT.jar user@202.31.200.130:/var/www/myapp/deployments/v1.0.0/loadbalancingtest01-0.0.1-SNAPSHOT.jar
+
+		5.서버에서 실행해보기
+			(0) 서버의 자바 업데이트
+				: java11 이라서 java21 로 업뎃해줌
+					0. sudo apt-get update
+					1. sudo apt-get install openjdk-21-jdk
+					2. sudo update-alternatives --config java 하고 21을 기본으로 설정
+					3. 환경 변수 설정 >> 
+						(1) export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+						(2) export PATH=$JAVA_HOME/bin:$PATH
+
+			(1) 특정 프로파일(server1)로 스프링부트 애플리케이션 시작하기 >>   java -jar -Dspring.profiles.active=프로파일 {파일명}.jar
+				: 다음을 입력했음>>java -jar -Dspring.profiles.active=server1 loadbalancingtest01-0.0.1-SNAPSHOT.jar
+
+		: https://hudi.blog/load-balancing-with-nginx/
+
+	: 절차2
+		1. nginx 설치 
+			: https://velog.io/@xangj0ng/Linux-Ubuntu-Nginx-%EC%84%A4%EC%B9%98
+			(1) sudo apt update
+			(1) sudo apt upgrade
+			(2) sudo apt install nginx
+
+		2. nginx 서버 설정 변경 >> 
+			(1) sudo vim /etc/nginx/default.conf
+			(2) sudo nginx -s reload
+
+
+
+
+
+	: 효과. 효율성. 딜레이
+
+
+
+
+-----
+
+Apache Jmeter 사용법
+	: 유튜브 생활코딩 참고
+	0. JDK 다운로드 및 환경변수 설정
+		: 기본적으로 Jmeter 가 자바 기반이라 깔려있어야된다
+		: https://hongong.hanbit.co.kr/java-%EC%9E%90%EB%B0%94-%EA%B0%9C%EB%B0%9C-%EB%8F%84%EA%B5%AC-%EC%84%A4%EC%B9%98-oracle-jdk-21/
+			: 근데 위 사이트에서 환경 변수 설정 중 JAVA_HOME 을 C:\Program Files\Java 까지만 설정해놨는데, 실제로는 C:\Program Files\Java\jdk-21 까지 해놔야된다
+	1. https://jmeter.apache.org/download_jmeter.cgi 에서 다운 및 압축 해제
+	2. bin 디렉터리 의 ApacheJemeter.jar 클릭 시 사용 가능
+
+
+----
+
+기타 작업 내용
+	1. 인텔리제이 커뮤니티 버전 설치함
+		: https://velog.io/@bi-sz/IntelliJ-%ED%99%98%EA%B2%BD-%EA%B5%AC%EC%84%B1%ED%95%98%EA%B8%B0
+
+----
+
+
+
+1. **가상 서버 설정**:
+   - **Virtual Machines (VMs)**: 하나의 물리적 서버에서 여러 개의 가상 머신을 생성합니다. 각각의 가상 머신에 웹 서버(예: Nginx, Apache)를 설치합니다.
+   - **Docker**: Docker를 사용하여 여러 개의 컨테이너를 생성하고, 각 컨테이너에서 웹 서버를 실행할 수도 있습니다.
+
+   예를 들어, 4개의 가상 머신 또는 Docker 컨테이너를 생성하여 각각의 머신이 동일한 웹 애플리케이션을 호스팅하게 합니다.
+
+2. **로드 밸런서 설정**:
+   - Nginx 또는 HAProxy를 사용하여 로드 밸런서를 설정합니다.
+   - **Reverse Response Type**: 로드 밸런서가 클라이언트 요청을 받아 적절한 서버로 요청을 전달하고, 해당 서버에서 응답을 받아 다시 클라이언트에게 전달하도록 설정합니다.
+   - **Front Response Type**: 로드 밸런서가 클라이언트에게 가장 가까운 서버로 직접 요청을 보내도록 설정합니다.
+
+### 2. JMeter 설정 및 테스트 계획 작성
+
+1. **JMeter 설치**:
+   - 서버에 JMeter를 설치합니다.
+   - 설치된 JMeter를 통해 클라이언트의 역할을 수행하며 트래픽을 생성합니다.
+
+2. **테스트 계획 작성**:
+   - **Thread Group**: 사용자 수와 반복 횟수를 설정합니다. 예를 들어, 100명의 사용자가 1000번의 요청을 보낸다고 설정할 수 있습니다.
+   - **HTTP Request Sampler**: 로드 밸런서의 IP 주소와 포트를 사용하여 요청을 보냅니다. 이때, Reverse Response Type과 Front Response Type 각각의 설정에 대한 HTTP 요청을 작성합니다.
+   - **Listeners**: 응답 시간을 측정할 수 있는 `View Results in Table`, `Summary Report` 등을 추가합니다.
+
+### 3. 테스트 실행 및 데이터 수집
+
+1. **Reverse Response Type 테스트**:
+   - JMeter에서 Reverse Response Type 로드 밸런서 설정에 따라 트래픽을 생성합니다.
+   - 모든 응답 시간, 처리량, 에러율 등을 기록합니다.
+
+2. **Front Response Type 테스트**:
+   - 동일한 방식으로 Front Response Type 설정에 대해 테스트를 진행합니다.
+   - 마찬가지로 응답 시간, 처리량, 에러율 등의 데이터를 수집합니다.
+
+### 4. 결과 분석
+
+1. **응답 시간 분석**:
+   - 두 방식의 평균 응답 시간을 비교합니다.
+   - 최대 응답 시간과 최소 응답 시간을 확인하여 성능의 일관성을 평가합니다.
+
+2. **처리량 분석**:
+   - 초당 처리할 수 있는 요청 수를 비교하여 두 방식 중 어느 것이 더 효율적인지 확인합니다.
+
+3. **에러율 분석**:
+   - 각 방식에서 발생한 에러의 비율을 분석하여 안정성을 평가합니다.
+
+### 5. 결론 도출 및 보고서 작성
+
+1. **결론 도출**:
+   - 두 가지 로드 밸런싱 방식 중 어떤 방식이 더 나은 성능을 제공하는지 결론을 도출합니다.
+   - 다양한 트래픽 시나리오에서의 성능 차이를 분석합니다.
+
+2. **보고서 작성**:
+   - JMeter에서 수집한 데이터를 바탕으로 보고서를 작성합니다.
+   - 그래프와 표를 활용하여 결과를 시각적으로 표현합니다.
+
+이 실습 절차를 통해 주어진 서버에서 다양한 로드 밸런싱 시나리오를 평가할 수 있습니다.
