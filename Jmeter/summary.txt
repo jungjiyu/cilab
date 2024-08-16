@@ -65,12 +65,29 @@ Nginx를 사용한 로드밸런싱 환경 구축
 			(2) sudo apt install nginx
 
 		2. nginx 서버 설정 변경 >> 
-			(1) sudo vim /etc/nginx/default.conf
+			(1) sudo vim /etc/nginx/conf.d 에 default.conf 생성 및 다음 내용을 작성
+upstream samplecluster {
+  server localhost:8801; 
+  server localhost:8802;
+  server localhost:8803;
+}
+
+server {
+  listen 8800;
+
+  location / {
+    proxy_pass http://samplecluster;
+  }
+}
+
 			(2) sudo nginx -s reload
 
+		3. 접속해보기 >> http://202.31.200.130:8800
+			: server-1, server-2 , server-3 을 빙글빙글 돌아가면서 잘 실행됨을 확인 가능
 
+		4. 접속 로그 확인 >>sudo tail -f /var/log/nginx/access.log
 
-
+	
 
 	: 효과. 효율성. 딜레이
 
@@ -80,7 +97,8 @@ Nginx를 사용한 로드밸런싱 환경 구축
 -----
 
 Apache Jmeter 사용법
-	: 유튜브 생활코딩 참고
+    : 유튜브 생활코딩 참고
+    : 초기 설정
 	0. JDK 다운로드 및 환경변수 설정
 		: 기본적으로 Jmeter 가 자바 기반이라 깔려있어야된다
 		: https://hongong.hanbit.co.kr/java-%EC%9E%90%EB%B0%94-%EA%B0%9C%EB%B0%9C-%EB%8F%84%EA%B5%AC-%EC%84%A4%EC%B9%98-oracle-jdk-21/
@@ -88,7 +106,89 @@ Apache Jmeter 사용법
 	1. https://jmeter.apache.org/download_jmeter.cgi 에서 다운 및 압축 해제
 	2. bin 디렉터리 의 ApacheJemeter.jar 클릭 시 사용 가능
 
+    : 활용
+	(1) test plan 테스트 계획 작성을 하고 접속하기
+	    1. 스레드 그룹 생성
+		: 테스트 계획 우클릭-add(추가)-thread(스레드)-thread group(스레드그룹) 택 
+			: Number of threads 쓰레드들의 수 >> 몇 유저가 접속을 할 것인가
+				: 그러니까 10으로 하면 10명의 사용자가 접속하는 것 
 
+			: Loop count 루프 카운트 >> 한 유저가 몇번 접속을 할 것인가
+				: 그러니까 10으로 하면 한 사용자 당 10 번 접속하는 것 
+
+	    2. 스레드 그룹 활용 - 요청 설정
+		(1) 생성한 스레드그룹 우클릭-add(추가)-sampler(표본추출기)-http reqest(http 요청) 택 
+			: sampler 를 통해서 어떤 프로토콜로 접속하게 할 건지 설정 가능
+		(2) http requets 설정
+		    1. Web server
+			: protocol 프로토콜
+				: 만약 https 접속의 경우 protocol 란에 https 를 적으면 됨
+		 		: http 면 프로토콜란을 걍 비워두면 디폴트값인  http 적용됨
+			: server name or IP >> 접속하고자 하는 서버의 IP 주소 입력
+				: 202.31.200.130 입력함
+			: 포트 번호 port number >> 접속하고자 하는 포트 번호 입렫ㄱ
+				: 8800 입력
+`				: 디폴트는 80 값
+
+		    2. Http request
+			: GET/POST 등의 http method 설정
+			: path >> 요청 경로
+				: ex) "IP:포트번호/uhahaha" 로의 접속을 원하는 경우 uhahaha 를 작성 (앞에 / 붙이는거 아니다)
+
+		(3) 접속 : 위의 start 버튼(▶) 누르면 됨
+
+
+	(2) 서버 부하량(얼마나 힘들어하는지) 확인해보기 - 개별적인
+	    : 종류
+		1. 스레드 그룹에 대한  
+		2. 스레드 그룹의 특정 http request 에 대한 >> http request우클릭 - add(추가) - listner(리스너)-view reuslt tree(결과물의 트리 보기) 하고 start 버튼(▶) 누름
+
+	    : 관련 지식
+		: request 의 status >> 3단계로 구성
+		    (1) request start
+		    (2) response start 
+		    (3) request end
+		: latency >> requets start ~response start 
+		: Load time >> requets start ~response end (request end 막 시작하는 구간)
+			: 일반적으로 performance test 로 성능을 측정할 때는 load time 을 기준으로 하게 된다
+
+	    : 분석
+		sampler result (표본추출기결과) 탭 
+ 			: load time(로드 시간)
+			    : 밀리세크(1/1000 초) 단위로 표시됨
+
+
+
+	(3) 서버 부하량(얼마나 힘들어하는지) 확인해보기 - 종합적인
+	    : 종류
+		1. 스레드 그룹에 대한  
+		2. 스레드 그룹의 특정 http request 에 대한 >> http request우클릭 - add(추가) - listner(리스너)-summary report (요약보고서) 하고 start 버튼(▶) 누름
+
+	    : 분석
+	 	samples(표본수) >> 총 몇번 접속이 됬는가. (=스레드그룹*루프수)
+		average (평균) >> 평균 load time
+		min (최소값) >> 최소 load time
+		max (최대값) >> 최대 load time
+		std Dev (표준편차) >> 평균으로 부터 각각의 요청 시간이 얼마나 떨어져있는가. 얼마나 들쑥날쑥한가
+			: 클 수록 들쑥날쑥 한것
+
+		Error(오류)>> 에러의 발생률
+		throughput(처리량) >> 초당 몇번의 access 가 이뤄졌는가
+			: 높을 수록 좋은거임
+
+
+	(4) 서버 부하량(얼마나 힘들어하는지) 확인해보기 - 그래프로	
+	    : 시간적인 것을 확인하고자 할 때 좋다
+	    : 종류
+		1. 스레드 그룹에 대한  
+		2. 스레드 그룹의 특정 http request 에 대한 >> http request우클릭 - add(추가) - listner(리스너)-graph result (결과그래프) 하고 start 버튼(▶) 누름
+	    : 분석
+		data(데이터)
+		average(평균)
+		medium(중간값) 
+		deviation >> 편차
+		throughput(처리량)
+		
 ----
 
 기타 작업 내용
