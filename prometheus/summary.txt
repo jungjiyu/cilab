@@ -1,1 +1,22 @@
 
+참고글 >> "api 호출 로그 수집 스프링부트" 검색
+**********0. 스프링부트 애플리케이션과  grafana 기반 metric & log 모니터링 >> https://jaehee329.tistory.com/45
+		: Grafana - Prometheus는 서버 메트릭 수집 및 시각화를 위해 함께 쓰인다.
+		: Prometheus>>  오픈소스 모니터링 및 경보 도구로, 메트릭 수집, 저장, 쿼리, 시각화 및 경보 기능을 제공. 이를 스프링 부트 애플리케이션과 연계하면 API 호출 메트릭을 수집하고, Prometheus와 Grafana를 통해 모니터링할 수 있다.
+
+	0.5 자세한 예시 >> https://velog.io/@windsekirun/Spring-Boot-Actuator-Micrometer%EB%A1%9C-Prometheus-%EC%97%B0%EB%8F%99%ED%95%98%EA%B8%B0
+	1. 스프링부트 애플리케이션의 Access Log를 통해 일정 시간마다 URL별 호출량 통계 내기 >> https://kim-oriental.tistory.com/59
+	
+
+
+작업 내용 
+	1. mysql 설치
+	    : 참고
+		: https://giveme-happyending.tistory.com/203
+	    : 설정내용
+		: username >> root
+`		: pw >> 1234
+		: windowservice name >> MySQL
+
+	2. 스프링부트(인텔리제이)와 깃허브 연동
+		: https://velog.io/@ssoop/%EA%B9%83%ED%97%88%EB%B8%8CGitHub-%EC%97%B0%EB%8F%99%ED%95%98%EA%B8%B0-Spring-Boot-IntelliJ
