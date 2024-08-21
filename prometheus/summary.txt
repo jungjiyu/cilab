@@ -1075,6 +1075,8 @@ volumes:
 
 --------------------------------------------------------------------
 
+내가 이번에 docker 를 사용한 이유 >> prometheus, grafana 일일이 설치하기 귀찮고, 스프링부트 애플리케이션, nginx, mysql , prometheus, grafana 를 일일이 실행시켜야하는게 불편해서(docker-compose를 써서 한번에 실행시키고 싶어서)
+
 docker 로 컨테이너화 시켜 구현함으로 얻을 수 있는 장점
 	if : docker 를 사용하지 않았더라면 >> 
 		: 여전히 nginx-springboot,mysql-Prometheus-Grafana 를 실행 가능하긴 함. 
