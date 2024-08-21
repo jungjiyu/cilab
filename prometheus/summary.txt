@@ -2,9 +2,16 @@
 참고글 >> "api 호출 로그 수집 스프링부트" 검색
 **********0. 스프링부트 애플리케이션과  grafana 기반 metric & log 모니터링 >> https://jaehee329.tistory.com/45
 
-	0.5 자세한 예시 
+	0.2 actuator 란 >> https://semtul79.tistory.com/ 
+	0.5 actuator-prometus, Grafana 
+		(1) 자세한 예시 
 		>> https://velog.io/@roycewon/Spring-boot-%EB%AA%A8%EB%8B%88%ED%84%B0%EB%A7%81Prometheus-Grafana-docker
-		>> https://velog.io/@windsekirun/Spring-Boot-Actuator-Micrometer%EB%A1%9C-Prometheus-%EC%97%B0%EB%8F%99%ED%95%98%EA%B8%B0
+
+		>>https://lordofkangs.tistory.com/category/SPRING/Spring%20Boot
+
+		(2) 간단한 예시  >> https://velog.io/@windsekirun/Spring-Boot-Actuator-Micrometer%EB%A1%9C-Prometheus-%EC%97%B0%EB%8F%99%ED%95%98%EA%B8%B0
+
+
 	1. 스프링부트 애플리케이션의 Access Log를 통해 일정 시간마다 URL별 호출량 통계 내기 >> https://kim-oriental.tistory.com/59
 	
 
@@ -43,13 +50,113 @@ API와 endpoint
 			ex ) POST 방식의 http://test.domain.com/1 != GET 방식의 http://test.domain.com/1
 
 
+.yml 과 .properties 에서의 *
+	: YAML 파일에서는 * 가 특별한 의미를 가지기 떄문에, 값으로 * 를 줘야하는경우 그냥 적음 안되고 "*"로 표시해야됨
+	: .properties 에서는 * 에 특별한 의미가 없어, 값으로 * 를 줘야되면 걍 *를 주면 됨
+	: https://semtul79.tistory.com/13
+ 
+
+CORS  Cross-Origin Resource Sharing 교차 출처 리소스 공유 >>  다른 출처의 자원에 접근할 수 있도록 하는 정책
+	: 출처 Origin >> URL에서 Protocol + Host + Port  부분 
+		: ex) https://jiyu.github.io:443/tech/browser/cors/ 에서  "https://jiyu.github.io:443" 부분
+		: 같은 출처 >> 클라이언트와 서버가 같은 출처에 있다
+		: 다른 출처 >> 클라이언트와 서버가 다른 출처에 있다
+			: 그러니까 일반적으로는 다른 출처 환경에서 request, response 하는 거임.
+
+		: 동일 출처 정책 Same-Origin Policy >>  동일 출처 요청만 자유롭게 요청이 가능하다는 정책.
+			: 기본적으로 이 정책이 적용되고, 다른 출처의 리소스 요청을 해야하는 경우 CORS 정책을 따라야만 정상적으로 응답을 받을 수 있다
+				: 왜 >> 보안상의 이유로 그렇다고 한다. (출처가 다른 곳에서 내 애플리케이션에 무슨 짓을 할지 모르니까)
+
+	: HTTP 헤더를 사용
+	: 종류
+		(1)  단순요청(Simple Request) >> 걍 전송
+		(2)  프리플라이트 요청(Preflighted Request) >>  실제 요청을 전송하기전, 안전한지 확인하는 요청을 미리 보내 확인 후 전송 
+		(3)  인증정보요청(Credential Request) >> ( 쿠키, 인증 헤더, TLS 클라이언트 인증서 등의) 신용정보와 함께 요청
+
+	: 스프링부트에서의 기본적인 CORS 설정
+		:  @CrossOrigin  >> 컨트롤러로 정의된 path 대해 클라이언트의 출처 상관없이 request 를 받을 수 있게 함
+			: 컨트롤러/컨트롤러내부메서드 위에 명시
+			: 주의 >> @CrossOrigin 명시한다고 스프링부트 내의 모든 path/endpoint 대해 적용되는건 아니고,  Actuator 제공 endpoint 등에 대한 CORS 에 대해선 별도의 설정이 필요
+
+	: 스프링부트 Actuator 제공 endpoint 대한 CORS 설정
+		: 아래의 Actuator 설명 부분에 명시함
+
+	: https://escapefromcoding.tistory.com/724
+
+
+
+JMX Java Management Extensions
+	: 웹사이트를 통해 원격으로 Java 응용 프로그램의 모니터링과 관리기능을 제공하는 프레임워크
+	: 컴포넌트
+	    (1) MBean >> 관리 가능한 리소스를 나타내는 자바 객체
+		1. Standard MBean: 표준 인터페이스를 구현한 MBean.
+		2. Dynamic MBean: 런타임 시 동적으로 관리 가능한 속성이나 메서드를 정의할 수 있는 MBean.
+		3. Open MBean: 더 많은 유연성을 제공하는 MBean으로, 다양한 데이터 타입을 지원.
+		4. Model MBean: 가장 유연한 형태의 MBean으로, 표준 MBean과 동적 MBean의 기능을 모두 포함.
+
+	    (2) MBean Server >> MBean을 등록하고 관리하는 역할을 하는 레지스트리
+
+	    (3) Connectors and Protocols >> 커넥터. 원격 애플리케이션과 JMX MBean Server 간의 통신을 가능하게 한다.
+
+	    (4) Agent >>  MBean Server와 MBean을 포함하는 관리 애플리케이션
+
+	: https://tangle1996.tistory.com/31
+
+
 metric  >> ( 메모리 사용률, CPU 사용률, 스레드 사용률 등.. ) 시간이 지남에 따라 변화하는 데이터. 
 
 
 스프링부트에서의 metric 수집 >> Actuator의 MicroMeter 모듈이 담당
 	:  Actuator 엑츄에이터 >> 스프링 부트 애플리케이션의 상태 모니터링, 관리 기능을 제공하는 모듈
+		: https://semtul79.tistory.com/
 		: metric 수집 및 애플리케이션의 상태를 모니터링할 수 있는 다양한 엔드포인트를 제공
-		: 사용 방법
+		: Actuator관련 application.properties 설정 
+			(1) 엔드포인트 활성화/노출 관련
+				: 활성화, 노출 2가지 모두 켜진상태여야 외부로 노출됨(둘 중 하나라도 off 이면 노출안됨)
+				1. 활성화 여부 (enabled) >>  spring boot 내부적으로 특정 endpoint 의 정보를 수집할지를 설정
+					: default 론 "shutdown" endpoint 를 제외하곤 모두 활성화되어있다
+					: how to >> management.endpoint.[엔드포인트명].enabled 에 true/false 할당
+						1. 활성화 >> 값을 true 로 줌 됨
+						2. 비활성화 >> 값을 false 로 줌 됨
+					    : 주의 >> management.endpoints (exposure 관련해서만 사용 가능) 가 아니라 management.endpoint
+
+
+				2. 노출 여부 (exposure) >> 최종적으로 web 이나 jmx에 해당 정보를 노출시킬지를 설정	
+					: default 론 "health" endpoint 만 노출되어있다
+						: 그러니까 health 제외하곤, 기본적으로는 endpoint 들을 사용 못하고, 사용을 원하면 (enabled 는 디폴트 활성화라 할필요없지만) exposure 설정은 (디폴트로는 비활성화니까) 별도로 꼭 해줘야 된다.
+
+					: how to >> 
+						(1) management.endpoints.[web혹은jmx].exposure.include 에 활성화 원하는 endpoint명을 값으로 줌
+
+						(2) management.endpoints.[web혹은jmx].exposure.exclude 에 비활성화 원하는 endpoint명을 값으로 줌
+
+					    : 주의 >> management.endpoint (enabled 관련해서만 사용 가능) 가 아니라 management.endpoints.
+
+					    : tip >> 
+						0. endpoint명 대신 * 를 값으로 주면 전체 endpoint 에 대해 적용 가능
+						1. endpoint명을 콤마로 여러개 나열해서 여러 엔드포인트에 한번에 적용할 수도 있음
+
+
+					    : 참고 >>  include 와 exclude 에 둘다 적으면 , exclude 가 적용됨 (exclude 가 우선순위가 더 높음) 
+
+
+
+			(2) 엔드포인트 CORS 관련
+				: Spring Boot Actuator에선 디폴트론 CORS가 비활성화되어있음
+					: 출처가 같은 "http://localhost:8080" 같은곳에선 엔드포인트로의 접근에 문제 없는데, 아예 다른 컴터에서 접근하려하면 접근이 안된다는 것
+
+				: 엔드포인트 CORS 활성화 방법 >> 
+					management.endpoints.web.cors.allowed-origins >> 허용할 출처명을 값으로 줌
+						: 값으로 * 를 주면 모든 출처의 클라이언트의 접근을 허용할 수 있다.
+						: 콤마로 여러개 나열 가능
+
+
+					management.endpoints.web.cors.allowed-methods >> 허용할 HTTP 메서드명을 값으로 줌
+						: 값으로 * 를 주면 모든 HTTP 메서드의 활용을 허용할 수 있다.
+						: 콤마로 여러개 나열 가능
+	
+
+		: 기본적인 사용 방법
 			(1) depedency 추가 >> spring initailzr 에서 "spring boot actuator" 추가해 프로젝트 생성
 			(2) application.properties 에서  Spring Boot Actuator의 엔드포인트 활성화 >>
 				: management.endpoints.web.exposure.include 는 Spring Boot Actuator의 엔드포인트에만 적용되는 설정이지, 스프링부트 전반적인 엔드포인트에 대한 것은 아니다.
@@ -63,7 +170,10 @@ metric  >> ( 메모리 사용률, CPU 사용률, 스레드 사용률 등.. ) 시
 			(3) (스프링부트 애플리케이션 실행 후) Actuator 제공 엔드포인트롤 path 로 하여 원하는 정보 get
 
 
-		: 주요 엔드포인트
+
+
+
+		: 주요 제공 엔드포인트
 			(0)  /actuator >> actuator 가 제공하는 엔드포인트 목록을 확인 가능
 				: HATEOAS 방식의 response (response 에 urI 정보 포함 )를 받게 된다
 				: 아래와 같은 정보 얻는다
@@ -175,8 +285,76 @@ metric  >> ( 메모리 사용률, CPU 사용률, 스레드 사용률 등.. ) 시
 					: https://semtul79.tistory.com/17
 
 
-				: 수집한 metric은 프로메테우스, 그라파나 같은 모니터링 시스템과 연동해 시각화 가능
+				: 수집한 metric은 프로메테우스(=수집된 메트릭을 보관할 DB), 그라파나(=수집된 메트릭을 시각화 할 대시보드) 같은 모니터링 시스템과 연동해 시각화 가능
 
+				: 요청하면, 아래와 같이 모니터링 가능한 목록이 나오고 , 해당 목록에 대해 상세 정보를 알고 싶으면 " /actuator/metrics/목록이름" 으로 요청하면 됨
+					{
+ 					   "names": [
+					"application.ready.time",
+					"application.started.time",
+					"disk.free",
+					"disk.total",
+					"executor.active",
+					"executor.completed",
+					"executor.pool.core",
+					"executor.pool.max",
+					"executor.pool.size",
+					"executor.queue.remaining",
+					"executor.queued",
+					"hikaricp.connections",
+					"hikaricp.connections.acquire",
+					"hikaricp.connections.active",
+					"hikaricp.connections.creation",
+					"hikaricp.connections.idle",
+					"hikaricp.connections.max",
+					"hikaricp.connections.min",
+					"hikaricp.connections.pending",
+					"hikaricp.connections.timeout",
+					"hikaricp.connections.usage",
+					"http.server.requests",
+					"http.server.requests.active",
+					"jdbc.connections.active",
+					"jdbc.connections.idle",
+					"jdbc.connections.max",
+					"jdbc.connections.min",
+					"jvm.buffer.count",
+					"jvm.buffer.memory.used",
+					"jvm.buffer.total.capacity",
+					"jvm.classes.loaded",
+					"jvm.classes.unloaded",
+					"jvm.compilation.time",
+					"jvm.gc.concurrent.phase.time",
+					"jvm.gc.live.data.size",
+					"jvm.gc.max.data.size",
+					"jvm.gc.memory.allocated",
+					"jvm.gc.memory.promoted",
+					"jvm.gc.overhead",
+					"jvm.gc.pause",
+					"jvm.info",
+					"jvm.memory.committed",
+					"jvm.memory.max",
+					"jvm.memory.usage.after.gc",
+					"jvm.memory.used",
+					"jvm.threads.daemon",
+					"jvm.threads.live",
+					"jvm.threads.peak",
+					"jvm.threads.started",
+					"jvm.threads.states",
+					"logback.events",
+					"process.cpu.time",
+					"process.cpu.usage",
+					"process.start.time",
+					"process.uptime",
+					"system.cpu.count",
+					"system.cpu.usage",
+					"tomcat.sessions.active.current",
+					"tomcat.sessions.active.max",
+					"tomcat.sessions.alive.max",
+					"tomcat.sessions.created",
+					"tomcat.sessions.expired",
+					"tomcat.sessions.rejected"
+    					]
+					}
 
 			(3) Environment 환경 설정 >> /actuator/env
 				: 현재 애플리케이션의 환경 설정( 프로파일, 환경 변수, 시스템 프로퍼티 등)을 확인
@@ -198,15 +376,86 @@ metric  >> ( 메모리 사용률, CPU 사용률, 스레드 사용률 등.. ) 시
 				: 애플리케이션의 캐시 상태를 확인
 
 
+		: custom endpoint 
+			: https://semtul79.tistory.com/14
+			: 그러니까 원하는 정보만 반환 받을 수 있는 엔드포인트 
+			: REST controller 만드는 과정/작동방식이 유사 
+				: (걍 컨트롤러로 구현 안하고) 굳이 custom endpoint 로 구현하는 이유 >> 호환성을 위해.
+					: 직접 rest controller 로 만들어버리면, prometheus 등 actuator 와 호환될 라이브러리와 연동이 제대로 안된다.
+
+			: how to 생성
+				(1) 엔드포인트 클래스 만들기 >> @Endpoint(id = "경로명") 을 명시한 클래스 생성
+					: REST controller 역할을하는 클래스를 만드는 것.
+					: 보통 endpoint 라는 패키지에 생성
+					: @Endpoint >> 해당 클래스를 "actuator/특정경로명" 에 대응하는 Actuator 엔드포인트로 정의해준다
+						: REST controller의 "@RestController + @RequestMapping" 과 유사
+
+
+				(2) 기본 클래스 내부 메서드 작성 >>  @ReadOperation, @WriteOperation, @DeleteOperation 을 사용해 특정 HTTP 메서드로 호출 가능한 메서드 작성
+					: REST controller 내부의 메서드 작성하는 것과 유사
+					: custom Actuator endpoint를 통한 통신 방식 >> REST controller 처럼 URL과 HTTP 메서드를 기반으로 request를 받고, (view가 아닌) 데이터(String, List<Object> 등..)를 response 한다
+
+					: custom Actuator endpoint에 적용 가능한 HTTP 메서드
+						(1)  @ReadOperation >> HTTP GET 메서드에 대응
+							: RestController 의 @GetMapping과 유사
+
+						(2) @WriteOperation >> HTTP POST 메서드에 대응
+							: 생성 및 수정에 대한 메서드
+							:  Actuator 에선 RestController 처럼 생성(@PostMapping)과 수정(@PatchMapping)이 세분화되어있지 않다
+						(3) @DeleteOperation >> HTTP DELTE 메서드에 대응
+							: RestController 의 @DeleteMapping과 유사
+
+					: custom Actuator endpoint를 통해 클라이언트로부터 데이터 받는 방법
+					    : RestController 와는 다르게 Actuator endpoint에서는 body, queryString 으로 데이터를 받을지의 여부는 사용자가 직접 결정 못하고  HTTP 메서드따라 어떻게 받게될지가 고정되어있다. (path variable는 그나마 커스터마이징 가능)
+
+						(1) query string 
+							:  @ReadOperation 에서 기본적으로 데이터를 받는 방법
+								:  @WriteOperation 에선  query string 으론 못받는다
+							: 명시해도 되고 안해도 되는 >> @Nullable (jakarta 가 아니라 org.springframework.lang.Nullable 인거 주의)을 명시할 시 
+							: 명시 필수인  >> @Nullable을 명시하지 않을 시
+
+						(2) body 
+							:  @WriteOperation 에서 기본적으로 데이터를 받는 방법
+								:  @ReadOperation 에선  query string 으론 못받는다
+
+							: RestController 와는 다르게, DTO로 여러 값을 한번에 받을 수 없다. 일일이 값 하나당 필드 하나씩 써서 받아야된다.
+								: 데이터 받는거만 DTO 로 못받는거지, 당연히 메서드 내부에서 DTO 를 활용 및 값으로 DTO 반환가능
+		
+						(3) path variable 
+							:  (@ReadOperation,   @WriteOperation  모두에서) @Selector 어노테이션 명시하면 사용 가능
+							: 여러 pathvariable 받기 >>  @Selector(match = Selector.Match.ALL_REMAINING) 으로, match 속성 값으로 Selector.Match.ALL_REMAINING을 주면 됨
+								: Selector 어노테이션의 match 필드의 값으론 SINGLE, ALL_REMAINING 이 있는데 디폴트는 딱 하나의 pathvariable 만 받는 SINGLE 이고,  ALL_REMAINING 을 값으로 주면 여러개의 pathvariable 을 받을 수 있다
+							: 딱 하나의 pathvariable 받기 >> @Selector 에 별다른 속성 명시 안하면 됨
+
+
+	
+				(3) 엔드포인트 클래스 를 bean 으로 등록 >> @Configuration 과 @Bean 을 사용
+					: 해당 엔드포인트를 스프링부트가 자유자재로 쓸 수 있게해준다
+					@Configuration
+					public class  엔드포인트클래스명Config {
+
+  					  @Bean
+   					 엔드포인트클래스명 임의의이름() {
+     					   return new 엔드포인트클래스명();
+   					 }
+				}
+
+
 
 
 		: HTTP방식과 JMX방식으로 데이터를 제공
+		     : 필요에 따라 함께 사용할 수도 있다
+			: HTTP 방식 >> Actuator의 다양한 엔드포인트를 HTTP를 통해 노출	
+				: 웹 기반 모니터링 툴과 통합하기 쉽다
+				: 일반적으로 선택하는 방법
+
+			: JMX방식  >> MBean을 통해 애플리케이션의 상태와 메트릭을 관리
+				: 엔터프라이즈 환경(정부, 대기업등 조직의 대규모 IT 시스템/인프라)에서 애플리케이션의 모니터링/관리할 때 사용
 
 
 
 
 
-	: https://lordofkangs.tistory.com/326
 
 
 
@@ -217,8 +466,6 @@ metric  >> ( 메모리 사용률, CPU 사용률, 스레드 사용률 등.. ) 시
 		2. 사용자의 액세스와 활동 분석 
 
 	: Spring actuator
-
-
 		: Grafana - Prometheus는 서버 메트릭 수집 및 시각화를 위해 함께 쓰인다.
 		: Prometheus>>  오픈소스 모니터링 및 경보 도구로, 메트릭 수집, 저장, 쿼리, 시각화 및 경보 기능을 제공. 이를 스프링 부트 애플리케이션과 연계하면 API 호출 메트릭을 수집하고, Prometheus와 Grafana를 통해 모니터링할 수 있다.
 
