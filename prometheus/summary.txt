@@ -17,7 +17,7 @@
 
 
 작업 내용 
-	1. mysql 설치
+	1. 로컬 컴퓨터에 mysql 설치
 	    : 참고
 		: https://giveme-happyending.tistory.com/203
 	    : 설정내용
@@ -29,6 +29,35 @@
 		: https://velog.io/@ssoop/%EA%B9%83%ED%97%88%EB%B8%8CGitHub-%EC%97%B0%EB%8F%99%ED%95%98%EA%B8%B0-Spring-Boot-IntelliJ
 
 
+	3. 서버에 docker 와 docker-compose 설치
+		(1) docker 설치
+sudo apt-get update
+sudo apt-get install -y docker.io
+sudo systemctl start docker
+sudo systemctl enable docker
+
+		(2) docker-compose 설치
+			1. docker-compose 최신 버전 수동 다운로드 >> sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+	`		2. 다운로드한 docker-compose 파일에 실행 권한을 부여 >> sudo chmod +x /usr/local/bin/docker-compose
+			3. 제대로 설치됬나 확인 >> docker-compose --version
+
+
+	4.  MySQL Docker 컨테이너 생성 >> docker run --name  cilab-mysql -e MYSQL_ROOT_PASSWORD=0000 -e MYSQL_DATABASE=mywatch -e MYSQL_USER=user -e MYSQL_PASSWORD=0000 -p 3306:3306 -d mysql:latest
+		: docker run 명령어를 사용하여 mysql 컨테이너를 실행할 때, 지정한 Docker 이미지 (mysql:latest)가 로컬에 없으면 Docker는 자동으로 Docker Hub에서 해당 이미지를 다운로드한다
+`		: MySQL 컨테이너 자체가, mysql 워크밴치의 MySQL 서버 인스턴스같은 개념
+		: MySQL 컨테이너의 데이터베이스는 , mysql 워크밴치의 MySQL 서버 인스턴스 내의 하나의 데이터베이스(스키마)같은 개념
+		: 설정 내용 >>
+			--name mysql-db: 컨테이너명 을 cilab-mysql로 지정
+			-e MYSQL_ROOT_PASSWORD=0000 : MySQL root 사용자의 비밀번호를 1234로 설정
+			-e MYSQL_DATABASE=mywatch >> 
+			-e MYSQL_USER=user >> MySQL 서버 인스턴스 내의 특정 데이터베이스스키마(!=서버인스턴스)에 대한 일반 사용자의 username을 user로 하여 생성
+			-e MYSQL_PASSWORD=0000 >>  MySQL 서버 인스턴스에 대한 루트 사용자(root)의 비밀번호를 설정 ( root 사용자의 username은 별도로 지정안하고, root 이다. )
+			-p 3306:3306: 호스트의 포트 3306을 컨테이너의 포트 3306에 매핑합니다.
+			-d: 백그라운드에서 컨테이너를 실행합니다.
+			mysql:latest: 최신 MySQL 이미지를 사용합니다 
+	
+
+	5. tree 설치
 
 --------------------------------------------------------------------
 
@@ -287,7 +316,7 @@ metric  >> ( 메모리 사용률, CPU 사용률, 스레드 사용률 등.. ) 시
 
 				: 수집한 metric은 프로메테우스(=수집된 메트릭을 보관할 DB), 그라파나(=수집된 메트릭을 시각화 할 대시보드) 같은 모니터링 시스템과 연동해 시각화 가능
 
-				: 요청하면, 아래와 같이 모니터링 가능한 목록이 나오고 , 해당 목록에 대해 상세 정보를 알고 싶으면 " /actuator/metrics/목록이름" 으로 요청하면 됨
+				: 요청하면, 아래와 같이 모니터링 가능한 목록이 나오고 , 해당 목록에 대해 상세 정보를 알고 싶으면 "/actuator/metrics/목록이름" 으로 요청하면 됨
 					{
  					   "names": [
 					"application.ready.time",
@@ -458,15 +487,588 @@ metric  >> ( 메모리 사용률, CPU 사용률, 스레드 사용률 등.. ) 시
 
 
 
+--------------------------------------------------------------------
 
+Polling 폴링 >>  클라이언트가 서버에 일정한 시간 간격으로 주기적으로 요청을 보내어 서버의 상태나 데이터를 확인하는 방법
+	:  동작 방식
+		(1) 클라이언트 요청 >> 클라이언트가 서버에 (새로운 데이터가 있는지, 상태가 변경되었는지 등을 확인하고자) 일정한 시간 간격으로 요청을 보냄.
+		(2) 서버 응답 >> 서버가 클라이언트의 요청을 받아 현재 상태나 데이터를 응답으로 보냄
+			: 서버에 새로운 데이터가 있다면 그 데이터를 반환하고, 그렇지 않다면 빈 응답을 보낼 수도 있음
+	: 종류
+		1. 단순 폴링(Simple Polling) >> 클라이언트가 정해진 간격으로 서버에 요청을 보내는 가장 기본적인 폴링 방식
+			: 서버의 상태가 자주 변하지 않으면 불필요한 요청이 많아져 비효율적일 수 있음
+		2. 긴 폴링(Long Polling) >> 클라이언트가 서버에 요청을 보내고, 서버는 새로운 데이터가 생길 때까지 요청을 유지한 후 응답을 보냄
+			: 단순 폴링보다 서버와 네트워크 자원을 더 효율적으로 사용가능
+	: 대안 >> polling 대신 웹소켓 등을 사용 가능
+
+ 
+Prometheus>>  오픈소스 시스템 모니터링 및 경고 툴 
+	:Micrometer가 제공하는 엔드포인트 (/actuator/prometheus)에서 메트릭을 Pull 방식으로 수집하고, 이를 저장, 쿼리 및 시각화하여 애플리케이션의 상태를 모니터링
+		: Micrometer >>Spring Actuator 에서 매트릭 수집하는 얘로,  클라이언트(모니터링 시스템)에 대해 추상화된 파사드를 제공하여 특정 벤더(모니터링 시스템 제공 회사)에 종속되지 않고 JVM 기반 애플리케이션 코드를 계측할 수 있게 해준다
+			:  그러니까 Actuator는 메트릭을 제공하고, Micrometer는 이 메트릭을 다양한 포맷으로 가공하여 여러 모니터링 시스템으로 전달하는 역할
+		
+	:   prometheus 엔드포인트>> /actuator/prometheus 
+		:  /actuator/prometheus VS /actuator/metrics >>
+			:  /actuator/metrics >>  Spring Actuator가 기본적으로 제공하는 메트릭 데이터를 조회하는 데 사용
+			: /actuator/prometheus >> Prometheus가 이해할 수 있는 형식으로 애플리케이션의 메트릭 데이터를 얻고싶을때 사용
+				: Prometheus 서버는 이 엔드포인트에 주기적으로 요청(Polling)을 보내어 메트릭 데이터를 수집하게됨
+				: 직접 request 하면 다음과 같은 데이터를 얻을 수 있음
+					# HELP application_ready_time_seconds Time taken for the application to be ready to service requests
+					# TYPE application_ready_time_seconds gauge
+					application_ready_time_seconds{main_application_class="com.example.mywatch1.Mywatch1Application"} 4.339
+					# HELP application_started_time_seconds Time taken to start the application
+					# TYPE application_started_time_seconds gauge
+					application_started_time_seconds{main_application_class="com.example.mywatch1.Mywatch1Application"} 4.277
+					# HELP disk_free_bytes Usable space for path
+					# TYPE disk_free_bytes gauge
+					disk_free_bytes{path="C:\\jiyu\\springboot_project\\0820\\mywatch1\\mywatch1\\."} 4.44179279872E11
+					# HELP disk_total_bytes Total space for path
+					# TYPE disk_total_bytes gauge
+					disk_total_bytes{path="C:\\jiyu\\springboot_project\\0820\\mywatch1\\mywatch1\\."} 4.99461910528E11
+					# HELP executor_active_threads The approximate number of threads that are actively executing tasks
+					# TYPE executor_active_threads gauge
+					executor_active_threads{name="applicationTaskExecutor"} 0.0
+					# HELP executor_completed_tasks_total The approximate total number of tasks that have completed execution
+					# TYPE executor_completed_tasks_total counter
+					executor_completed_tasks_total{name="applicationTaskExecutor"} 0.0
+					# HELP executor_pool_core_threads The core number of threads for the pool
+					# TYPE executor_pool_core_threads gauge
+					executor_pool_core_threads{name="applicationTaskExecutor"} 8.0
+					# HELP executor_pool_max_threads The maximum allowed number of threads in the pool
+					# TYPE executor_pool_max_threads gauge
+					executor_pool_max_threads{name="applicationTaskExecutor"} 2.147483647E9
+					# HELP executor_pool_size_threads The current number of threads in the pool
+					# TYPE executor_pool_size_threads gauge
+					executor_pool_size_threads{name="applicationTaskExecutor"} 0.0
+					# HELP executor_queue_remaining_tasks The number of additional elements that this queue can ideally accept without blocking
+					# TYPE executor_queue_remaining_tasks gauge
+					executor_queue_remaining_tasks{name="applicationTaskExecutor"} 2.147483647E9
+					# HELP executor_queued_tasks The approximate number of tasks that are queued for execution
+					# TYPE executor_queued_tasks gauge
+					executor_queued_tasks{name="applicationTaskExecutor"} 0.0
+					# HELP hikaricp_connections Total connections
+					# TYPE hikaricp_connections gauge
+					hikaricp_connections{pool="HikariPool-1"} 10.0
+					# HELP hikaricp_connections_acquire_seconds Connection acquire time
+					# TYPE hikaricp_connections_acquire_seconds summary
+					hikaricp_connections_acquire_seconds_count{pool="HikariPool-1"} 2
+					hikaricp_connections_acquire_seconds_sum{pool="HikariPool-1"} 3.518E-4
+					# HELP hikaricp_connections_acquire_seconds_max Connection acquire time
+					# TYPE hikaricp_connections_acquire_seconds_max gauge
+					hikaricp_connections_acquire_seconds_max{pool="HikariPool-1"} 0.0
+					# HELP hikaricp_connections_active Active connections
+					# TYPE hikaricp_connections_active gauge
+					hikaricp_connections_active{pool="HikariPool-1"} 0.0
+					# HELP hikaricp_connections_creation_seconds Connection creation time
+					# TYPE hikaricp_connections_creation_seconds summary
+					hikaricp_connections_creation_seconds_count{pool="HikariPool-1"} 0
+					hikaricp_connections_creation_seconds_sum{pool="HikariPool-1"} 0.0
+					# HELP hikaricp_connections_creation_seconds_max Connection creation time
+					# TYPE hikaricp_connections_creation_seconds_max gauge
+					hikaricp_connections_creation_seconds_max{pool="HikariPool-1"} 0.0
+					# HELP hikaricp_connections_idle Idle connections
+					# TYPE hikaricp_connections_idle gauge
+					hikaricp_connections_idle{pool="HikariPool-1"} 10.0
+					# HELP hikaricp_connections_max Max connections
+					# TYPE hikaricp_connections_max gauge
+					hikaricp_connections_max{pool="HikariPool-1"} 10.0
+					# HELP hikaricp_connections_min Min connections
+					# TYPE hikaricp_connections_min gauge
+					hikaricp_connections_min{pool="HikariPool-1"} 10.0
+					# HELP hikaricp_connections_pending Pending threads
+					# TYPE hikaricp_connections_pending gauge
+					hikaricp_connections_pending{pool="HikariPool-1"} 0.0
+					# HELP hikaricp_connections_timeout_total Connection timeout total count
+					# TYPE hikaricp_connections_timeout_total counter
+					hikaricp_connections_timeout_total{pool="HikariPool-1"} 0.0
+					# HELP hikaricp_connections_usage_seconds Connection usage time
+					# TYPE hikaricp_connections_usage_seconds summary
+					hikaricp_connections_usage_seconds_count{pool="HikariPool-1"} 2
+					hikaricp_connections_usage_seconds_sum{pool="HikariPool-1"} 0.003
+					# HELP hikaricp_connections_usage_seconds_max Connection usage time
+					# TYPE hikaricp_connections_usage_seconds_max gauge
+					hikaricp_connections_usage_seconds_max{pool="HikariPool-1"} 0.0
+					# HELP http_server_requests_active_seconds  
+					# TYPE http_server_requests_active_seconds summary
+					http_server_requests_active_seconds_count{exception="none",method="GET",outcome="SUCCESS",status="200",uri="UNKNOWN"} 1
+					http_server_requests_active_seconds_sum{exception="none",method="GET",outcome="SUCCESS",status="200",uri="UNKNOWN"} 0.0113362
+					# HELP http_server_requests_active_seconds_max  
+					# TYPE http_server_requests_active_seconds_max gauge
+					http_server_requests_active_seconds_max{exception="none",method="GET",outcome="SUCCESS",status="200",uri="UNKNOWN"} 0.0113416
+					# HELP http_server_requests_seconds  
+					# TYPE http_server_requests_seconds summary
+					http_server_requests_seconds_count{error="none",exception="none",method="GET",outcome="SUCCESS",status="200",uri="/actuator"} 1
+					http_server_requests_seconds_sum{error="none",exception="none",method="GET",outcome="SUCCESS",status="200",uri="/actuator"} 0.0100069
+					http_server_requests_seconds_count{error="none",exception="none",method="GET",outcome="SUCCESS",status="200",uri="/actuator/health"} 1
+					http_server_requests_seconds_sum{error="none",exception="none",method="GET",outcome="SUCCESS",status="200",uri="/actuator/health"} 0.0995438
+					http_server_requests_seconds_count{error="none",exception="none",method="GET",outcome="SUCCESS",status="200",uri="/actuator/prometheus"} 1
+					http_server_requests_seconds_sum{error="none",exception="none",method="GET",outcome="SUCCESS",status="200",uri="/actuator/prometheus"} 0.2179582
+					# HELP http_server_requests_seconds_max  
+					# TYPE http_server_requests_seconds_max gauge
+					http_server_requests_seconds_max{error="none",exception="none",method="GET",outcome="SUCCESS",status="200",uri="/actuator"} 0.0
+					http_server_requests_seconds_max{error="none",exception="none",method="GET",outcome="SUCCESS",status="200",uri="/actuator/health"} 0.0
+					http_server_requests_seconds_max{error="none",exception="none",method="GET",outcome="SUCCESS",status="200",uri="/actuator/prometheus"} 0.2179582
+					# HELP jdbc_connections_active Current number of active connections that have been allocated from the data source.
+					# TYPE jdbc_connections_active gauge
+					jdbc_connections_active{name="dataSource"} 0.0
+					# HELP jdbc_connections_idle Number of established but idle connections.
+					# TYPE jdbc_connections_idle gauge
+					jdbc_connections_idle{name="dataSource"} 10.0
+					# HELP jdbc_connections_max Maximum number of active connections that can be allocated at the same time.
+					# TYPE jdbc_connections_max gauge
+					jdbc_connections_max{name="dataSource"} 10.0
+					# HELP jdbc_connections_min Minimum number of idle connections in the pool.
+					# TYPE jdbc_connections_min gauge
+					jdbc_connections_min{name="dataSource"} 10.0
+					# HELP jvm_info JVM version info
+					# TYPE jvm_info gauge
+					jvm_info{runtime="Java(TM) SE Runtime Environment",vendor="Oracle Corporation",version="21.0.4+8-LTS-274"} 1
+					# HELP jvm_buffer_count_buffers An estimate of the number of buffers in the pool
+					# TYPE jvm_buffer_count_buffers gauge
+					jvm_buffer_count_buffers{id="direct"} 4.0
+					jvm_buffer_count_buffers{id="mapped"} 0.0
+					jvm_buffer_count_buffers{id="mapped - 'non-volatile memory'"} 0.0
+					# HELP jvm_buffer_memory_used_bytes An estimate of the memory that the Java virtual machine is using for this buffer pool
+					# TYPE jvm_buffer_memory_used_bytes gauge
+					jvm_buffer_memory_used_bytes{id="direct"} 32768.0
+					jvm_buffer_memory_used_bytes{id="mapped"} 0.0
+					jvm_buffer_memory_used_bytes{id="mapped - 'non-volatile memory'"} 0.0
+					# HELP jvm_buffer_total_capacity_bytes An estimate of the total capacity of the buffers in this pool
+					# TYPE jvm_buffer_total_capacity_bytes gauge
+					jvm_buffer_total_capacity_bytes{id="direct"} 32768.0
+					jvm_buffer_total_capacity_bytes{id="mapped"} 0.0
+					jvm_buffer_total_capacity_bytes{id="mapped - 'non-volatile memory'"} 0.0
+					# HELP jvm_classes_loaded_classes The number of classes that are currently loaded in the Java virtual machine
+					# TYPE jvm_classes_loaded_classes gauge
+					jvm_classes_loaded_classes 13420.0
+					# HELP jvm_classes_unloaded_classes_total The total number of classes unloaded since the Java virtual machine has started execution
+					# TYPE jvm_classes_unloaded_classes_total counter
+					jvm_classes_unloaded_classes_total 0.0
+					# HELP jvm_compilation_time_ms_total The approximate accumulated elapsed time spent in compilation
+					# TYPE jvm_compilation_time_ms_total counter
+					jvm_compilation_time_ms_total{compiler="HotSpot 64-Bit Tiered Compilers"} 13635.0
+					# HELP jvm_gc_concurrent_phase_time_seconds Time spent in concurrent phase
+					# TYPE jvm_gc_concurrent_phase_time_seconds summary
+					jvm_gc_concurrent_phase_time_seconds_count{action="end of concurrent GC pause",cause="No GC",gc="G1 Concurrent GC"} 2
+					jvm_gc_concurrent_phase_time_seconds_sum{action="end of concurrent GC pause",cause="No GC",gc="G1 Concurrent GC"} 0.005
+					# HELP jvm_gc_concurrent_phase_time_seconds_max Time spent in concurrent phase
+					# TYPE jvm_gc_concurrent_phase_time_seconds_max gauge
+					jvm_gc_concurrent_phase_time_seconds_max{action="end of concurrent GC pause",cause="No GC",gc="G1 Concurrent GC"} 0.0
+					# HELP jvm_gc_live_data_size_bytes Size of long-lived heap memory pool after reclamation
+					# TYPE jvm_gc_live_data_size_bytes gauge
+					jvm_gc_live_data_size_bytes 0.0
+					# HELP jvm_gc_max_data_size_bytes Max size of long-lived heap memory pool
+					# TYPE jvm_gc_max_data_size_bytes gauge
+					jvm_gc_max_data_size_bytes 4.280287232E9
+					# HELP jvm_gc_memory_allocated_bytes_total Incremented for an increase in the size of the (young) heap memory pool after one GC to before the next
+					# TYPE jvm_gc_memory_allocated_bytes_total counter
+					jvm_gc_memory_allocated_bytes_total 4.8234496E7
+					# HELP jvm_gc_memory_promoted_bytes_total Count of positive increases in the size of the old generation memory pool before GC to after GC
+					# TYPE jvm_gc_memory_promoted_bytes_total counter
+					jvm_gc_memory_promoted_bytes_total 7816160.0
+					# HELP jvm_gc_overhead An approximation of the percent of CPU time used by GC activities over the last lookback period or since monitoring began, whichever is shorter, in the range [0..1]
+					# TYPE jvm_gc_overhead gauge
+					jvm_gc_overhead 0.0
+					# HELP jvm_gc_pause_seconds Time spent in GC pause
+					# TYPE jvm_gc_pause_seconds summary
+					jvm_gc_pause_seconds_count{action="end of minor GC",cause="G1 Evacuation Pause",gc="G1 Young Generation"} 1
+					jvm_gc_pause_seconds_sum{action="end of minor GC",cause="G1 Evacuation Pause",gc="G1 Young Generation"} 0.005
+					jvm_gc_pause_seconds_count{action="end of minor GC",cause="Metadata GC Threshold",gc="G1 Young Generation"} 1
+					jvm_gc_pause_seconds_sum{action="end of minor GC",cause="Metadata GC Threshold",gc="G1 Young Generation"} 0.003
+					# HELP jvm_gc_pause_seconds_max Time spent in GC pause
+					# TYPE jvm_gc_pause_seconds_max gauge
+					jvm_gc_pause_seconds_max{action="end of minor GC",cause="G1 Evacuation Pause",gc="G1 Young Generation"} 0.0
+					jvm_gc_pause_seconds_max{action="end of minor GC",cause="Metadata GC Threshold",gc="G1 Young Generation"} 0.0
+					# HELP jvm_memory_committed_bytes The amount of memory in bytes that is committed for the Java virtual machine to use
+					# TYPE jvm_memory_committed_bytes gauge
+					jvm_memory_committed_bytes{area="heap",id="G1 Eden Space"} 5.24288E7
+					jvm_memory_committed_bytes{area="heap",id="G1 Old Gen"} 3.5651584E7
+					jvm_memory_committed_bytes{area="heap",id="G1 Survivor Space"} 4194304.0
+					jvm_memory_committed_bytes{area="nonheap",id="CodeHeap 'non-nmethods'"} 2555904.0
+					jvm_memory_committed_bytes{area="nonheap",id="CodeHeap 'non-profiled nmethods'"} 4849664.0
+					jvm_memory_committed_bytes{area="nonheap",id="CodeHeap 'profiled nmethods'"} 1.2320768E7
+					jvm_memory_committed_bytes{area="nonheap",id="Compressed Class Space"} 8847360.0
+					jvm_memory_committed_bytes{area="nonheap",id="Metaspace"} 6.5994752E7
+					# HELP jvm_memory_max_bytes The maximum amount of memory in bytes that can be used for memory management
+					# TYPE jvm_memory_max_bytes gauge
+					jvm_memory_max_bytes{area="heap",id="G1 Eden Space"} -1.0
+					jvm_memory_max_bytes{area="heap",id="G1 Old Gen"} 4.280287232E9
+					jvm_memory_max_bytes{area="heap",id="G1 Survivor Space"} -1.0
+					jvm_memory_max_bytes{area="nonheap",id="CodeHeap 'non-nmethods'"} 5898240.0
+					jvm_memory_max_bytes{area="nonheap",id="CodeHeap 'non-profiled nmethods'"} 1.2288E8
+					jvm_memory_max_bytes{area="nonheap",id="CodeHeap 'profiled nmethods'"} 1.2288E8
+					jvm_memory_max_bytes{area="nonheap",id="Compressed Class Space"} 1.073741824E9
+					jvm_memory_max_bytes{area="nonheap",id="Metaspace"} -1.0
+					# HELP jvm_memory_usage_after_gc The percentage of long-lived heap pool used after the last GC event, in the range [0..1]
+					# TYPE jvm_memory_usage_after_gc gauge
+					jvm_memory_usage_after_gc{area="heap",pool="long-lived"} 0.006719664929253047
+					# HELP jvm_memory_used_bytes The amount of used memory
+					# TYPE jvm_memory_used_bytes gauge
+					jvm_memory_used_bytes{area="heap",id="G1 Eden Space"} 1.8874368E7
+					jvm_memory_used_bytes{area="heap",id="G1 Old Gen"} 2.8762096E7
+					jvm_memory_used_bytes{area="heap",id="G1 Survivor Space"} 4091264.0
+					jvm_memory_used_bytes{area="nonheap",id="CodeHeap 'non-nmethods'"} 1698432.0
+					jvm_memory_used_bytes{area="nonheap",id="CodeHeap 'non-profiled nmethods'"} 4818048.0
+					jvm_memory_used_bytes{area="nonheap",id="CodeHeap 'profiled nmethods'"} 1.2090112E7
+					jvm_memory_used_bytes{area="nonheap",id="Compressed Class Space"} 8544192.0
+					jvm_memory_used_bytes{area="nonheap",id="Metaspace"} 6.5293448E7
+					# HELP jvm_threads_daemon_threads The current number of live daemon threads
+					# TYPE jvm_threads_daemon_threads gauge
+					jvm_threads_daemon_threads 20.0
+					# HELP jvm_threads_live_threads The current number of live threads including both daemon and non-daemon threads
+					# TYPE jvm_threads_live_threads gauge
+					jvm_threads_live_threads 24.0
+					# HELP jvm_threads_peak_threads The peak live thread count since the Java virtual machine started or peak was reset
+					# TYPE jvm_threads_peak_threads gauge
+					jvm_threads_peak_threads 25.0
+					# HELP jvm_threads_started_threads_total The total number of application threads started in the JVM
+					# TYPE jvm_threads_started_threads_total counter
+					jvm_threads_started_threads_total 28.0
+					# HELP jvm_threads_states_threads The current number of threads
+					# TYPE jvm_threads_states_threads gauge
+					jvm_threads_states_threads{state="blocked"} 0.0
+					jvm_threads_states_threads{state="new"} 0.0
+					jvm_threads_states_threads{state="runnable"} 8.0
+					jvm_threads_states_threads{state="terminated"} 0.0
+					jvm_threads_states_threads{state="timed-waiting"} 5.0
+					jvm_threads_states_threads{state="waiting"} 11.0
+					# HELP logback_events_total Number of log events that were enabled by the effective log level
+					# TYPE logback_events_total counter
+					logback_events_total{level="debug"} 0.0
+					logback_events_total{level="error"} 0.0
+					logback_events_total{level="info"} 5.0
+					logback_events_total{level="trace"} 0.0
+					logback_events_total{level="warn"} 0.0
+					# HELP process_cpu_time_ns_total The "cpu time" used by the Java Virtual Machine process
+					# TYPE process_cpu_time_ns_total counter
+					process_cpu_time_ns_total 1.84375E10
+					# HELP process_cpu_usage The "recent cpu usage" for the Java Virtual Machine process
+					# TYPE process_cpu_usage gauge
+					process_cpu_usage 1.480603149263461E-4
+					# HELP process_start_time_seconds Start time of the process since unix epoch.
+					# TYPE process_start_time_seconds gauge
+					process_start_time_seconds 1.72422995429E9
+					# HELP process_uptime_seconds The uptime of the Java virtual machine
+					# TYPE process_uptime_seconds gauge
+					process_uptime_seconds 1654.787
+					# HELP system_cpu_count The number of processors available to the Java virtual machine
+					# TYPE system_cpu_count gauge
+					system_cpu_count 12.0
+					# HELP system_cpu_usage The "recent cpu usage" of the system the application is running in
+					# TYPE system_cpu_usage gauge
+					system_cpu_usage 0.0865418870619077
+					# HELP tomcat_sessions_active_current_sessions  
+					# TYPE tomcat_sessions_active_current_sessions gauge
+					tomcat_sessions_active_current_sessions 0.0
+					# HELP tomcat_sessions_active_max_sessions  
+					# TYPE tomcat_sessions_active_max_sessions gauge
+					tomcat_sessions_active_max_sessions 0.0
+					# HELP tomcat_sessions_alive_max_seconds  
+					# TYPE tomcat_sessions_alive_max_seconds gauge
+					tomcat_sessions_alive_max_seconds 0.0
+					# HELP tomcat_sessions_created_sessions_total  
+					# TYPE tomcat_sessions_created_sessions_total counter
+					tomcat_sessions_created_sessions_total 0.0
+					# HELP tomcat_sessions_expired_sessions_total  
+					# TYPE tomcat_sessions_expired_sessions_total counter
+					tomcat_sessions_expired_sessions_total 0.0
+					# HELP tomcat_sessions_rejected_sessions_total  
+					# TYPE tomcat_sessions_rejected_sessions_total counter
+					tomcat_sessions_rejected_sessions_total 0.0
+
+
+
+	: Grafana와 함께 사용하여 시각화 가능
+	: polling 방식을 사용하여 모니터링 대상(애플리케이션, 서버 등)의 엔드포인트에 주기적으로 요청을 보내, 메트릭 데이터를 수집한다
+	: Prometheus 관련 설정 파일들(prometheus.yml, rule.yml)을 수정 후 적용시키는 법 >>  docker restart [Prometheus컨테이너명]
+	
+	: prometheus.yml 파일 
+		: https://velog.io/@swhan9404/Prometheus%EB%A5%BC-docker%EB%A1%9C-%EA%B5%AC%EC%84%B1%ED%95%B4%EB%B3%B4%EA%B8%B0
+		: 위치 >>   Docker 컨테이너와의 볼륨 마운트를 통해 설정됨. 
+			: 그러니까  사용자의 시스템에서 자유롭게 설정할 수 있고,  Docker 명령어에서 지정한 경로에 따라 컨테이너에서 사용가능
+			: 주로 Dockerfile, docker-compose.yml 과 같은 디렉터리에 "prometeus" 라는 디렉터리를 새로 생성 후 그 아래에 "config", "volume "만들고 prometheus.yml같은거 작성하는 편
+				ex) 
+				├── docker-compose.yml
+				├── Dockerfile
+				├── mywatch1-0.0.2-SNAPSHOT.jar
+				└── prometheus   
+				 └── prometheus.yml
+
+
+
+
+
+
+	: 기본적인 사용 방법
+		(1)  /actuator/prometheus 엔드포인트를 제공하도록 스프링부트 설정
+			1. build.gradle에 prometheus 의존성을 추가
+			2. application.properties 에서 Spring Boot Actuator에서 prometheus 엔드포인트를 노출하도록 설정 >> management.endpoints.web.exposure.include=prometheus
+				: management.endpoints.web.exposure.include=* 했었으면 굳이 또 할필요없음(이미 모든 엔드포인트 개방됨)
+			
+		(2)  docker를 통해 관리
+			1. . Prometheus Docker 이미지 다운로드 >> sudo docker pull prom/prometheus:latest
+			2. 디렉터리를 Dockerfile 있는 디렉터리 아래에 /prometheus/config, /prometheus/volume  생성
+			3. /prometheus/config 에 아래의 내용으로 prometheus.yml 작성
+scrape_configs:
+  - job_name: 'mywatchdev'
+    scrape_interval: 5s
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['nginx:8800'']
+
+
+				: scrape_configs 부분>> Prometheus가 메트릭을 수집할 대상과 방법을 정의
+					:  job_name >>  메트릭 수집 작업을 식별하는 이름.
+						: Prometheus UI에서 메트릭을 조회할 때 사용됨
+					: scrape_interval >> 메트릭을 수집하는 빈도
+					: static_configs >>  고정된 (정적) 메트릭 수집 대상을 정의하는 설정 . Prometheus가 수집할 대상의 목록을 하드코딩
+						: targets >>  Prometheus가 메트릭을 수집할 대상의 주소를 정의
+							: ['nginx:8800''] == 'nginx'라는 컨테이너의 8800 포트에서 메트릭을 수집하겠다
+							
+
+			4.  Prometheus Docker 컨테이너 실행 >>  prometheus 이미지와 작성한 prometheus.yml을 바탕으로 컨테이너 배포
+				(,sol 1) 단독으로 배포 > docker run -d   --name prometheus  -p 9090:9090  -v /path/to/prometheus.yml:/etc/prometheus/prometheus.yml  prom/prometheus:latest
+				(sol2) docker-compose.yml 로 다른 컨테이너들과 함께 배포
+
+				: https://velog.io/@swhan9404/Prometheus%EB%A5%BC-docker%EB%A1%9C-%EA%B5%AC%EC%84%B1%ED%95%B4%EB%B3%B4%EA%B8%B0
+
+			5. 접속 >> 브라우저창에 http://202.31.200.130:9090 입력하면 대시보드 확인가능
+				:  Status -> Targets를 통해 prometheus가 polling 중인 타겟을 확인 가능
+
+
+--------------------------------------------------------------------		
+Grafana >> Prometheus에서 수집한 메트릭을 유용하게 시각화 할 수 있는 시각화 도구로서 사용
+	(1) 이미지 pull >> sudo docker image pull grafana/grafana:latest
+	(2) docker-compose.yml 에 추가함됨
+		:  grafana image내 /var/lib/grafana의 쓰기 작업을 위해 user: "<사용자 ID>:<그룹 ID>"를 설정해야 한다! << 그룹 ID 는 id -g 로 , 사용자 ID는 id -u로 확인 
+		: 초기 관리자 username은 admin 이고, 관리자 password (GF_SECURITY_ADMIN_PASSWORD) 는 아래에서 설정 >>   
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    user: "1000:1000"  # 호스트 시스템의 사용자 ID와 그룹 ID로 설정
+    volumes:
+      - grafana-data:/var/lib/grafana  # 데이터 디렉토리를 볼륨으로 설정
+
+volumes:
+  grafana-data:
+
+
+	(3) 컨테이너 배포
+	(4) 3000 포트로 접속 및 로그인 >> http://202.31.200.130:3000 으로 브라우저 통해 접속 및 id는 admin, PW는 0000으로 접속
+	(5) prometheus를 등록 >>  Administration -> Data soureces에 들어와서  URL을 http://202.31.200.130:9090 로 함 됨
+		: localhost 로 하면 안되는건, promethues 가 배포된 환경에서 접근하는게 아니라서 그런거임
+	(6) Grafana Labs(찐Grafana 사이트 >>https://grafana.com/grafana/dashboards  )에 가서 다양한 Dashboards를 탐색하고 선택한후 ID를 긁어옴 >> 
+		Spring boot로 검색한 뒤, Spring boot 2.1 System Monitor를 선택 하고 ,  ID get << 11378 이었음
+
+	(7) 배포한 Grafana에서 긁은 ID로 대시보드 import >> 대시보드탭에서 new 버튼 누르면 나오는 얘들 중에서 import 클릭후 id 입력하고, (다음버튼 누르고) datasource 로는 앞서 추가한 prometeus 선택하고 최종 생성
+
+
+
+	(8) (일부 모니터링을 위해- 기본적으로는 WAS 가 Jetty 인데 이걸 tomcat 으로바꿔야  WAS 관련 metric 볼 수 있다) 스프링부트 애플리케이션의 application.yml 수정 및 재배포
+server:
+  tomcat:
+    mbeanregistry:
+      enabled: true
+
+
+	(9) Dashboard settings에서 수정
+
+		
+--------------------------------------------------------------------
 모니터링 시스템 구축하기
 	: https://velog.io/@roycewon/Spring-boot-%EB%AA%A8%EB%8B%88%ED%84%B0%EB%A7%81Prometheus-Grafana-docker
-	: 모니터링 시스템 구축 이유
-		1. 운영상 발생한 버그나 오류에 대해 빠른 확인
-		2. 사용자의 액세스와 활동 분석 
+	: 작업 내용
+		(1) 모니터링 당할 애플리케이션 구현 >> https://github.com/jungjiyu/prometheus01/tree/master
+		(2) 애플리케이션 서버에 배포 >> 
 
-	: Spring actuator
-		: Grafana - Prometheus는 서버 메트릭 수집 및 시각화를 위해 함께 쓰인다.
-		: Prometheus>>  오픈소스 모니터링 및 경보 도구로, 메트릭 수집, 저장, 쿼리, 시각화 및 경보 기능을 제공. 이를 스프링 부트 애플리케이션과 연계하면 API 호출 메트릭을 수집하고, Prometheus와 Grafana를 통해 모니터링할 수 있다.
+			1. 서버에 파일이 저장될 환경 구성
+				(1) 디렉터리 생성>> sudo mkdir -p /var/www/myapp/deployments/v2.0.0/
+				(2) 폴더 권한부여>> sudo chmod 755 /var/www/myapp/deployments/v2.0.0/
+				(3) 폴더 소유자 변경>> sudo chown -R user:user /var/www/myapp/deployments/v2.0.0/
 
+			2. 서버에서  MySQL Docker 컨테이너 생성  >> docker run --name  cilab-mysql -e MYSQL_ROOT_PASSWORD=0000 -e MYSQL_DATABASE=mywatch -e MYSQL_USER=user -e MYSQL_PASSWORD=0000 -p 3306:3306 -d mysql:latest
+				: docker run 명령어를 사용하여 mysql 컨테이너를 실행할 때, 지정한 Docker 이미지 (mysql:latest)가 로컬에 없으면 Docker는 자동으로 Docker Hub에서 해당 이미지를 다운로드한다
+`				: MySQL 컨테이너 자체가, mysql 워크밴치의 MySQL 서버 인스턴스같은 개념
+				: MySQL 컨테이너의 데이터베이스는 , mysql 워크밴치의 MySQL 서버 인스턴스 내의 하나의 데이터베이스(스키마)같은 개념
+				: 설정 내용 >>
+					--name mysql-db: 컨테이너명 을 cilab-mysql로 지정
+					-e MYSQL_ROOT_PASSWORD=0000 : MySQL root 사용자의 비밀번호를 1234로 설정
+					-e MYSQL_DATABASE=mywatch >> 
+					-e MYSQL_USER=user >> MySQL 서버 인스턴스 내의 특정 데이터베이스스키마(!=서버인스턴스)에 대한 일반 사용자의 username을 user로 하여 생성
+					-e MYSQL_PASSWORD=0000 >>  MySQL 서버 인스턴스에 대한 루트 사용자(root)의 비밀번호를 설정 ( root 사용자의 username은 별도로 지정안하고, root 이다. )
+					-p 3306:3306: 호스트의 포트 3306을 컨테이너의 포트 3306에 매핑
+					-d: 백그라운드에서 컨테이너를 실행.
+					mysql:latest: 최신 MySQL 이미지를 사용
+
+			3. mysql 맟춰서 application.properties 수정  >> 
+spring.application.name=mywatch1
+
+# db config
+spring.datasource.url=jdbc:mysql://202.31.200.130:3306/mywatch
+spring.datasource.username=user
+spring.datasource.password=0000
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.properties.hibernate.generate_statistics=true
+spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
+
+# Spring Boot Actuator endpoint exposure config
+management.endpoints.web.exposure.include=*
+
+# Spring Boot Actuator endpoint CORS config
+management.endpoints.web.cors.allowed-origins=*
+management.endpoints.web.cors.allowed-methods=*
+
+# for Tomcat metric (not Jetty)
+server.tomcat.mbeanregistry.enabled=true
+
+
+
+
+
+
+			4. 프로젝트 빌드 >> gradlew.bat bootJar
+
+			5. 서버로 빌드된 jar 파일을 전송>> (jar파일있는곳에서 입력) scp mywatch1-0.0.1-SNAPSHOT.jar user@202.31.200.130:/var/www/myapp/deployments/v2.0.0/mywatch1-0.0.3-SNAPSHOT.jar
+	
+
+			6.  jar 파일 대한 이미지 생성 >> 
+				(1) ( jar 파일과 같은 디렉터리에) Dockerfile 작성
+# Use an official OpenJDK runtime as a parent image
+FROM openjdk:21
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy the application .jar file to the container
+COPY mywatch1-0.0.3-SNAPSHOT.jar /app/mywatch1.jar
+
+# Specify the command to run the application
+ENTRYPOINT ["java","-jar","/app/mywatch1.jar"]
+
+
+				(2)Docker 이미지 빌드 >> sudo docker build -t mywatch1-app:0.0.1 .
+
+
+			7. /prometeus/config 디렉터리 생성 및 prometeus.yml 작성
+scrape_configs:
+  - job_name: 'mywatchdev'
+    scrape_interval: 5s
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['nginx:8800'']
+
+
+			8.  /nginx 디렉터리 생성 및 default.conf 작성 
+server {
+    listen 8800;
+
+    location / {
+        proxy_pass http://app:8080;
+    }
+}
+			9.  MySQL, prometeus , nginx, Spring Boot 컨테이너 함께 실행하도록  Docker Compose를 작성
+
+version: '3.8'
+services:
+  cilab-mysql:
+    image: mysql:latest
+    container_name: cilab-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "0000"
+      MYSQL_DATABASE: mywatch
+      MYSQL_USER: user
+      MYSQL_PASSWORD: "0000"
+    ports:
+      - "3306:3306"
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "8800:8800"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro  # Read-only
+    depends_on:
+      - app
+
+  app:
+    image: mywatch1-app:0.0.2
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://cilab-mysql:3306/mywatch
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: "0000"
+    depends_on:
+      - cilab-mysql
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/volume:/prometheus_data  # Optional: Data storage path
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    user: "1000:1000"  # 호스트 시스템의 사용자 ID와 그룹 ID로 설정
+    volumes:
+      - grafana-data:/var/lib/grafana  # 데이터 디렉토리를 볼륨으로 설정
+
+volumes:
+  grafana-data:
+
+
+
+
+
+
+
+			10.  docker-compose.yml에 정의된 모든 서비스에 대한 이미지를 다시 빌드하고 실행 >> ( sudo docker-compose down 하고 ) sudo docker-compose up -d --build
+				:--build 플래그>> 이미지를 다시 빌드 
+				: -d >> 백그라운드에서 실행
+
+			
+
+
+			11.  접속해보기
+			    (1) 애플리케이션
+				: 바깥 브라우저로는  >> http://202.31.200.130:8800
+				: 서버 에서는  >> curl http://localhost:8080
+
+			    (2) prometheus >>  http://202.31.200.130:9090
+				: 눈으로 확인하기 편하게 postman말고 브라우저로 요청해라
+
+			    (3) 3000 포트로 접속 및 로그인 >> http://202.31.200.130:3000 으로 브라우저 통해 접속 및 id는 admin, PW는 0000으로 접속
+
+
+			12.  grafana에서 prometheus 연동
+				: Administration -> Data soureces에 들어와서 prometheus를 등록 >> URL을 http://202.31.200.130:9090 로 함 됨
+
+			13.  grafana에서 대시보드 설정
+				:  Grafana Labs(찐Grafana 사이트 >>https://grafana.com/grafana/dashboards  )에 가서 좀 밑으로 내리면 나오는 검색창엣거 Spring boot로 검색한 뒤, Spring boot 2.1 System Monitor를 선택 하고 ,  ID get << 11378 이었음
+
+			14.  배포한 Grafana에서 긁은 ID로 대시보드 import >> 대시보드탭에서 new 버튼 누르면 나오는 얘들 중에서 import 클릭후 id 입력하고, (다음버튼 누르고) datasource 로는 앞서 추가한 prometeus 선택하고 최종 생성
+
+
+		(?) 애플리케이션 AWS에 배포 >>
 
