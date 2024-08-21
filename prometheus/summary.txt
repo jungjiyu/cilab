@@ -25,6 +25,23 @@
 
 --------------------------------------------------------------------
 
+HATEOAS Hypermedia As The Engine Of Application State 헤이티오스 >> API를 실제로 "RESTful"하게 만드는 REST Appilcation Architecture의 제약 조건
+	: Hypermedia 하이퍼미디어 >> 하이퍼텍스트 + 멀티미디어.  문자열 클릭을 통해 동영상/소리/이미지/텍스트 등의 매체로 이동하는 것.
+		: http://mistutor.dothome.co.kr/hyper.html
+	: REST API request 대한 response 로 필요한 URI를 포함하여 반환하는 것
+	: https://dev-coco.tistory.com/187
+
+
+API와 endpoint
+	API Application Programming Interface >> 응용프로그램/특정기능을 사용할 수 있게하는 인터페이스. 매개체
+		REST API >>  REST 원리를 따르는 API 
+			: 그러니까 HTTP URI을 통해 자원을 명시하고, HTTP Method를 통해 해당 자원에 대한 CRUD Operation을 적용하는 API
+
+	endpoint >> API 중, 클라이언트가 요청을 보낼 수 있는 말단 URI. 
+		: 엔드포인트는 API의 한 부분인 것.
+		: 같은 URI 이라도, 사용하는 http 메서드가 다르면 다른 endpoint 인거다
+			ex ) POST 방식의 http://test.domain.com/1 != GET 방식의 http://test.domain.com/1
+
 
 metric  >> ( 메모리 사용률, CPU 사용률, 스레드 사용률 등.. ) 시간이 지남에 따라 변화하는 데이터. 
 
@@ -48,6 +65,8 @@ metric  >> ( 메모리 사용률, CPU 사용률, 스레드 사용률 등.. ) 시
 
 		: 주요 엔드포인트
 			(0)  /actuator >> actuator 가 제공하는 엔드포인트 목록을 확인 가능
+				: HATEOAS 방식의 response (response 에 urI 정보 포함 )를 받게 된다
+				: 아래와 같은 정보 얻는다
 			{
   			  "_links": {
  			       "self": {
@@ -145,11 +164,13 @@ metric  >> ( 메모리 사용률, CPU 사용률, 스레드 사용률 등.. ) 시
  			   }
 			}
 
+
+
 			(1) Health Check 헬스 체크 >> /actuator/health 
 				:  애플리케이션의 현재 상태(정상적으로 동작 중인지 )를 확인. 
 
 		******(2) Metric 매트릭 >> /actuator/metrics
-				: MicroMeter 를 사용해 애플리케이션의 성능 및 리소스 사용에 관한 metric 을 수집
+				:  MicroMeter 를 사용해 애플리케이션의 성능 및 리소스 사용에 관한 metric 을 수집
 				    : MicroMeter  >>스프링 부트 애플리케이션의 metric을 수집하는,  Actuator에 내장된 모듈
 					: https://semtul79.tistory.com/17
 
