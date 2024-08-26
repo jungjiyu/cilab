@@ -37,7 +37,8 @@ groq >> LPU 개발한 회사
 			1. Llama 3.1 시리즈( Llama 3.1 405B, 70B, 8B ): Meta에서 개발한 모델들
 				: 큰 컨텍스트 윈도우(최대 131,072 토큰)를 제공하며, 다국어 번역, 도구 사용, 일반 지식 질의 등의 복잡한 작업을 처리 가능.
 
-			2. Gemma 시리즈( Gemma 2 9B, Gemma 7B ) : Google에서 개발한 모델들						: 최대 8,192 토큰의 컨텍스트 윈도우를 제공
+			2. Gemma 시리즈( Gemma 2 9B, Gemma 7B ) : Google에서 개발한 모델들
+						: 최대 8,192 토큰의 컨텍스트 윈도우를 제공
 
 			3. Mixtral 8x7B: Mistral에서 개발한 모델
 				: 2,768 토큰의 컨텍스트 윈도우를 제공
@@ -66,8 +67,276 @@ groq >> LPU 개발한 회사
 
 
 
-vLLM >>  LLM 추론 및 서빙을 쉽게, 빠른 속도로 가능하게 하는 라이브러리
+vLLM  Versatile Large Language Model >>  LLM 추론 및 서빙을 쉽게, 빠른 속도로 가능하게 하는 라이브러리
 	; vLLM 의 코드 분석 ( TMI ) >> https://tech.scatterlab.co.kr/vllm-implementation-details/
 	: vLLM 전반적인 설명 >> https://lsjsj92.tistory.com/668
 	: LLM을 쉽고 빠르게 deploy(배포), inference(추론), serving(서빙)할 수 있는 라이브러리
+	: 특징
+		1. state-of-the-art serving throughput을 보여줌. 즉, 서빙 처리 속도가 좋음
+		2. 페이지 어텐션(page attention) 방법으로 key, value 메모리를 효과적으로 관리
+		3. 입력으로 들어오는 요청(request)에 대해서 지속적인 배치(Continuous batching) 처리 가능
+		4. 양자화(Quantization) : GPTQ, AWQ, FP8 KV Cache 등
+		5. 허깅페이스(huggingface)와의 원활한 통합으로 인기 있는 LLM 모델을 사용할 수 있음
+		6. 분산 추론(distributed inference) 지원
+
+	: 단점 >> linux 운영체제에서만 사용 가능
+	: how to use
+	    case 0. hugging face를 기본적으로 활용
+		0. 파이썬 가상환경 생성
+			: 파이썬 기반의 코드를 실행할거라서 파이썬을 활용해야된다
+
+		1. 해당 가상환경에 필요한 라이브러리 설치 
+		    (1) transformers 라이브러리 설치 >>pip install transformers
+			: hugging face 사용해서 트랜스포머 모델 받기 위해 필요
+		    (2) vllm 라이브러리 설치 >> pip install vllm
+
+		2. 커스텀 한 가상환경 아래에 실습폴더 생성 
+		3. 예제 코드 작성 : vim 으로 transformers라이브러리와 vllm라이브러리를 사용하는 "어쩌구.py" 파일을 작성
+		4. 예제 코드 실행>>  python3 어쩌구.py
+	
+
+	    case 1. API 형태로 배포
+
+
+
+
+------------------------------------------------------------------------------------------------------
+
+transformers 라이브러리
+	: 자연어 처리(NLP)와 관련된 작업을 수행하기 위해 Hugging Face에서 개발한 오픈 소스 Python 라이브러리
+	: 트랜스포머(Transformer) 구조를 기반으로 하는 모델들을 지원
+	: pipline 모듈을 포함
+	    : pipline 모듈 >>   다양한 NLP 작업을 쉽게 수행할 수 있도록 설계된 함수
+
+
+venv 라이브러리
+	: python 가상환경 만드는데 사용
+	: 기본적인 사용 방법
+		(1) 가상환경 생성 >>   python3 -m venv [가상환경명]
+		(2) 가상환경 활성화 >> source [가상환경명]/bin/activate
+		(3) 가상환경 비활성화 >> deactivate
+
+
+
+nvidia 드라이버와 CUDA 드라이버
+	: nvidia 드라이버 >> 운영 체제와 GPU 간의 "기본적인" 상호작용을 가능하게 함. 
+		: 운영 체제가 GPU를 인식하고 사용할 수 있도록 하는 데 필요한 모든 저수준(low-level) 소프트웨어를 제공
+		: ( 운영 체제와 GPU 간 상호 작용을 위해선) 필수적으로 설치되어야됨
+			: NVIDIA 드라이버 없이 다른 드라이버(ex : CUDA 드라이버)를 설치할 수 없음
+
+	: CUDA 드라이버 >> GPU를 활용한 병렬 컴퓨팅(병렬 연산)을 지원하는 소프트웨어
+		:  CUDA 드라이버는 과학적 계산, 머신러닝, 딥러닝, 데이터 분석 등 복잡한 작업에서 사용되는 GPU 가속 프로그램을 지원
+		: NVIDIA 드라이버가 설치된 상태에서 CUDA 드라이버가 작동
+		: 필수는 아님 
+		: CUDA 드라이버는 NVIDIA 드라이버의 상위 레이어로, NVIDIA 드라이버가 GPU와의 저수준 통신을 관리하는 반면, CUDA 드라이버는 병렬 컴퓨팅 작업을 관리
+
+
+
+
+실습 내용
+
+
+	-1.  GPU 와 CUDA 드라이버 확인 << : vLLM은 GPU 기반의 실행을 전제로 설계된 시스템이기 때문에, GPU가 올바르게 설정되고 CUDA 드라이버가 설치되어 있어야 한다 
+		1. gpu 의 모델 확인 >> lspci | grep -i nvidia
+			:  시스템에 연결된 모든 NVIDIA GPU를 나열한다.
+			: 아래와 같이 출력됬다
+(myenv) user@workstation:~/myenv/vllm_project$ lspci | grep -i nvidia
+01:00.0 VGA compatible controller: NVIDIA Corporation Device 2786 (rev a1)
+01:00.1 Audio device: NVIDIA Corporation Device 22bc (rev a1)
+
+
+		2. GPU 드라이버 버전 확인 >> nvidia-smi
+		: 아래와 같이 출력됬다 << 그러니까 GPU 드라이버( NVIDIA 드라이버)가 설치되어있지 않아서 그런것.
+(myenv) user@workstation:~/myenv/vllm_project$ nvidia-smi
+NVIDIA-SMI has failed because it couldn't communicate with the NVIDIA driver. Make sure that the latest NVIDIA driver is installed and running.
+
+
+	-0.5 nvidia 드라이버 설치 >>
+		1. sudo apt-get update
+		2.  sudo apt-get install nvidia-driver-560 
+			:   sudo apt-get install nvidia-driver-<적절한NVIDIA 드라이버버전> 인데,  2786은 NVIDIA GeForce RTX 4070 GPU에 해당하고, 이 GPU에 적합한 드라이버 버전은 NVIDIA의 최신 Game Ready Driver이고, 이는  560.81 버전이다.,
+
+		3. sudo reboot >> 시스템 재부팅
+		4. 제대로 설치됬나 확인 >>  nvidia-smi
+			: 아래와 같이 정상적으로 출력
+
+Mon Aug 26 18:10:26 2024       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 560.35.03              Driver Version: 560.35.03      CUDA Version: 12.6     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 4070        Off |   00000000:01:00.0  On |                  N/A |
+|  0%   38C    P8              7W /  200W |      41MiB /  12282MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI        PID   Type   Process name                              GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A      1772      G   /usr/lib/xorg/Xorg                             18MiB |
+|    0   N/A  N/A      1982      G   /usr/bin/gnome-shell                            7MiB |
++-----------------------------------------------------------------------------------------+
+
+
+
+
+	0. 파이썬 가상환경 구축 << vLLM 설치할 때 pip 써야되서 파이썬 필요
+	     : /home/user 디렉터리에 myenv라는 이름으로 생성함
+		(0) 업데이트 >> sudo apt update
+		(1) python3-venv 패키지 설치 >> sudo apt install python3-venv
+		(2) 가상환경 생성 >> python3 -m venv myenv
+		(3) 가상환경 활성화 >> source myenv/bin/activate
+
+	0. 해당 가상환경 내에 vLLM 실습을 위한 디렉터리 생성 >> /home/user/myenv 디렉터리에 vllm_project 디렉터리 생성
+
+	1. vLLM 설치 
+		(1) transformers 라이브러리 설치 >>pip install transformers
+			: hugging face 사용해서 트랜스포머 모델 받기 위해 필요
+		(2) vllm 라이브러리 설치 >> pip install vllm
+
+	2. 예제 코드 작성 << vim 을 활용
+		:  vim example.py 하고 아래의 내용입력
+
+		(1)  vLLM을 사용하지 않은(transformers 만 사용) 스크립트
+
+from transformers import pipeline
+
+# 텍스트 생성 파이프라인 생성
+generator = pipeline('text-generation', model='gpt2')
+
+# 텍스트 생성
+result = generator("Once upon a time", max_length=50, num_return_sequences=1)
+
+# 결과 출력
+print(result)
+
+
+
+
+		(2)  vLLM을 사용한 스크립트
+from transformers import AutoTokenizer
+from vllm import LLM, SamplingParams
+
+# GPT-2 모델과 토크나이저 로드
+tokenizer = AutoTokenizer.from_pretrained("gpt2")
+
+llm = LLM(model="gpt2", enforce_eager=True)
+
+# 입력 텍스트 정의
+input_text = "The future of AI is"
+
+# 샘플링 파라미터 설정
+sampling_params = SamplingParams(temperature=0.7, top_p=0.9)
+
+# vLLM을 사용해 텍스트 생성
+output = llm.generate([input_text], sampling_params=sampling_params)
+
+# RequestOutput 객체에서 텍스트 추출
+generated_text = output[0].outputs[0].text
+print(generated_text)
+
+
+
+
+
+
+
+	3. 예제 코드 실행 >> python3 example.py
+		: 파이썬 실행시키는거라 가상환경 활성화된 상태에서 해야됨
+		: vLLM을 사용하지 않은 경우와 사용한 경우의 실습 결과 비교
+			: 결론
+				높은 성능: 요청 처리 속도와 처리량이 개선
+				메모리 효율성: GPU 메모리를 최적화하여 더 많은 요청을 처리 가능
+				지연 시간 감소: 텍스트 생성 시 지연 시간이 감소
+				사용 편의성: 복잡한 설정 없이도 효율적인 모델 서빙이 가능
+
+
+			1. vLLM을 사용하지 않은 경우
+			     (0) 성능
+				: 모델이 단순하게 순차적으로 요청을 처리. 효율성이 낮을 수 있으며, 특히 대규모 모델을 여러 요청에 대해 처리할 때 성능 저하가 발생할 수 있다.
+				: 모델 로딩 및 추론 시간이 더 오래 걸릴 수 있다
+
+			     (1) 메모리 효율성 >> 각 요청이 개별적으로 처리되기 때문에 GPU 메모리 사용이 비효율적일 수 있고, 이로 인해 메모리 부족 문제가 발생할 가능성이 있다
+
+			     (2) 지연 시간 Latency >>요청당 개별 추론이 수행되기 때문에 응답 지연 시간이 길어질 수 있다.
+			     (3) 사용 편의성 >> 모델 서빙을 직접 관리하고, 메모리 사용과 배치 처리를 직접 최적화해야했다.
+	
+
+			2. vLLM을 사용한 경우
+			     (0) 성능
+				: 연속적인 배치 처리와 GPU 자원 최적화를 통해 처리량이 크게 향상되어, 입력된 텍스트에 대한 모델 추론이 더 빠르게 이루어졌다.=
+
+			     (1) 메모리 효율성 >> vLLM은 GPU 메모리 사용을 최적화해준다. 특히, GPU와 CPU 블록의 최적화를 통해 메모리 사용이 최적화된 것을 확인 가능.
+
+
+			     (2) 지연 시간 Latency >>vLLM은 배치 처리와 CUDA 그래프 최적화 등의 기능을 통해 지연 시간을 단축한다.실습에서는 텍스트 생성이 더 빠르게 이루어졌으며, 처리 속도가 크게 향상되었다.
+
+			     (3) 사용 편의성 >> vLLM은 이러한 복잡한 작업들을 자동으로 처리해 주었으며, 사용자는 간단한 API 호출만으로 대규모 모델을 효율적으로 서빙 가능했다.
+
+
+
+
+
+
+
+
+
+		(1) vLLM을 사용하지 않은 스크립트의 실행결과
+
+
+(myenv) user@workstation:~/myenv/vllm_project$  python3 example.py
+config.json: 100%|███████████████████████████████████████████████████████████████████████████████████| 665/665 [00:00<00:00, 9.06MB/s]
+model.safetensors: 100%|███████████████████████████████████████████████████████████████████████████| 548M/548M [00:48<00:00, 11.3MB/s]
+generation_config.json: 100%|████████████████████████████████████████████████████████████████████████| 124/124 [00:00<00:00, 1.43MB/s]
+tokenizer_config.json: 100%|████████████████████████████████████████████████████████████████████████| 26.0/26.0 [00:00<00:00, 343kB/s]
+vocab.json: 100%|████████████████████████████████████████████████████████████████████████████████| 1.04M/1.04M [00:00<00:00, 9.86MB/s]
+merges.txt: 100%|███████████████████████████████████████████████████████████████████████████████████| 456k/456k [00:00<00:00, 797kB/s]
+tokenizer.json: 100%|████████████████████████████████████████████████████████████████████████████| 1.36M/1.36M [00:00<00:00, 1.44MB/s]
+/home/user/myenv/lib/python3.10/site-packages/transformers/tokenization_utils_base.py:1601: FutureWarning: `clean_up_tokenization_spaces` was not set. It will be set to `True` by default. This behavior will be depracted in transformers v4.45, and will be then set to `False` by default. For more details check this issue: https://github.com/huggingface/transformers/issues/31884
+  warnings.warn(
+Truncation was not explicitly activated but `max_length` is provided a specific value, please use `truncation=True` to explicitly truncate examples to max length. Defaulting to 'longest_first' truncation strategy. If you encode pairs of sequences (GLUE-style) with the tokenizer you can select this strategy more precisely by providing a specific strategy to `truncation`.
+Setting `pad_token_id` to `eos_token_id`:50256 for open-end generation.
+[{'generated_text': "The future of AI is not clear, as AI may evolve to address specific problems.\n\nAnswering my questions is more complex and time consuming. First, there are more than 140 questions to ponder like 'If I put the program 'On"}]
+
+
+		     : 분석해보면 >> 
+			1. config.json, model.safetensors, tokenizer.json 등의 파일이 다운로드 됨
+				:  이 파일들은 GPT-2 모델과 관련된 설정 및 가중치 파일, 토크나이저 파일들로, GPT-2 모델을 처음 로드한거라 다운로드 된거다
+			2. warning 출력 : 뭐 실행에 딱히 영향을 주진 않았으나 조심할 필요는 있다
+			3. 텍스트 생성 결과 출력 >> 
+				GPT-2 모델이 "The future of AI is"라는 입력 텍스트를 기반으로 아래의 결과를 반환했음을 확인 가능
+					 The future of AI is not clear, as AI may evolve to address specific problems.
+					 Answering my questions is more complex and time consuming. First, there are more than 140 questions to ponder like 'If I put the program 'On...
+
+
+
+		(2) vLLM을 사용한 스크립트의 실행결과
+(myenv) user@workstation:~/myenv/vllm_project$ python3 example.py 
+/home/user/myenv/lib/python3.10/site-packages/transformers/tokenization_utils_base.py:1601: FutureWarning: `clean_up_tokenization_spaces` was not set. It will be set to `True` by default. This behavior will be depracted in transformers v4.45, and will be then set to `False` by default. For more details check this issue: https://github.com/huggingface/transformers/issues/31884
+  warnings.warn(
+INFO 08-26 18:18:05 config.py:1559] Downcasting torch.float32 to torch.float16.
+INFO 08-26 18:18:05 llm_engine.py:184] Initializing an LLM engine (v0.5.5) with config: model='gpt2', speculative_config=None, tokenizer='gpt2', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, rope_scaling=None, rope_theta=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.float16, max_seq_len=1024, download_dir=None, load_format=LoadFormat.AUTO, tensor_parallel_size=1, pipeline_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=True, kv_cache_dtype=auto, quantization_param_path=None, device_config=cuda, decoding_config=DecodingConfig(guided_decoding_backend='outlines'), observability_config=ObservabilityConfig(otlp_traces_endpoint=None, collect_model_forward_time=False, collect_model_execute_time=False), seed=0, served_model_name=gpt2, use_v2_block_manager=False, enable_prefix_caching=False)
+INFO 08-26 18:18:06 model_runner.py:879] Starting to load model gpt2...
+INFO 08-26 18:18:07 weight_utils.py:236] Using model weights format ['*.safetensors']
+INFO 08-26 18:18:08 weight_utils.py:280] No model.safetensors.index.json found in remote.
+Loading safetensors checkpoint shards:   0% Completed | 0/1 [00:00<?, ?it/s]
+Loading safetensors checkpoint shards: 100% Completed | 1/1 [00:00<00:00, 12.08it/s]
+
+INFO 08-26 18:18:08 model_runner.py:890] Loading model weights took 0.2378 GB
+INFO 08-26 18:18:08 gpu_executor.py:121] # GPU blocks: 17469, # CPU blocks: 7281
+Processed prompts: 100%|████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:00<00:00, 13.41it/s, est. speed input: 67.08 toks/s, output: 214.64 toks/s]
+ under attack. More and more companies are creating products and services that enable developers to
+
+
+
+
+
+
+
+
 
