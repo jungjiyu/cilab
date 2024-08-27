@@ -1,4 +1,179 @@
-1. 서버에 vllm을 docker를 사용하여 컨테이너화 시키고 이를 활용하여 huggingface의 모델을 서빙하는 예시를 구현해줘.
+1. 
+
+위 애플리케이션은 좀 부수적인 역할(ai 모델 활용 및 유저별 ai api 호출량 집계)이고, 주요 기능을 수행(유저관리 및 게시글 생성 등)하는 애플리케이션은 따로 있거든? 
+
+주요 애플리케이션에서 user 정보를 끌어와서, 이 애플리케이션에 해당 user의 ai 모델 api 호출량을 집계하는 기능을 추가하고 싶은데 어떻게 해야할까?
+
+참고로 주요 애플리케이션의 user 컨트롤러 부분은 아래와 같고
+
+package com.itk.storybridge.user.member.api.controller;
+
+import com.itk.storybridge.common.api.response.ApiResponse;
+import com.itk.storybridge.common.code.SuccessCode;
+import com.itk.storybridge.user.member.api.request.MemberRequest;
+import com.itk.storybridge.user.member.api.response.InvitationTicketResponse;
+import com.itk.storybridge.user.member.api.response.MemberResponse;
+import com.itk.storybridge.user.member.application.MemberAppService;
+import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Slice;
+import org.springframework.web.bind.annotation.*;
+
+
+@RestController
+@AllArgsConstructor
+@RequestMapping("/members")
+public class MemberController {
+
+	private final MemberAppService memberService;
+
+	@PostMapping("/{nickname}/invitation-tickets")
+	public ApiResponse<InvitationTicketResponse> createInvitationTicket(
+			@PathVariable String nickname) {
+
+		return ApiResponse.success(SuccessCode.CREATED,
+				memberService.createInvitationTicket(nickname)
+		);
+	}
+
+	@GetMapping(value = "/{nickname}/my-page")
+	public ApiResponse<MemberResponse.MemberInfo> getMember(
+			@PathVariable String nickname) {
+		return ApiResponse.success(SuccessCode.OK, memberService.getMemberInfo(nickname));
+	}
+
+	//TODO 레디스 적용시 본인 확인 검증 필요
+	@PutMapping("/{nickname}") //닉네임 변경
+	public ApiResponse<MemberResponse.NicknameChange> updateInvitationTicket(
+			@PathVariable String nickname,
+			@RequestBody MemberRequest.ChangeNickname request) {
+		return ApiResponse.success(SuccessCode.OK, memberService.changeNickname(nickname, request));
+	}
+
+
+	@GetMapping("/{nickname}/amt")
+	public ApiResponse<MemberResponse.Amt> getMemberTree(
+			@PathVariable String nickname,
+			@RequestParam(required = false) String token
+	) {
+		return ApiResponse.success(SuccessCode.OK, memberService.getActivityBasedMemberTree(nickname, token));
+	}
+
+	@GetMapping("/{nickname}/children")
+	public ApiResponse<Slice<MemberResponse.AmtMemberInfo>> getMemberChildren(
+			@PathVariable String nickname,
+			@RequestParam(required = false) String token,
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size
+	) {
+		return ApiResponse.success(SuccessCode.OK, memberService.getMemberChildren(nickname, token, page, size));
+	}
+
+	@PostMapping("/amt/block")
+	public ApiResponse<MemberResponse.BlockInfo> amtBlockMember(
+			@RequestParam String nickname
+	) {
+		return ApiResponse.success(SuccessCode.CREATED, memberService.amtBlockMember(nickname));
+	}
+
+
+	@DeleteMapping("/amt/block")
+	public ApiResponse<MemberResponse.BlockInfo> amtUnblockMember(
+			@RequestParam String nickname
+	) {
+		return ApiResponse.success(SuccessCode.OK, memberService.amtUnblockMember(nickname));
+	}
+
+	@PostMapping("/block/{nickname}")
+	public ApiResponse<MemberResponse.BlockInfo> blockMember(
+			@PathVariable(name = "nickname") String blockedNickname
+	) {
+		return ApiResponse.success(SuccessCode.CREATED, memberService.blockMember(blockedNickname));
+	}
+
+}
+
+
+response DTO 부분은 아래와 같아.
+
+package com.itk.storybridge.user.member.api.response;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+public class MemberResponse {
+
+	@Data
+	@Builder
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class NicknameChange {
+		private String nickname;
+	}
+
+	@Data
+	@Builder
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class Amt {
+		private AmtMemberInfo root;
+
+		private AmtMemberInfo levelOneNode;
+
+		private AmtMemberInfo parent;
+
+		private AmtMemberInfo me;
+
+		private Long oneLevelChildCount;
+
+		private Long twoLevelChildCount;
+
+		private Long threeLevelChildCount;
+
+		private Long totalChildCount;
+	}
+
+	@Data
+	@Builder
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class AmtMemberInfo {
+		private String nickname;
+		private String imageUrl;
+		private Boolean isBlocked;
+	}
+
+
+	@Data
+	@Builder
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class MemberInfo {
+		private String imageUrl;
+		private String name;
+		private String nickname;
+		private String email;
+		private String phone;
+	}
+
+	@Data
+	@Builder
+	public static class BlackList {
+	}
+
+	@Data
+	@Builder
+	public static class BlockInfo{
+		private String blockerNickname;
+		private String blockedNickname;
+	}
+}
+
+
+
+
+
 
 2. 서비스 쪽에서 어케 사용자 데이터(키 등) 넘겨받을것인가?
 
