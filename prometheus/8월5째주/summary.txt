@@ -362,17 +362,182 @@ Processed prompts: 100%|██████████████████�
 
 ------------------------------------------------------------------------------------------------------
 
-<스프링부트 애플리케이션 실습>
+<종합 실습>
 
 발급한 groq api key >> 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
 
+Docker를 사용할 경우 따로 파이썬 가상환경을 생성할 필요가 없음 >> Docker  자체가 일종의 "가상환경" 역할을 하기 때문
+
 
 실습 내용
-	dependency
+
+	(1) 스프링부트 프로젝트 작성
+	    : dependency
 		Spring Web: REST API를 구현하기 위해 필요
 		Spring Boot DevTools: 개발 도중 빠른 재시작을 지원
 		Lombok: 코드 간소화
 		Spring Security: API 보호를 위해 필요
+
+	    : 구조
+	    : 기능
+		(1) 텍스트 처리 ai 모델 api 적용 가능하게 만듦
+		(2) 사용자의 api 호출 모니터링
+
+
+	(2) 서버 환경 구성
+		: 구조
+		
+
+	(3) vLLM을 컨테이너화하고 Hugging Face 모델을 서빙
+
+
+		0. Docker가 GPU를 사용가능하게 환경 조성
+			(1) NVIDIA Docker가 설치되어있는지 확인 >>  sudo docker run --gpus all nvidia/cuda:11.0-base nvidia-smi 했을때 잘 실행되면 NVIDIA Docker가 올바르게 설치된 것
+				: 근데 설치 안되있어서 아래와 같이 나옴
+user@workstation:/var/www/myapp/deployments/v3.0.0/vLLM$ sudo docker run --gpus all nvidia/cuda:11.0-base nvidia-smi
+Unable to find image 'nvidia/cuda:11.0-base' locally
+docker: Error response from daemon: manifest for nvidia/cuda:11.0-base not found: manifest unknown: manifest unknown.
+See 'docker run --help'.
+
+
+			(2) ( NVIDIA Docker가 설치안된 경우) NVIDIA Docker 설치하기
+				1. NVIDIA Container Toolkit 설치
+distribution=$(. /etc/os-release;echo $ID$VERSION_ID) \
+&& curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add - \
+&& curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+
+
+				2. 패키지 업데이트 및 설치
+sudo apt-get update
+sudo apt-get install -y nvidia-docker2
+sudo systemctl restart docker
+
+				3. NVIDIA Docker 테스트 >> sudo docker run --gpus all nvidia/cuda:12.2.0-runtime-ubuntu22.04 nvidia-smi
+					:최신 버전의 이미지(CUDA 12.2 이미지로 시도)를 사용
+					: 처음엔 Unable to find image 'nvidia/cuda:12.2.0-runtime-ubuntu22.04' locally 뜨고 나서 바로 이미지 다운로드 시작하니까 걱정 ㄴㄴ 
+					: 다운로드 다 끝나면 아래와 같이 출력됨
+						: 요약하자면 
+							CUDA 버전: 12.2.0이 제대로 로드됨
+							NVIDIA 드라이버 버전: 560.35.03 드라이버가 로드됨
+							GPU 정보: NVIDIA GeForce RTX 4070이 정상적으로 인식되었고, GPU 메모리 사용량과 온도 등도 표시됨
+
+user@workstation:/var/www/myapp/deployments/v3.0.0/vLLM$ sudo docker run --gpus all nvidia/cuda:12.2.0-runtime-ubuntu22.04 nvidia-smi
+Unable to find image 'nvidia/cuda:12.2.0-runtime-ubuntu22.04' locally
+12.2.0-runtime-ubuntu22.04: Pulling from nvidia/cuda
+aece8493d397: Already exists 
+9fe5ccccae45: Pull complete 
+8054e9d6e8d6: Pull complete 
+bdddd5cb92f6: Pull complete 
+5324914b4472: Pull complete 
+9a9dd462fc4c: Pull complete 
+95eef45e00fa: Pull complete 
+e2554c2d377e: Pull complete 
+4640d022dbb8: Pull complete 
+Digest: sha256:739e0bde7bafdb2ed9057865f53085539f51cbf8bd6bf719f2e114bab321e70e
+Status: Downloaded newer image for nvidia/cuda:12.2.0-runtime-ubuntu22.04
+
+==========
+== CUDA ==
+==========
+
+CUDA Version 12.2.0
+
+Container image Copyright (c) 2016-2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+
+This container image and its contents are governed by the NVIDIA Deep Learning Container License.
+By pulling and using the container, you accept the terms and conditions of this license:
+https://developer.nvidia.com/ngc/nvidia-deep-learning-container-license
+
+A copy of this license is made available in this container at /NGC-DL-CONTAINER-LICENSE for your convenience.
+
+Tue Aug 27 04:37:29 2024       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 560.35.03              Driver Version: 560.35.03      CUDA Version: 12.6     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 4070        Off |   00000000:01:00.0 Off |                  N/A |
+|  0%   43C    P8             12W /  200W |      49MiB /  12282MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI        PID   Type   Process name                              GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
++-----------------------------------------------------------------------------------------+
+
+
+				
+
+
+			(3) Docker Daemon 설정 확인
+				1. /etc/docker/daemon.json 파일을 다음과 같이 수정 ("default-runtime": "nvidia"를 추가)
+
+user@workstation:/etc/docker$ cat daemon.json 
+{
+    "default-runtime": "nvidia",
+    "runtimes": {
+        "nvidia": {
+            "path": "nvidia-container-runtime",
+            "runtimeArgs": []
+        }
+    }
+}
+
+
+				2.  Docker를 재시작 >> sudo systemctl restart docker
+
+
+
+
+
+
+
+		1. Dockerfile 작성 >> 이미지 빌드를 위함
+		    : 주요 내용
+			(1)  컨테이너가 8081 포트에서 실행되도록 설정 <- EXPOSE 8081
+			(2)   requirements.txt 를 참고하여 필요한 라이브러리 install 시킴 <- RUN pip3 install --no-cache-dir -r requirements.txt
+			(3)  serve.py 이 실행되도록함 <- CMD ["python3", "serve.py"]
+
+
+# Base image: Python with CUDA support
+FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    python3-pip \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the requirements file and install dependencies
+COPY requirements.txt /app/requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+# Copy the application code
+COPY . /app
+
+# Expose the port the app runs on
+EXPOSE 8081
+
+# Command to run the vLLM server
+CMD ["python3", "serve.py"]
+
+
+		2. requirements.txt 작성 << vLLM과 Hugging Face Transformers 라이브러리를 설치하는데 필요한 dependency를 정의
+		3. serve.py 코드 작성 << 컨테이너 실행시 실행시킬, vLLM을 통해 Hugging Face 모델을 서빙하는 서버 코드. 
+		4. 이미지 빌드 >> docker build -t vllm-huggingface-server .
+			:  vllm-huggingface-server 라는 이름의 이미지 빌드함.
+
+		5. Docker 컨테이너 실행 >> docker run --gpus all -d -p 8081:8081 vllm-huggingface-server
+
+
 
 
 
