@@ -381,7 +381,10 @@ Docker를 사용할 경우 따로 파이썬 가상환경을 생성할 필요가 
 	    : 구조
 	    : 기능
 		(1) 텍스트 처리 ai 모델 api 적용 가능하게 만듦
-		(2) 사용자의 api 호출 모니터링
+		(2) 주요 애플리케이션에서 사용자의 AI 모델 API 호출량을 집계하는 기능
+			: 두 애플리케이션 간의 연동이 필요
+			: 
+
 
 
 	(2) 서버 환경 구성
@@ -504,38 +507,127 @@ user@workstation:/etc/docker$ cat daemon.json
 			(3)  serve.py 이 실행되도록함 <- CMD ["python3", "serve.py"]
 
 
-# Base image: Python with CUDA support
-FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
+FROM nvidia/cuda:11.8.0-runtime-ubuntu20.04
 
-# Install dependencies
+# Install Python and other dependencies
 RUN apt-get update && apt-get install -y \
     python3-pip \
     python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Install necessary Python packages
+RUN pip3 install --upgrade pip
+RUN pip3 install vllm transformers flask
+
+# Copy the server script
+COPY serve.py /app/serve.py
+
 # Set the working directory
 WORKDIR /app
-
-# Copy the requirements file and install dependencies
-COPY requirements.txt /app/requirements.txt
-RUN pip3 install --no-cache-dir -r requirements.txt
-
-# Copy the application code
-COPY . /app
 
 # Expose the port the app runs on
 EXPOSE 8081
 
-# Command to run the vLLM server
+# Run the application
 CMD ["python3", "serve.py"]
 
 
 		2. requirements.txt 작성 << vLLM과 Hugging Face Transformers 라이브러리를 설치하는데 필요한 dependency를 정의
+vllm
+transformers
+torch
+Flask>=2.2.0
+Werkzeug>=2.2.
+
 		3. serve.py 코드 작성 << 컨테이너 실행시 실행시킬, vLLM을 통해 Hugging Face 모델을 서빙하는 서버 코드. 
+
+
+from vllm import LLM, SamplingParams
+from transformers import AutoTokenizer
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+# Load model and tokenizer
+model_name = "EleutherAI/gpt-neo-1.3B"
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+llm = LLM(model=model_name, enforce_eager=True)
+
+@app.route("/complete", methods=["POST"])
+def complete():
+    data = request.json
+    prompt = data.get("prompt")
+    max_tokens = data.get("max_tokens", 50)
+
+    # Tokenize input
+    input_tokens = tokenizer.encode(prompt, return_tensors="pt").tolist()
+
+    sampling_params = SamplingParams(temperature=0.7, top_p=0.9, max_tokens=max_tokens)
+
+    # Generate text using vLLM
+    output = llm.generate(input_tokens, sampling_params=sampling_params)
+
+    # Extract generated sequences
+    generated_sequences = output[0].sequences
+
+    # Decode the generated sequences
+    output_text = tokenizer.decode(generated_sequences[0], skip_special_tokens=True)
+
+    return jsonify({"generated_text": output_text})
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8081)
+
 		4. 이미지 빌드 >> docker build -t vllm-huggingface-server .
 			:  vllm-huggingface-server 라는 이름의 이미지 빌드함.
 
-		5. Docker 컨테이너 실행 >> docker run --gpus all -d -p 8081:8081 vllm-huggingface-server
+		5. Docker 컨테이너 실행 >> sudo docker run --gpus all -d -p 8081:8081 vllm-huggingface-server
+
+
+	(4) 전반적인 실행 방법 << groq model 은 직접 서버에 올린게 아니라 별도의 작업은 필요 없고, vLLM 의 경우 컨테이너 띄워서 해야되는 거라 컨테이너 먼저 실행시켜야됨
+
+`		1.  vLLM 컨테이너 실행시켜놓고 
+		2. 스프링부트 애플리케이션 실행 
+			: 로컬이든 서버에서든 뭐 상관없음
+		3. vLLM에 대한 requewst
+
+
+from vllm import LLM, SamplingParams
+from transformers import AutoTokenizer
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+# Load model and tokenizer
+model_name = "gpt2"  # 원하는 Hugging Face 모델 이름
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+llm = LLM(model=model_name, enforce_eager=True)
+
+
+@app.route("/complete", methods=["POST"])
+def complete():
+    data = request.json
+    prompt = data.get("prompt")
+    max_tokens = data.get("max_tokens", 50)
+
+    # 인코딩된 입력을 리스트로 변환하여 전달
+    input_tokens = tokenizer.encode(prompt, return_tensors="pt").tolist()
+
+    sampling_params = SamplingParams(temperature=0.7, top_p=0.9, max_tokens=max_tokens)
+
+    # Generate text using vLLM
+    output = llm.generate(input_tokens, sampling_params=sampling_params)
+
+    # Extract generated sequences
+    generated_sequences = output[0].sequences
+
+    # Decode the generated sequences
+    output_text = tokenizer.decode(generated_sequences[0], skip_special_tokens=True)
+
+    return jsonify({"generated_text": output_text})
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8081)
 
 
 
