@@ -369,6 +369,30 @@ Processed prompts: 100%|██████████████████�
 Docker를 사용할 경우 따로 파이썬 가상환경을 생성할 필요가 없음 >> Docker  자체가 일종의 "가상환경" 역할을 하기 때문
 
 
+개고생 원인
+지금까지 여러 번의 수정과 테스트를 거치면서 겪은 어려움의 원인을 종합적으로 설명하자면 다음과 같습니다:
+
+### 1. **버전 호환성 문제**
+   - `transformers` 라이브러리의 특정 버전이나 `vLLM`의 특정 버전에서 사용되는 함수나 인자의 형식이 변경되었거나, 새로운 메서드가 도입되면서 예기치 않은 오류가 발생했습니다. 특히, `assert_never` 오류는 `vLLM`에서 처리되지 않은 예외적인 입력 형식 때문이었고, 이는 API 사용 방법이 변경된 것에 기인한 문제였습니다.
+
+### 2. **잘못된 코드 구현**
+   - 코드에서 `generate` 메서드를 호출할 때 잘못된 인자(`inputs`)를 사용하려고 하거나, `prompt_token_ids`를 잘못된 형식으로 전달하려고 했던 점이 있었습니다. 이로 인해 `TypeError` 또는 `AssertionError`와 같은 오류가 발생했습니다. 이는 `vLLM`의 API 사용 방식에 대한 오해 또는 잘못된 문서 참고에서 비롯되었습니다.
+
+### 3. **모델 설정 및 초기화**
+   - `vLLM` 라이브러리를 사용해 모델을 초기화하는 과정에서, GPU 메모리 관리와 CUDA 그래프 관련 설정이 제대로 이해되지 않아 초기화가 실패하거나 메모리 관련 문제를 일으켰습니다. 예를 들어, `enforce_eager=True`를 설정하지 않았을 때 CUDA 그래프 관련 경고가 발생했으며, 이로 인해 모델 로드 시 불필요한 메모리 사용이 발생할 수 있었습니다.
+
+### 4. **로그 확인 및 디버깅 부족**
+   - 초기 단계에서 로그를 충분히 활용하지 못해, 오류의 원인을 신속하게 파악하지 못했습니다. 이는 디버깅 속도를 저하시켰고, 여러 번의 시도 끝에야 문제의 본질을 이해할 수 있었습니다.
+
+### 5. **도커 환경 문제**
+   - 도커 컨테이너 내부에서 실행되는 환경과 로컬 개발 환경 간의 차이로 인해 예상치 못한 문제가 발생했습니다. 예를 들어, 모델 파일 로드, GPU 메모리 할당 등의 이슈가 컨테이너 환경에서 발생할 수 있었습니다.
+
+### 종합적인 결론
+이 모든 문제들은 대부분 라이브러리의 최신 버전에 대한 이해 부족, 새로운 API와의 호환성 문제, 그리고 로그 확인의 부족에서 비롯되었습니다. 결과적으로 여러 번의 수정과 테스트를 거치며 점진적으로 문제를 해결해 나갔고, 이제는 모델이 정상적으로 동작하는 상태에 도달할 수 있었습니다.
+
+이러한 과정을 통해 얻은 교훈은, **문서화된 내용을 꼼꼼히 확인하고, 코드의 각 부분이 의도한 대로 동작하는지 세밀하게 확인하는 것**이 중요하다는 것입니다. 또한, **로그를 적극적으로 활용하여 문제 발생 시 빠르게 원인을 파악하는 것이 필요**합니다.
+
+
 실습 내용
 
 	(1) 스프링부트 프로젝트 작성
@@ -555,8 +579,13 @@ Werkzeug>=2.2.
 from flask import Flask, request, jsonify
 from transformers import AutoTokenizer
 from vllm import LLM, SamplingParams
+from prometheus_client import start_http_server, Summary, Counter, generate_latest
 
 app = Flask(__name__)
+
+# Prometheus metrics
+REQUEST_TIME = Summary('request_processing_seconds', 'Time spent processing request')
+REQUEST_COUNT = Counter('request_count', 'Total number of requests')
 
 # Load model and tokenizer
 model_name = "gpt2"
@@ -564,7 +593,10 @@ tokenizer = AutoTokenizer.from_pretrained(model_name)
 llm = LLM(model=model_name)
 
 @app.route("/complete", methods=["POST"])
+@REQUEST_TIME.time()  # Measure the time spent in this request
 def complete():
+    REQUEST_COUNT.inc()  # Increment the request count
+
     data = request.json
     prompt = data.get("prompt")
     max_tokens = data.get("max_tokens", 50)
@@ -590,8 +622,17 @@ def complete():
 
     return jsonify({"generated_text": output_text})
 
+@app.route("/metrics")
+def metrics():
+    return generate_latest()
+
 if __name__ == "__main__":
+    # Start the Prometheus metrics server on port 8000
+    start_http_server(8000)
+    
+    # Start the Flask application
     app.run(host="0.0.0.0", port=8081)
+
 
 
 
@@ -613,11 +654,146 @@ curl -X POST http://localhost:8081/complete -H "Content-Type: application/json" 
 
 
 
+<< 스프링부트 빌드 및 배포>>
+0. 	implementation group: 'net.andreinc', name: 'mockneat', version: '0.4.8' 를 활용하여 1000개의 더미 데이터 생성
+  
+
+1. gradlew.bat bootJar
+
+2. scp ai01-0.0.1-SNAPSHOT.jar user@202.31.200.130:/var/www/myapp/deployments/v3.0.0/spring_boot/ai01-0.0.4-SNAPSHOT.jar
+	
+3. Dockerfile << 이미지 빌드용
+# Use an official OpenJDK runtime as a parent image
+FROM openjdk:21
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy the application .jar file to the container
+COPY ai01-0.0.4-SNAPSHOT.jar /app/ai01.jar
+
+# Specify the command to run the application
+ENTRYPOINT ["java","-jar","/app/ai01.jar"]
+
+
+
+4. 이미지 빌드 >> sudo docker build -t ai01-app:0.0.1 .
+
+
+
+<<prometheus>> 
+
+
+1. prometheus/prometheus.yml 을 아래처럼 작성
+
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'spring-boot'
+    scrape_interval: 5s
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['nginx:80']  
+
+  - job_name: 'vllm'
+    static_configs:
+      - targets: ['vllm:8081']
 
 
 
 
+<<nginx/default.conf>>
+server {
+    listen 80;
 
+    location / {
+        proxy_pass http://spring_boot:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    location /vllm {
+        proxy_pass http://vllm:8081;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+
+
+
+<< docker-compose.yml >>
+
+: 작성은 아래처럼
+
+version: '3.8'
+
+services:
+  spring_boot:
+    build:
+      context: ./spring_boot
+    image: spring_boot_app
+    ports:
+      - "8080:8080"
+    networks:
+      - monitoring
+
+  vllm:
+    build:
+      context: ./vLLM
+    image: vllm_app
+    ports:
+      - "8081:8081"
+    networks:
+      - monitoring
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - "80:80"
+    depends_on:
+      - spring_boot
+      - vllm
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    driver: bridge
+
+volumes:
+  grafana-storage:
+
+
+
+실행은 이걸로 >> docker-compose up --build
+
+
+http_server_requests_seconds_count{user_id="specific_user_id"}
 
 
 
