@@ -793,7 +793,239 @@ volumes:
 실행은 이걸로 >> docker-compose up --build
 
 
-http_server_requests_seconds_count{user_id="specific_user_id"}
+
+
+
+<< gpu가 부족하다... 어쩌구 는 아래와 같음 : torch.OutOfMemoryError >>
+user@workstation:/var/www/myapp/deployments/v3.0.0/vLLM$ sudo docker exec -it vllm /bin/bash
+root@2583a8014456:/app# python3
+Python 3.10.12 (main, Jul 29 2024, 16:56:48) [GCC 11.4.0] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>> from serve import app
+/usr/local/lib/python3.10/dist-packages/transformers/tokenization_utils_base.py:1601: FutureWarning: `clean_up_tokenization_spaces` was not set. It will be set to `True` by default. This behavior will be depracted in transformers v4.45, and will be then set to `False` by default. For more details check this issue: https://github.com/huggingface/transformers/issues/31884
+  warnings.warn(
+INFO 08-29 07:44:48 config.py:1559] Downcasting torch.float32 to torch.float16.
+INFO 08-29 07:44:48 llm_engine.py:184] Initializing an LLM engine (v0.5.5) with config: model='gpt2', speculative_config=None, tokenizer='gpt2', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, rope_scaling=None, rope_theta=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.float16, max_seq_len=1024, download_dir=None, load_format=LoadFormat.AUTO, tensor_parallel_size=1, pipeline_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, kv_cache_dtype=auto, quantization_param_path=None, device_config=cuda, decoding_config=DecodingConfig(guided_decoding_backend='outlines'), observability_config=ObservabilityConfig(otlp_traces_endpoint=None, collect_model_forward_time=False, collect_model_execute_time=False), seed=0, served_model_name=gpt2, use_v2_block_manager=False, enable_prefix_caching=False)
+INFO 08-29 07:44:49 model_runner.py:879] Starting to load model gpt2...
+INFO 08-29 07:44:50 weight_utils.py:236] Using model weights format ['*.safetensors']
+INFO 08-29 07:44:50 weight_utils.py:280] No model.safetensors.index.json found in remote.
+Loading safetensors checkpoint shards:   0% Completed | 0/1 [00:00<?, ?it/s]
+Loading safetensors checkpoint shards: 100% Completed | 1/1 [00:00<00:00, 12.47it/s]
+
+INFO 08-29 07:44:51 model_runner.py:890] Loading model weights took 0.2378 GB
+INFO 08-29 07:44:51 gpu_executor.py:121] # GPU blocks: 17469, # CPU blocks: 7281
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "<stdin>", line 1, in <module>
+[rank0]:   File "/app/serve.py", line 16, in <module>
+[rank0]:     llm = LLM(model=model_name)
+[rank0]:   File "/usr/local/lib/python3.10/dist-packages/vllm/entrypoints/llm.py", line 175, in __init__
+[rank0]:     self.llm_engine = LLMEngine.from_engine_args(
+[rank0]:   File "/usr/local/lib/python3.10/dist-packages/vllm/engine/llm_engine.py", line 473, in from_engine_args
+[rank0]:     engine = cls(
+[rank0]:   File "/usr/local/lib/python3.10/dist-packages/vllm/engine/llm_engine.py", line 284, in __init__
+[rank0]:     self._initialize_kv_caches()
+[rank0]:   File "/usr/local/lib/python3.10/dist-packages/vllm/engine/llm_engine.py", line 403, in _initialize_kv_caches
+[rank0]:     self.model_executor.initialize_cache(num_gpu_blocks, num_cpu_blocks)
+[rank0]:   File "/usr/local/lib/python3.10/dist-packages/vllm/executor/gpu_executor.py", line 124, in initialize_cache
+[rank0]:     self.driver_worker.initialize_cache(num_gpu_blocks, num_cpu_blocks)
+[rank0]:   File "/usr/local/lib/python3.10/dist-packages/vllm/worker/worker.py", line 264, in initialize_cache
+[rank0]:     self._init_cache_engine()
+[rank0]:   File "/usr/local/lib/python3.10/dist-packages/vllm/worker/worker.py", line 269, in _init_cache_engine
+[rank0]:     self.cache_engine = [
+[rank0]:   File "/usr/local/lib/python3.10/dist-packages/vllm/worker/worker.py", line 270, in <listcomp>
+[rank0]:     CacheEngine(self.cache_config, self.model_config,
+[rank0]:   File "/usr/local/lib/python3.10/dist-packages/vllm/worker/cache_engine.py", line 66, in __init__
+[rank0]:     self.gpu_cache = self._allocate_kv_cache(
+[rank0]:   File "/usr/local/lib/python3.10/dist-packages/vllm/worker/cache_engine.py", line 85, in _allocate_kv_cache
+[rank0]:     torch.zeros(kv_cache_shape,
+[rank0]: torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 820.00 MiB. GPU 0 has a total capacity of 11.62 GiB of which 89.44 MiB is free. Process 19990 has 10.21 GiB memory in use. Process 21084 has 1.26 GiB memory in use. Of the allocated memory 1.05 GiB is allocated by PyTorch, and 25.53 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+>>> print(app.url_map)
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "<stdin>", line 1, in <module>
+[rank0]: NameError: name 'app' is not defined
+
+
+
+     1. 서버의 gpu 메모리 청소
+	: 당시 gpu 상태
+user@workstation:/var/www/myapp/deployments/v3.0.0/vLLM$ nvidia-smi
+Thu Aug 29 16:48:14 2024       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 560.35.03              Driver Version: 560.35.03      CUDA Version: 12.6     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 4070        Off |   00000000:01:00.0 Off |                  N/A |
+|  0%   45C    P8             12W /  200W |   10518MiB /  12282MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI        PID   Type   Process name                              GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A      1803      G   /usr/lib/xorg/Xorg                             26MiB |
+|    0   N/A  N/A      2010      G   /usr/bin/gnome-shell                            7MiB |
+|    0   N/A  N/A     19990      C   python3                                     10450MiB |
++-----------------------------------------------------------------------------------------+
+
+	: 조취 >> sudo pkill -9 python3
+
+	: 청소 후 >> 
+
+user@workstation:/var/www/myapp/deployments/v3.0.0/vLLM$ nvidia-smi
+Thu Aug 29 16:55:02 2024       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 560.35.03              Driver Version: 560.35.03      CUDA Version: 12.6     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 4070        Off |   00000000:01:00.0 Off |                  N/A |
+|  0%   47C    P0             31W /  200W |      49MiB /  12282MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI        PID   Type   Process name                              GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A      1803      G   /usr/lib/xorg/Xorg                             26MiB |
+|    0   N/A  N/A      2010      G   /usr/bin/gnome-shell                            7MiB |
++-----------------------------------------------------------------------------------------+
+
+
+
+    2. serve.py에서 메모리 사용량을 줄이기 위해 몇 가지 최적화를 추가
+
+from flask import Flask, request, jsonify
+from transformers import AutoTokenizer
+from vllm import LLM, SamplingParams
+from prometheus_client import Summary, Counter, generate_latest, CONTENT_TYPE_LATEST
+
+app = Flask(__name__)
+
+# Prometheus metrics
+REQUEST_TIME = Summary('request_processing_seconds', 'Time spent processing request')
+REQUEST_COUNT = Counter('request_count', 'Total number of requests')
+
+# Load model and tokenizer
+model_name = "gpt2"
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+# Initialize the LLM with reduced GPU memory utilization
+llm = LLM(model=model_name, gpu_memory_utilization=0.8)  # Adjust this value as needed
+
+@app.route("/complete", methods=["POST"])
+@REQUEST_TIME.time()  # Measure the time spent in this request
+def complete():
+    REQUEST_COUNT.inc()  # Increment the request count
+
+    data = request.json
+    prompt = data.get("prompt")
+    max_tokens = data.get("max_tokens", 50)
+
+    # Encode input text
+    inputs = tokenizer(prompt, return_tensors="pt")
+
+    # Convert tokens to list
+    input_token_ids = inputs["input_ids"].tolist()[0]
+
+    # Set sampling parameters with a smaller batch size
+    sampling_params = SamplingParams(max_tokens=max_tokens, temperature=0.7, top_p=0.9, batch_size=1)
+
+    # Generate text using vLLM
+    output = llm.generate(
+        prompt_token_ids=[input_token_ids],
+        sampling_params=sampling_params,
+        use_tqdm=False
+    )
+
+    # Decode the generated sequences
+    output_text = tokenizer.decode(output[0].outputs[0].token_ids, skip_special_tokens=True)
+
+    return jsonify({"generated_text": output_text})
+
+@app.route("/custom-metrics")
+def metrics():
+    app.logger.info("Custom metrics endpoint was called")
+    return generate_latest(), 200, {'Content-Type': CONTENT_TYPE_LATEST}
+
+if __name__ == "__main__":
+    # Start the Flask application
+    with app.app_context():
+        print(app.url_map)
+    app.run(host="0.0.0.0", port=8081)
+
+
+
+
+<<tip 자주쓰는 명령어 모음>>
+prometheus
+
+1. gradlew.bat bootJar
+
+2. scp ai01-0.0.1-SNAPSHOT.jar user@202.31.200.130:/var/www/myapp/deployments/v3.0.0/spring_boot/ai01-0.0.5-SNAPSHOT.jar
+	
+3. Dockerfile << 이미지 빌드용
+# Use an official OpenJDK runtime as a parent image
+FROM openjdk:21
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy the application .jar file to the container
+COPY ai01-0.0.4-SNAPSHOT.jar /app/ai01.jar
+
+# Specify the command to run the application
+ENTRYPOINT ["java","-jar","/app/ai01.jar"]
+
+
+
+
+
+sudo docker-compose down
+sudo docker-compose up --build
+sudo kill $(sudo lsof -t -i :80)
+
+sudo docker exec -it vllm /bin/bash
+from serve import app
+print(app.url_map)
+
+
+<<수정 사항>>
+
+gpt2 가 gpu 를 너무 많이 필요로 해서 좀 더 작은 모델로 수정함 >> TinyBERT (huawei-noah/TinyBERT_General_4L_312D ) 모델을 사용
+
+sudo apt install python3-pip
+pip install torch
+
+python3
+
+from transformers import AutoTokenizer, AutoModel
+
+model_name = "huawei-noah/TinyBERT_General_4L_312D"
+
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModel.from_pretrained(model_name)
+
+tokenizer.save_pretrained("./TinyBERT_General_4L_312D")
+model.save_pretrained("./TinyBERT_General_4L_312D")
+
+
+
+
+
+
+
+
+
+
 
 
 
