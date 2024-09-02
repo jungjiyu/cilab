@@ -419,7 +419,13 @@ Docker를 사용할 경우 따로 파이썬 가상환경을 생성할 필요가 
 docker-compose 와 이미지 자동 빌드
 	: 그냥은 이미지까지 자동빌드시켜주진 않는다. 별도로 build 섹션을 추가해야 이미지도 자동 빌드 시켜준다
 		: 그러니까 일반적으로는 이미지를 별도로 먼저 빌드한 후 docker-compose up 을 해야된다는 말이다.
+		: sudo docker build -t v300-spring-boot-app .
 
+docker-compose 로 생성된 컨테이너 간의 통신 방법
+	sol1. 컨테이너의 "서비스명"을 hostname으로 하여 통신 	
+		: 컨테이너명(service 섹션의 서비스명 아래 container_name으로 정의된 이름) != 컨테이너의 서비스명(service 섹션 바로 아래에 정의된 이름)
+
+	sol2. 실제 서버의 IP를 hostname으로하여 통신
 
 실습 내용
 
@@ -684,19 +690,27 @@ curl -X POST http://localhost:8081/complete -H "Content-Type: application/json" 
 
 << 스프링부트 빌드 및 배포>>
 
+-1. 특정 파일에 로그 기록하게 하기>> logging.file.name=application.log
+
 
 0-sol1. interceptor 정의 >>  Micrometer의 MeterRegistry를 사용하여 사용자 별 API 호출량을 기록. 
      : 핵심 내용
 	: MeterRegistry를 통해 counter 메트릭을 정의하고, 사용자가 API를 호출할 때마다 이 값을 증가시키는 원리 
 		: meterRegistry.counter("http.server.requests.user", "user_id", userId).increment();
-			:  http.server.requests.user라는 이름의 카운터 메트릭을 사용하고 있으며, 각 호출마다 user_id라는 태그를 사용해 사용자의 ID를 기록
+			:  http_server_requests_user_total 이란 이름의 카운터 메트릭을 사용하고 있으며, 각 호출마다 user_id라는 태그를 사용해 사용자의 ID를 기록
+				: Prometheus는 각 메트릭의 종류에 따라 접미사로 _total, _sum, _count 등의 키워드를 붙여서 메트릭을 구분하는 경우가 많다
+					: *_total >>  누적 카운터 값
+					: *_sum>>  총합
+					: *_count >>  이벤트 발생 횟수
+
 
 	: Prometheus와의 통합
 		: 애플리케이션이 /actuator/prometheus 의 엔드포인트를 통해 Prometheus 가 활용 가능한 형식의 메트릭을 제공
 	`	: 서버의 prometheus.yml 에서  Spring Boot 애플리케이션을 타겟으로 추가
 
-	: Grafana와 의 통합 >> 특정 사용자별 API 호출량을 쿼리
-		: ex ) sum(rate(http_server_requests_user{user_id="specific_user"}[5m]))  >> http.server.requests.user 메트릭에서 user_id가 특정 사용자인 경우의 요청 비율을 5분 단위로 합산
+	: Grafana와 의 통합 >> 특정 사용자별 API 호출량을 쿼리 
+
+		: ex ) sum(rate(http_server_requests_user_total[5m])) by (user_id)  >> http.server.requests.user 메트릭에서 user_id가 특정 사용자인 경우의 요청 비율을 5분 단위로 합산
 		: ex) sum(rate(http_server_requests_user{path=~"/api/groq/complete"}[5m])) by (user_id, path) >> 특정 경로 /api/groq/complete 에 대한 사용자별 요청 수를 집계
 
 	
@@ -874,7 +888,7 @@ public class CustomFilter extends OncePerRequestFilter {
 
 1. gradlew.bat bootJar
 
-2. scp ai01-0.0.1-SNAPSHOT.jar user@202.31.200.130:/var/www/myapp/deployments/v3.0.0/spring_boot/ai01-0.0.7-SNAPSHOT.jar
+2. scp ai01-0.0.1-SNAPSHOT.jar user@202.31.200.130:/var/www/myapp/deployments/v3.0.0/spring_boot/ai01-0.0.9-SNAPSHOT.jar
 	
 3. Dockerfile << 이미지 빌드용
 # Use an official OpenJDK runtime as a parent image
@@ -891,7 +905,7 @@ ENTRYPOINT ["java","-jar","/app/ai01.jar"]
 
 
 
-4. 이미지 빌드 >> sudo docker build -t ai01-app:0.0.1 .
+4. 이미지 빌드 >> sudo docker build -t v300-spring-boot-app .
 
 
 
@@ -1240,6 +1254,12 @@ model.save_pretrained("./TinyBERT_General_4L_312D")
 
 
 
+<< mysql 컨테이너 조회 >>
+MySQL 컨테이너에서 member 테이블의 전체 row를 조회 >>
+	1.  MySQL 컨테이너에 접속 >> sudo docker exec -it <컨테이너명> mysql -u root -p
+	2. MySQL에 로그인 (root 사용자의 비밀번호를 입력) >> Enter password: 1234
+	3. 데이터베이스 선택 >> USE cilab;
+	4. member 테이블의 전체 데이터 조회 >> SELECT * FROM member;
 
 
 
