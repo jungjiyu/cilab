@@ -3,7 +3,7 @@ todo
 1. 과부하 어느정도에서 걸리나 정도 >> Jmeter 올리면서 test 함
 
 2. 모니터링 실전 >> chatgpt/Gemma/Lamma api를 호출하여 글 완성해줘,  그림 설명해줘 등을 프롬프트로하여 API를 호출하는 스프링부트 애플리케이션을 만들고 서버에 배포하되, 이 과정에서  vLLM과 groq를 활용
-    : 계획
+    : 계획 ver1
 	:  텍스트 처리에 vLLM을 사용한 이유 >> 
 		: 이미지 처리 
 			:  CNN과 같은 구조를 통해 (이미지) 데이터를 분석한다.
@@ -17,9 +17,17 @@ todo
 	: vLLM >> 서버에 vLLM을 설치하여 GPT-3, LLaMA, Gemma 모델을 서빙하고, 스프링부트 애플리케이션에서 이 모델들을 호출해 "텍스트 완성"에 활용
 		: vLLM을 Docker 컨테이너를 활용해 배포해서 활용함 된다.
 
-	: groq >> 스프링부트 애플리케이션에서 Groq API를 통해 LPU 기반 모델을 호출해 "이미지 설명"에 활용
+	: groq >> 스프링부트 애플리케이션에서 Groq API를 통해 LPU 기반 모델을 호출한 "텍스트 기반 설명"에 활용
 		: 서버에 물리적인 LPU 칩은 없는 상황이라, Groq에서 제공하는 API를 통해 LPU 기반의 모델을 원격으로 호출하는 정도로 활용.
 
+	: grafana >> http 헤더로 사용자의 정보를 포함해서 grafana 대시보드에서 사용자별 요청 정도를 확인할 수 있게 함
+
+
+   : 계획 ver2 << vLLM 관련 오류 계속 나니까 제외&gpt 4 mini 추가
+	: groq >> 스프링부트 애플리케이션에서 Groq API를 통해 LPU 기반 모델을 호출한 "텍스트 기반 설명"에 활용
+	: chatgpt 4 mini >> 마찬가지로 텍스트 기반 설명
+	: grafana >> (별도로 클라이언트 쪽에서 헤더로 보내는게 아니라) springsecurity로 로그인된 사용자를 애플리케이션 쪽에서 뽑아서, grafana 대시보드에서 사용자별 요청 정도를 확인할 수 있게 함
+	
 
 3. 서비스 쪽에서 어케 사용자 데이터(키 등) 넘겨받을것인가? >> knlab MSA 구조 활용함 될 듯
 
@@ -30,6 +38,19 @@ todo
 	: groq >> 여기 서비스 가입하면 무료로 API 호출할수 있는 key 얻을 수 있음
 	: chatgpt || 라마 || 젬마 >>글 완성해줘,  그림 설명해줘 관련 API 호출
 	: 서비스 쪽에서 어케 사용자 데이터(키 등) 넘겨받을것인가?
+
+
+------------------------------------------------------------------------------------------------------
+
+서버 접속 안됬던거 원인과 해결법
+	: 스프링인지 뭔지 뭔가가 자동으로 route 설정해서, 내 컴터에서는 접속이 불가능했던 것
+	: 해결법
+		1. 다른 서버(202.31.200.86:22)에 접속 
+			아이디: cilab
+			비밀번호: cilab!23
+		2. ssh 202.31.200.130 해서 접속
+		3. 접속한 상태에서 "route"입력 >> 내 IP 관련 뭐 적혀있으면 다음단계 실행(아니면 걍 딴게 문제인거임)
+		4. 192.168.64.0 관련 route 설정되있는거 삭제 >> sudo route del -net 192.168.64.0 netmask 255.255.240.0 dev br-62886332b62b
 
 
 ------------------------------------------------------------------------------------------------------
@@ -393,6 +414,13 @@ Docker를 사용할 경우 따로 파이썬 가상환경을 생성할 필요가 
 이러한 과정을 통해 얻은 교훈은, **문서화된 내용을 꼼꼼히 확인하고, 코드의 각 부분이 의도한 대로 동작하는지 세밀하게 확인하는 것**이 중요하다는 것입니다. 또한, **로그를 적극적으로 활용하여 문제 발생 시 빠르게 원인을 파악하는 것이 필요**합니다.
 
 
+
+
+docker-compose 와 이미지 자동 빌드
+	: 그냥은 이미지까지 자동빌드시켜주진 않는다. 별도로 build 섹션을 추가해야 이미지도 자동 빌드 시켜준다
+		: 그러니까 일반적으로는 이미지를 별도로 먼저 빌드한 후 docker-compose up 을 해야된다는 말이다.
+
+
 실습 내용
 
 	(1) 스프링부트 프로젝트 작성
@@ -655,12 +683,198 @@ curl -X POST http://localhost:8081/complete -H "Content-Type: application/json" 
 
 
 << 스프링부트 빌드 및 배포>>
+
+
+0-sol1. interceptor 정의 >>  Micrometer의 MeterRegistry를 사용하여 사용자 별 API 호출량을 기록. 
+     : 핵심 내용
+	: MeterRegistry를 통해 counter 메트릭을 정의하고, 사용자가 API를 호출할 때마다 이 값을 증가시키는 원리 
+		: meterRegistry.counter("http.server.requests.user", "user_id", userId).increment();
+			:  http.server.requests.user라는 이름의 카운터 메트릭을 사용하고 있으며, 각 호출마다 user_id라는 태그를 사용해 사용자의 ID를 기록
+
+	: Prometheus와의 통합
+		: 애플리케이션이 /actuator/prometheus 의 엔드포인트를 통해 Prometheus 가 활용 가능한 형식의 메트릭을 제공
+	`	: 서버의 prometheus.yml 에서  Spring Boot 애플리케이션을 타겟으로 추가
+
+	: Grafana와 의 통합 >> 특정 사용자별 API 호출량을 쿼리
+		: ex ) sum(rate(http_server_requests_user{user_id="specific_user"}[5m]))  >> http.server.requests.user 메트릭에서 user_id가 특정 사용자인 경우의 요청 비율을 5분 단위로 합산
+		: ex) sum(rate(http_server_requests_user{path=~"/api/groq/complete"}[5m])) by (user_id, path) >> 특정 경로 /api/groq/complete 에 대한 사용자별 요청 수를 집계
+
+	
+
+
+(0)interceptor 의 등록을 위한  config 클래스
+package com.example.ai01.global.config;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+@Configuration
+public class WebConfig implements WebMvcConfigurer { // Interceptor를 등록
+
+    private final CustomInterceptor customInterceptor;
+
+    @Autowired
+    public WebConfig(CustomInterceptor customInterceptor) {
+        this.customInterceptor = customInterceptor;
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(customInterceptor).addPathPatterns("/**");
+    }
+}
+
+
+
+(1) interceptor 정의
+
+package com.example.ai01.global.intercept;
+
+import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.HandlerInterceptor;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+@Component
+public class CustomInterceptor implements HandlerInterceptor {
+
+    private final MeterRegistry meterRegistry;
+
+    public CustomInterceptor(MeterRegistry meterRegistry) {
+        this.meterRegistry = meterRegistry;
+    }
+
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        String path = request.getRequestURI();
+
+        // /metrics 및 /actuator 경로는 제외
+        if (path.startsWith("/metrics") || path.startsWith("/actuator")) {
+            return true;
+        }
+
+        // 현재 인증된 사용자 정보 가져오기
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            Object principal = authentication.getPrincipal();
+            String userId = null;
+
+            if (principal instanceof UserDetails) {
+                userId = ((UserDetails) principal).getUsername();
+            } else {
+                userId = principal.toString();
+            }
+
+            if (userId != null) {
+                meterRegistry.counter("http.server.requests.user", "user_id", userId).increment();
+            }
+        }
+
+        return true;
+    }
+}
+
+
+
+
+
+
+0-sol2. OncePerRequestFilter 를 확장하여 구현하여 모든 요청에 대한 메트릭을 수집<< 개추
+	: Filter는 SecurityContext가 초기화된 후에 실행되기 때문에, 인증된 사용자의 정보를 올바르게 가져올 수 있다.
+
+    (0) CustomFilter 정의
+
+package com.example.ai01.global.filter;
+
+import io.micrometer.core.instrument.MeterRegistry;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+
+@Slf4j
+@Component
+public class CustomFilter extends OncePerRequestFilter {
+
+    private final MeterRegistry meterRegistry;
+
+    public CustomFilter(MeterRegistry meterRegistry) {
+        this.meterRegistry = meterRegistry;
+    }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
+        String path = request.getRequestURI();
+
+        // /metrics 및 /actuator 경로를 필터에서 제외
+        if (!path.startsWith("/metrics") && !path.startsWith("/actuator") && !path.startsWith("/api/members/login")) {
+            log.info("Filtering request to path: {}", path);
+
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.isAuthenticated() && !(authentication instanceof AnonymousAuthenticationToken)) {
+                Object principal = authentication.getPrincipal();
+                String userId = null;
+
+                if (principal instanceof UserDetails) {
+                    userId = ((UserDetails) principal).getUsername();
+                } else if (principal != null) {
+                    userId = principal.toString();
+                }
+
+                if (userId != null) {
+                    log.info("Registering metric for user_id: {}", userId);
+                    meterRegistry.counter("http.server.requests.user", "user_id", userId).increment();
+                } else {
+                    log.warn("User ID is null, metric not registered");
+                }
+            } else {
+                log.warn("Authentication is null or not authenticated");
+            }
+        }
+
+        filterChain.doFilter(request, response);
+    }
+}
+
+
+
+    (2) Filter 등록 >> Spring Boot에서는 Filter를 빈으로 등록하면 자동으로 필터 체인에 추가됨. ( @Component를 사용하면 자동으로 빈 생성되므로 별도로 등록할 필요가 없다) 
+
+    (3) CustomFilter가 JwtRequestFilter 뒤에 실행되도록 설정 >>>        
+        	 http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+	 http.addFilterAfter(customFilter, UsernamePasswordAuthenticationFilter.class);
+
+	
+		: 참고로   .antMatchers("/api/admin/**").hasRole("ADMIN") 는 depreceated 되었고, 이젠 대신  .requestMatchers("/api/admin/**").hasRole("ADMIN")를 사용한다.
+
+
+
+
+
+
+
 0. 	implementation group: 'net.andreinc', name: 'mockneat', version: '0.4.8' 를 활용하여 1000개의 더미 데이터 생성
   
 
 1. gradlew.bat bootJar
 
-2. scp ai01-0.0.1-SNAPSHOT.jar user@202.31.200.130:/var/www/myapp/deployments/v3.0.0/spring_boot/ai01-0.0.4-SNAPSHOT.jar
+2. scp ai01-0.0.1-SNAPSHOT.jar user@202.31.200.130:/var/www/myapp/deployments/v3.0.0/spring_boot/ai01-0.0.7-SNAPSHOT.jar
 	
 3. Dockerfile << 이미지 빌드용
 # Use an official OpenJDK runtime as a parent image
@@ -699,6 +913,12 @@ scrape_configs:
   - job_name: 'vllm'
     static_configs:
       - targets: ['vllm:8081']
+
+
+<<grafana>> 
+	: 쿼리문을 버튼으로 좀 쉽게 작성하고 싶음 builder, 코드 전체를 걍 내가 작성하고 싶으면 code 선택하고 작성
+	: 사용자별 쿼리 집계를 위해 다음의 코드를 추가
+sum(rate(http_server_requests_user{path=~"/api/groq/complete|/api/vllm/complete"}[5m])) by (user_id, path)
 
 
 
@@ -970,7 +1190,7 @@ prometheus
 
 1. gradlew.bat bootJar
 
-2. scp ai01-0.0.1-SNAPSHOT.jar user@202.31.200.130:/var/www/myapp/deployments/v3.0.0/spring_boot/ai01-0.0.5-SNAPSHOT.jar
+2. scp ai01-0.0.1-SNAPSHOT.jar user@202.31.200.130:/var/www/myapp/deployments/v3.0.0/spring_boot/ai01-0.0.8-SNAPSHOT.jar
 	
 3. Dockerfile << 이미지 빌드용
 # Use an official OpenJDK runtime as a parent image
@@ -980,7 +1200,7 @@ FROM openjdk:21
 WORKDIR /app
 
 # Copy the application .jar file to the container
-COPY ai01-0.0.4-SNAPSHOT.jar /app/ai01.jar
+COPY ai01-0.0.8-SNAPSHOT.jar /app/ai01.jar
 
 # Specify the command to run the application
 ENTRYPOINT ["java","-jar","/app/ai01.jar"]
