@@ -458,10 +458,17 @@ Grafana에서 API key 생성하기 >> administration - users and accounts - serv
 		Display name : Admin API Key
 		Role : Admin
 
-	    : 실습에서 생성된 API key 는 다음과 같음 >> glsa_soa3lpCY62h64iW5zufizvANR4w69FWY_24163771
+	    : 실습에서 생성된 API key 는 다음과 같음 >> glsa_KDzaLpQV4bTvUkW19S9wJFPeCuwVyZ4l_1381bd1c
 		: name 은 admin-api-key01 이고, expires 는 never로함
 
-		
+
+
+
+/actuator/prometheus 메트릭과 Prometheus UI, /api/members/usage/json 로의 반영 시간 차 >> 이는 정상적인 것.
+	: /actuator/prometheus 엔드포인트는 Spring Boot 애플리케이션에서 직접 노출하는 메트릭으로, 애플리케이션이 이 데이터를 바로 제공하기 때문에 즉시 반영됨.
+	: prometheus는 약 1분정도의 scrape_interval 로 /actuator/prometheus 엔드포인트에서 메트릭을 수집하기도하고, 내부적으로 데이터 를 반영하는데도 시간이 걸리기 때문에  Prometheus UI, /api/members/usage/json 등 에는 즉각적으론 반영되지 않을 수 있다.
+
+
 
 실습 내용
 
