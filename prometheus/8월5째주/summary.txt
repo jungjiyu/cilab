@@ -48,7 +48,7 @@ todo
 		1. 다른 서버(202.31.200.86:22)에 접속 
 			아이디: cilab
 			비밀번호: cilab!23
-		2. ssh 202.31.200.130 해서 접속
+		2. ssh user@202.31.200.130 해서 접속
 		3. 접속한 상태에서 "route"입력 >> 내 IP 관련 뭐 적혀있으면 다음단계 실행(아니면 걍 딴게 문제인거임)
 		4. 192.168.64.0 관련 route 설정되있는거 삭제 >> sudo route del -net 192.168.64.0 netmask 255.255.240.0 dev br-62886332b62b
 
@@ -1261,7 +1261,7 @@ prometheus
 
 1. gradlew.bat bootJar
 
-2. scp ai01-0.0.1-SNAPSHOT.jar user@202.31.200.130:/var/www/myapp/deployments/v3.0.0/spring_boot/ai01-0.0.11-SNAPSHOT.jar
+2. scp ai01-0.0.1-SNAPSHOT.jar user@202.31.200.130:/var/www/myapp/deployments/v3.0.0/spring_boot/ai01-0.0.15-SNAPSHOT.jar
 	
 3. Dockerfile << 이미지 빌드용
 # Use an official OpenJDK runtime as a parent image
