@@ -1,3 +1,4 @@
+
 todo
 
 1. 과부하 어느정도에서 걸리나 정도 >> Jmeter 올리면서 test 함
@@ -1345,4 +1346,26 @@ services:
       - ./grafana/grafana.ini:/etc/grafana/grafana.ini
 
 
+<<openAI 사용법>>
+
+User, Project, Organization  >>
+	User :  OpenAI의 API 플랫폼을 사용하는 개인 계정
+
+	Organization: 여러 User가 소속된 조직 단위. 
+		: User는 여러 Organization 에 소속될 수 있다
+		: Organization은 User에 의해 관리된다
+		: Organization 내 User 들에게 각각 권한을 부여 가능
+
+	Project: 특정 Organization의 특정 프로젝트에 대한 단위
+		: Project 는 Organization 에서 (종속되어) 정의 가능하다
+
+
+API Key 의 종류 << User API 키보다는, Project API 키를 사용하는 것이 권장된다
+	: https://help.openai.com/en/articles/9186755-managing-your-work-in-the-api-platform-with-projects
+	: 
+Authentication >> bearer OPENAI_API_KEY
+
+openAI API를 사용하는 목적은, 애플리케이션의 유저들이 글을 쓰면 해당 글을 좀 더 다듬은 결과물을 제공하기 위함인데 어떤 종류의 API 키를 사용하는게 좋을까?
+
+openAI 계정을 만들면 해당 계정이 user 로 생성되고, 해당 user 에 대해 자동으로 personal Organization 이 생성되고,  Project는 따로 자동으로 생성되지 않는거야? 그리고 다른 
 
